@@ -15,7 +15,7 @@ repeat
     end
 until u == nil
 
-os.loadAPI("color.lua")
+os.loadAPI("color")
 local admins = {
 "dannysmc95",
 "roger109z",
