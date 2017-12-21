@@ -1,4 +1,4 @@
 shell.run("fg")
-while true do
+--while true do
 shell.run("command")
-end
+--end
