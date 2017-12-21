@@ -57,8 +57,9 @@ local function AFKLock()
             isAFK = textutils.unserialize(file.readAll())
             file.close()
         else
+            isAFK = {}
             local writer = fs.open("persistence.json", "w")
-            writer.write("{}")
+            writer.write(textutils.serialize(isAFK))
             writer.close()
         end
         for k, v in pairs(isAFK) do
