@@ -51,9 +51,16 @@ local tell = function(name, message)
 end
 local function AFKLock()
     while true do
-        local file = fs.open("isAFK.txt", "r")
-        local isAFK = textutils.unserialize(file.readAll())
-        file.close()
+        local file = fs.open("persistence.json", "r")
+        local isAFK
+        if file then
+            isAFK = textutils.unserialize(file.readAll())
+            file.close()
+        else
+            local writer = fs.open("persistence.json", "w")
+            writer.write("{}")
+            writer.close()
+        end
         for k, v in pairs(isAFK) do
             local _, res = commands.tp(v[1], v[2], "~", v[4])
         end
@@ -110,9 +117,16 @@ local function main()
             end
             local command = {}
             local file = fs.open("motd.txt", "r")
-            local motd = file.readAll()
-            file.close()
-            file = nil
+                local motd
+            if file then
+                motd = file.readAll()
+                file.close()
+            else
+                motd = "&2Welcome to the server!\n&2type &c&g!help&2 for commands BetaBot provides."
+                writer = fs.open("motd.txt", "w")
+                writer.write(motd)
+                writer.close()
+            end
             if name == "join" then
                 tell(message, {motd})
                 --print(message)
