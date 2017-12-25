@@ -388,7 +388,7 @@ local function main()
             elseif command[1] == "shrug" then
                 print(name, "shrugged")
             elseif command[1] == "github" then
-                tell(@a, "Make changes to "..mName.." at https://github.com/roger109z/BetaBot/")
+                tell("@a", "Make changes to "..mName.." at https://github.com/roger109z/BetaBot/")
             else
                 if name ~= "join" then
                     commands.tellraw(name, color.format("&cUnkown Command! Use &6!help &cfor a list of commands."))
