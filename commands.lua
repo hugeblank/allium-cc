@@ -88,6 +88,7 @@ local cList = {
 "&c&g!math&6: &rperforms any mathematical equation you throw at it",
 "&c&g!afk&6: &rToggles AFK status and puts you in a safe place",
 "&c&g!motd&6: &rshows message of the day",
+"&c&g!github&6: &rshows how to edit me!",
 }
 local tpList = {}
 local function login()
@@ -386,6 +387,8 @@ local function main()
                 break
             elseif command[1] == "shrug" then
                 print(name, "shrugged")
+            elseif command[1] == "github" then
+                tell(@a, "Make changes to "..mName.." at https://github.com/roger109z/BetaBot/")
             else
                 if name ~= "join" then
                     commands.tellraw(name, color.format("&cUnkown Command! Use &6!help &cfor a list of commands."))
