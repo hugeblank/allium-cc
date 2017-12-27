@@ -7,7 +7,7 @@ local files = {
 }
 for k, v in pairs(files) do
   local site = http.get(v)
-  local file = fs.open(k)
+  local file = fs.open(k, "w")
   file.write(site.readAll())
   file.close()
   site.close()
