@@ -1,9 +1,9 @@
 local files = {
   startup = "https://raw.githubusercontent.com/roger109z/BetaBot/master/updater.lua",
-  startup2 = "https://raw.githubusercontent.com/roger109z/BetaBot/startup.lua",
-  command = "https://raw.githubusercontent.com/roger109z/BetaBot/commands.lua",
-  color = "https://raw.githubusercontent.com/roger109z/BetaBot/color.lua",
-  motd = "https://raw.githubusercontent.com/roger109z/BetaBot/motd.txt",
+  startup2 = "https://raw.githubusercontent.com/roger109z/BetaBot/master/startup.lua",
+  command = "https://raw.githubusercontent.com/roger109z/BetaBot/master/commands.lua",
+  color = "https://raw.githubusercontent.com/roger109z/BetaBot/master/color.lua",
+  motd = "https://raw.githubusercontent.com/roger109z/BetaBot/master/motd.txt",
 }
 for k, v in pairs(files) do
   local site = http.get(v)
