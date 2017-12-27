@@ -125,7 +125,7 @@ local function main()
                 file.close()
             else
                 motd = "&2Welcome to the server!\n&2type &c&g!help&2 for commands BetaBot provides."
-                writer = fs.open("motd.txt", "w")
+                writer = fs.open("motd", "w")
                 writer.write(motd)
                 writer.close()
             end
@@ -216,7 +216,7 @@ local function main()
                 if command[2] ~= "set" then
                     tell(name, {motd})
                 elseif command[2] == "set" and isAdmin(name) == true and command[3] ~= nil then
-                    local file = fs.open("motd.txt", "w") 
+                    local file = fs.open("motd", "w") 
                     file.write(string.sub(message, 10))
                     file.close()
                     tell(name, "MotD set!")
