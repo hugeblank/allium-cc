@@ -118,7 +118,7 @@ local function main()
                 message = string.sub(message, 2)
             end
             local command = {}
-            local file = fs.open("motd.txt", "r")
+            local file = fs.open("motd", "r")
                 local motd
             if file then
                 motd = file.readAll()
