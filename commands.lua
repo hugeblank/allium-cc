@@ -442,15 +442,15 @@ local function main()--the main function it's only a function because I needed t
                             tell(name,badsyntax)
                         elseif not gamma[command[3]] then
                             tell(name,"&6Player is not in the database")
-                        elseif not number(command[4]) then
+                        elseif not tonumber(command[4]) then
                             tell(name,"&6Invalid number amount")
-                        elseif number(command[4]) < 0 then
+                        elseif tonumber(command[4]) < 0 then
                             tell(name,"&6Amount cannot be negative")
-                        elseif number(command[4]) > gamma[name] then
+                        elseif tonumber(command[4]) > gamma[name] then
                             tell(name,"&6Insufficient funds")
                         else
-                            gamma[name] = gamma[name] - number(command[4])
-                            gamma[command[3]] = gamma[command[3]] + number(command(4))
+                            gamma[name] = gamma[name] - tonumber(command[4])
+                            gamma[command[3]] = gamma[command[3]] + tonumber(command(4))
                             gsave()
                         end
                     elseif command[2] == "balance" then
@@ -471,12 +471,12 @@ local function main()--the main function it's only a function because I needed t
                     elseif command[2] == "mkcoins" then
                         if #command ~= 3 then
                             tell(name,badsyntax)
-                        elseif (not number(command[3])) or number(command[3]) < 0 then
+                        elseif (not tonumber(command[3])) or tonumber(command[3]) < 0 then
                             tell(name,"&6Invalid number amount")
-                        elseif number(command[3]) > gamma[name] then
+                        elseif tonumber(command[3]) > gamma[name] then
                             tell(name,"&6Insufficient funds")
                         else
-                            local left = number(command[3])
+                            local left = tonumber(command[3])
                             while left >= 30 do
                                 local biggest
                                 for k,v in pairs(gcoins) do
