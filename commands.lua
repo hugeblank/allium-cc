@@ -7,6 +7,7 @@ local let --something for hangman can't remember rn
 local word --hangman word
 local incorrect = {} --incorrect letters in hangman
 local badsyntax = "&6Invalid Syntax!" --Canned answer to give when messing up syntax of a command
+local gcoins = {[0]=30,[1]=40,[64]=30,[65]=30,[66]=40,[67]=40,[68]=40,[69]=60,[70]=80,[71]=100,[72]=150,[96]=40,[97]=40,[98]=40,[99]=30,[100]=45,[101]=100,[102]=100,[103]=150} --list of all the coins with their rf values divided by 1000, used for conversions to gamma
 local gcommands = { --table with gamma (currency) commands
 "&cg send <recipient> <amount>&6: &rSends money to recipient",
 "&cg balance <player>&6: &rChecks balance",
@@ -30,18 +31,18 @@ local function gadd(name) --Adds gamma account information for given user if it 
         gamma[name] = gamma.default
     end
 end
-local _, plrs = commands.testfor("@a")
-for i = 1,#plrs do
-    gadd(plrs[i])
-end
-gsave()
 if (fs.exists("gamma")) then
     local f = fs.open("gamma","r")
     gamma = textutils.unserialize(f.readAll())
     f.close()
 else
-    gamma = {["default"]=1000}
+    gamma = {["default"]=100}
 end
+local _, plrs = commands.testfor("@a")
+for i = 1,#plrs do
+    gadd(plrs[i])
+end
+gsave()
 repeat --puts the words into the thingy
     local u = site.readLine()
     if u then
@@ -465,6 +466,25 @@ local function main()--the main function it's only a function because I needed t
                                 p = name
                             end
                             tell(name,"Balance: "..gamma[p])
+                        end
+                    elseif command[2] == "mkcoins" then
+                        if #command ~= 3 then
+                            tell(name,badsyntax)
+                        elseif (not number(command[3])) or number(command[3]) < 0 then
+                            tell(name,"&6Invalid number amount")
+                        elseif number(command[3]) > gamma[name] then
+                            tell(name,"&6Insufficient funds")
+                        else
+                            local left = number(command[3])
+                            while left >= 30 do
+                                local biggest
+                                for k,v in pairs(gcoins) do
+                                    if v < left and ((not gcoins[biggest]) or v > gcoins[biggest]) then
+                                        biggest = k
+                                    end
+                                end
+                                --still need to finish this, just don't run this cmd yet
+                            end
                         end
                     else
                         tell(name,"&6Invalid command")
