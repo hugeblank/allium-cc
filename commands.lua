@@ -465,6 +465,7 @@ local function main()--the main function it's only a function because I needed t
                             else
                                 p = name
                             end
+                            tell(name,"'"..command[3].."'") --just for testing
                             tell(name,"Balance: "..gamma[p])
                         end
                     elseif command[2] == "mkcoins" then
