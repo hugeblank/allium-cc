@@ -128,6 +128,7 @@ local cList = { --table with avail commands
 "&c&g!afk&6: &rToggles AFK status and puts you in a safe place",
 "&c&g!motd&6: &rshows message of the day",
 "&c&g!github&6: &rshows how to edit me!",
+"&c&g!g&6: &rlists gamma commands"
 }
 local tpList = {} --stores all the tp requests
 local function login() --I wasn't sure of a better way to detect login so I made this that checks a list and refreshes every second or so
@@ -451,6 +452,13 @@ local function main()--the main function it's only a function because I needed t
                             gamma[command[3]] = gamma[command[3]] + number(command(4))
                             gsave()
                         end
+                    elseif command[2] == "balance" then
+                        if not (#command == 2 or #command = 3) then
+                            tell(name,badsyntax)
+                        end
+                        
+                    else
+                        tell(name,"&6Invalid command")
                     end
                 end
             else
