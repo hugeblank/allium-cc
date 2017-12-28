@@ -6,9 +6,12 @@ local game = false --if true a game of hangman is going
 local let --something for hangman can't remember rn
 local word --hangman word
 local incorrect = {} --incorrect letters in hangman
+local badsyntax = "&6Invalid Syntax!" --Canned answer to give when messing up syntax of a command
 local gcommands = { --table with gamma (currency) commands
 "&cg send <recipient> <amount>&6: &rSends money to recipient",
-"&cg balance&6: &rChecks balance"
+"&cg balance <player>&6: &rChecks balance",
+"&cg mkcoins <amount>&6: &rMakes TE coins from balance",
+"&cg usecoins&6: &rConverts coins in inventory to balance"
 }
 local gacommands = { --table with admin-only gamma commands
 "&cg setdefault <amount>&6: &rSets amount of money new users start with",
@@ -16,6 +19,29 @@ local gacommands = { --table with admin-only gamma commands
 "&cg resetAll&6: &rResets all balances to the default or amount specified",
 "&cg money <player> <amount>&6: &rAdds money to player's account or removes if negative"
 }
+local gamma --Table containing account information
+local function gsave() --Saves state of gamma table to file
+    local f = fs.open("gamma","w")
+    f.write(textutils.serialize(gamma))
+    f.close()
+end
+local function gadd(name) --Adds gamma account information for given user if it doesn't exist
+    if not gamma[name] then
+        gamma[name] = gamma.default
+    end
+end
+local _, plrs = commands.testfor("@a")
+for i = 1,#plrs do
+    gadd(plrs[i])
+end
+gsave()
+if (fs.exists("gamma")) then
+    local f = fs.open("gamma","r")
+    gamma = textutils.unserialize(f.readAll())
+    f.close()
+else
+    gamma = {["default"]=1000}
+end
 repeat --puts the words into the thingy
     local u = site.readLine()
     if u then
@@ -408,10 +434,28 @@ local function main()--the main function it's only a function because I needed t
                     if (isAdmin(name)) then
                         tell(name,gacommands)
                     end
+                else
+                    if command[2] == "send" then
+                        if #command ~= 4 then
+                            tell(name,badsyntax)
+                        elseif not gamma[command[3]] then
+                            tell(name,"&6Player is not in the database")
+                        elseif not number(command[4]) then
+                            tell(name,"&6Invalid number amount")
+                        elseif number(command[4]) < 0 then
+                            tell(name,"&6Amount cannot be negative")
+                        elseif number(command[4]) > gamma[name] then
+                            tell(name,"&6Insufficient funds")
+                        else
+                            gamma[name] = gamma[name] - number(command[4])
+                            gamma[command[3]] = gamma[command[3]] + number(command(4))
+                            gsave()
+                        end
+                    end
                 end
             else
                 if name ~= "join" then --if command unknown it tells them
-                    commands.tellraw(name, color.format("&cUnkown Command! Use &6!help &cfor a list of commands."))
+                    commands.tellraw(name, color.format("&cUnknown Command! Use &6!help &cfor a list of commands."))
                     print(name, command[1])
                 end
             end
