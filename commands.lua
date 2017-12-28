@@ -484,8 +484,15 @@ local function main()--the main function it's only a function because I needed t
                                         biggest = k
                                     end
                                 end
-                                --still need to finish this, just don't run this cmd yet
+                                if biggest then
+                                    commands.give(name,"thermalfoundation:coin",biggest)
+                                    left = left - gcoins[biggest]
+                                    gamma[name] = gamma[name] - gcoins[biggest]
+                                else
+                                    break
+                                end
                             end
+                            gsave()
                         end
                     else
                         tell(name,"&6Invalid command")
