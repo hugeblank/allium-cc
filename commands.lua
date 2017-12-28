@@ -40,7 +40,7 @@ else
 end
 local _, plrs = commands.testfor("@a")
 for i = 1,#plrs do
-    gadd(plrs[i])
+    gadd(string.sub(plrs[i],7))
 end
 gsave()
 repeat --puts the words into the thingy
