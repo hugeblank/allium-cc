@@ -6,6 +6,16 @@ local game = false --if true a game of hangman is going
 local let --something for hangman can't remember rn
 local word --hangman word
 local incorrect = {} --incorrect letters in hangman
+local gcommands = { --table with gamma (currency) commands
+"&cg send <recipient> <amount>&6: &rSends money to recipient",
+"&cg balance&6: &rChecks balance"
+}
+local gacommands = { --table with admin-only gamma commands
+"&cg setdefault <amount>&6: &rSets amount of money new users start with",
+"&cg reset <player> [amount]&6: &rResets player to the default balance or amount specified",
+"&cg resetAll&6: &rResets all balances to the default or amount specified",
+"&cg money <player> <amount>&6: &rAdds money to player's account or removes if negative"
+}
 repeat --puts the words into the thingy
     local u = site.readLine()
     if u then
@@ -392,6 +402,13 @@ local function main()--the main function it's only a function because I needed t
                 print(name, "shrugged")
             elseif command[1] == "github" then --links to git
                 tell("@a", "Make changes to "..mName.."&r at https://github.com/roger109z/BetaBot/")
+            elseif command[1] == "g" or command[1] == "gamma" then --gamma is the name I'm giving the currency, similar to my old https one
+                if #command == 1 then
+                    tell(name,gcommands)
+                    if (isAdmin(name)) then
+                        tell(name,gacommands)
+                    end
+                end
             else
                 if name ~= "join" then --if command unknown it tells them
                     commands.tellraw(name, color.format("&cUnkown Command! Use &6!help &cfor a list of commands."))
