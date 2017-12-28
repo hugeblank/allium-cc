@@ -1,12 +1,12 @@
-local nsa = peripheral.wrap("bottom")
+local nsa = peripheral.wrap("bottom") --chatbox
 local wordList = "https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-usa.txt"
 local site = http.get(wordList)
-local words = {}
-local game = false
-local let
-local word
-local incorrect = {}
-repeat
+local words = {} --list of hangman words
+local game = false --if true a game of hangman is going
+local let --something for hangman can't remember rn
+local word --hangman word
+local incorrect = {} --incorrect letters in hangman
+repeat --puts the words into the thingy
     local u = site.readLine()
     if u then
         if u:len() > 5 then
@@ -15,16 +15,15 @@ repeat
     end
 until u == nil
 
-os.loadAPI("color")
-local admins = {
+os.loadAPI("color") --loads the api for minecraft color formatting
+local admins = { --table with all server admins(DO NOT TOUCH OR YOUR PR WILL NOT BE ACCEPTED!)
 "dannysmc95",
 "roger109z",
 "hugeblank",
 "cyborgtwins",
---"LDDestroyrr",
 "EldidiStroyrr",
 }
-local function isAdmin(name)
+local function isAdmin(name) --checks if admin(DO NOT TOUCH OR YOUR PR WILL NOT BE ACCEPTED!)
     for _, v in pairs(admins) do
         if v == name then
             return true
@@ -32,9 +31,9 @@ local function isAdmin(name)
     end
     return false
 end
-local mName = "</&cBeta&r>&6Bot"
+local mName = "</&cBeta&r>&6Bot" --name of the bot to be used with chat
 commands.tellraw("@a", color.format("Starting "..mName))
-local tell = function(name, message)
+local tell = function(name, message)--tell is used to tell a player or group of players a formatted message Usage: [NAME/GROUP] [MESSAGE]
     local m
     if type(message) == "string" then
         m = message
@@ -49,7 +48,7 @@ local tell = function(name, message)
     end
     return textutils.serialise(test)
 end
-local function AFKLock()
+local function AFKLock()--huge made this so it's pretty shitty imo but I think it keeps afk players in place but idk man
     while true do
         local file = fs.open("persistence.json", "r")
         local isAFK
@@ -68,7 +67,7 @@ local function AFKLock()
         sleep()
     end
 end
-local rules = {
+local rules = { --table with the rules
 "&6*&rUse Common Sense",
 "&6*&rNo Griefing Claimed Land", 
 "&6*&rYou are Not a Super Hacker, Don’t Hack", 
@@ -78,7 +77,7 @@ local rules = {
 "&6*&rRespect Admins (people with pink (Or green) names)",
 "&6*&rOh and Have Fun!"
 }
-local cList = {
+local cList = { --table with avail commands
 "&c&g!ping&6: &rPong!",
 "&c&g!help&6: &rShows this message",
 "&c&g!tps&6: &rShows the overall tps of the server",
@@ -94,8 +93,8 @@ local cList = {
 "&c&g!motd&6: &rshows message of the day",
 "&c&g!github&6: &rshows how to edit me!",
 }
-local tpList = {}
-local function login()
+local tpList = {} --stores all the tp requests
+local function login() --I wasn't sure of a better way to detect login so I made this that checks a list and refreshes every second or so
     local players = {}
     while true do
         local _, plrs = commands.testfor("@a")
@@ -114,30 +113,30 @@ local function login()
         sleep(1)
     end
 end
-local function main()
+local function main()--the main function it's only a function because I needed to parallel it
     while true do
-        local _, _, name, message = os.pullEvent("chat_message")
+        local _, _, name, message = os.pullEvent("chat_message") --pulls chat messages
         if string.find(message, "!") == 1 or name == "join" then
-            if name ~= "join" then
+            if name ~= "join" then --ok so the events from the login one get sent as the user "join" and that just helps me send the motd
                 message = string.sub(message, 2)
             end
-            local command = {}
-            local file = fs.open("motd", "r")
+            local command = {} --seperates the sub commands
+            local file = fs.open("motd", "r")--gets motd from file
                 local motd
             if file then
                 motd = file.readAll()
                 file.close()
             else
-                motd = "&2Welcome to the server!\n&2type &c&g!help&2 for commands BetaBot provides."
+                motd = "&2Welcome to the server!\n&2type &c&g!help&2 for commands BetaBot provides."--default motd again it was huge that did this
                 writer = fs.open("motd", "w")
                 writer.write(motd)
                 writer.close()
             end
             if name == "join" then
-                tell(message, {motd})
+                tell(message, {motd})--tells player motd
                 --print(message)
             end
-            for k in string.gmatch(message, "%S+") do
+            for k in string.gmatch(message, "%S+") do--uhhhhhhhh fuck idk what this does
                 command[#command+1] = k
             end
             local _, plrs = commands.testfor("@a")
@@ -150,24 +149,24 @@ local function main()
                     tpList[k] = nil
                 end
             end
-            if command[1] == "ping" then
+            if command[1] == "ping" then --command that replies pong(duh)
                 tell(name, "Pong!")
                 print("Ponged", name)
-            elseif command[1] == "tps" then
+            elseif command[1] == "tps" then --replies the server tps
                 local _, tps = commands.forge("tps")
                 tell("@a", tps[#tps])
                 print("Told "..name.." the tps")
-            elseif command[1] == "help" then
+            elseif command[1] == "help" then --sends help message
                 tell(name, cList)
                 print("Sent help to", name)
-            elseif command[1] == "rtp" then
+            elseif command[1] == "rtp" then --random teleport
                 commands.spreadplayers(20000, 20000, 1000, 20000, false, name)
                 tell(name, "&6Teleported to a random location!")
                 print("Sent a player away: ", name)
-            elseif command[1] == "rules" then
+            elseif command[1] == "rules" then --replies the rules
                 tell(name, rules)
                 print("Told "..name.." the laws of the land.")
-            elseif command[1] == "tpa" or command[1] == "tpahere" then
+            elseif command[1] == "tpa" or command[1] == "tpahere" then --this is where things get slightly complex but this is the tpa and tpahere command code
                 if type(players[command[2]]) == "nil" then
                     command[2] = nil
                 end
@@ -189,7 +188,7 @@ local function main()
                     end
                     tpList[command[2]][name] = {name, tphere}
                 end
-            elseif command[1] == "tpaccept" then
+            elseif command[1] == "tpaccept" then --tpaccept uses a different thing altogether
                 if tpList[name] ~= nil then
                     if tpList[name][command[2]] ~= nil then
                         local thing = tpList[name][command[2]]
@@ -210,13 +209,13 @@ local function main()
                 else
                     tell(name, "&cNo Teleport requests at this time")
                 end
-            elseif command[1] == "ragequit" then
+            elseif command[1] == "ragequit" then --lameified version of the ragequit command because I can't kick players with a command computer ;-;
                 commands.playsound("minecraft:entity.tnt.primed", "block")
                 commands.kill(name)
                 print("killed "..name)
-            elseif command[1] == "players" then
+            elseif command[1] == "players" then --replies list of players
                 tell(name, players)
-            elseif command[1] == "motd" then
+            elseif command[1] == "motd" then --motd
                 if command[2] ~= "set" then
                     tell(name, {motd})
                 elseif command[2] == "set" and isAdmin(name) == true and command[3] ~= nil then
@@ -228,7 +227,7 @@ local function main()
                 else
                     tell(name, "&cFailed!"..tostring(isAdmin(name)))
                 end
-            elseif command[1] == "hangman" then
+            elseif command[1] == "hangman" then --hangman
                 if game ~= true then
                     if command[2] == "start" then
                         game = true
@@ -318,7 +317,7 @@ local function main()
                         end
                     end
                 end
-            elseif command[1] == "lua" or command[1] == "math" then
+            elseif command[1] == "lua" or command[1] == "math" then --the math thing(huge did this so it's shitty as well)
                 local eqn = ""
                 local hf = true
                 for i = 2, #command do
@@ -343,7 +342,7 @@ local function main()
                 else
                     tell(name, "&cOkay you can stop trying to test the bounds now.")
                 end
-            elseif command[1] == "afk" then
+            elseif command[1] == "afk" then --afk command that huge did shittily
                 local file = fs.open("isAFK.txt", "r")
                 local isAFK = textutils.unserialize(file.readAll())
                 file.close()
@@ -383,18 +382,18 @@ local function main()
                         end
                     end
                 end
-            elseif command[1] == "test" then
+            elseif command[1] == "test" then --shows an output of all color codes for testing my color thingy
                 print(textutils.serialise({commands.tellraw(name, color.format("&11&22&33&44&55&66&77&88&99&00&aa&bb&cc&dd&ee&ff\\n &rnewline!"))}))
-            elseif command[1] == "stop" and isAdmin(name) == true then
+            elseif command[1] == "stop" and isAdmin(name) == true then --stops the bot
                 tell("@a", "&6Stopping...")
                 print("Stopping...")
                 break
-            elseif command[1] == "shrug" then
+            elseif command[1] == "shrug" then --ftb uses ! for their replacements
                 print(name, "shrugged")
-            elseif command[1] == "github" then
+            elseif command[1] == "github" then --links to git
                 tell("@a", "Make changes to "..mName.."&r at https://github.com/roger109z/BetaBot/")
             else
-                if name ~= "join" then
+                if name ~= "join" then --if command unknown it tells them
                     commands.tellraw(name, color.format("&cUnkown Command! Use &6!help &cfor a list of commands."))
                     print(name, command[1])
                 end
@@ -402,4 +401,4 @@ local function main()
         end
     end
 end
-parallel.waitForAny(main, AFKLock, login)
+parallel.waitForAny(main, AFKLock, login) --do all the things :)
