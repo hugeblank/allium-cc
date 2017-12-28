@@ -454,7 +454,7 @@ local function main()--the main function it's only a function because I needed t
                             gsave()
                         end
                     elseif command[2] == "balance" then
-                        if not (#command == 2 or #command = 3) then
+                        if not (#command == 2 or #command == 3) then
                             tell(name,badsyntax)
                         elseif #command == 3 and (not gamma[command[3]]) then
                             tell(name,"&6Player is not in the database")
