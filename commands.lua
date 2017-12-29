@@ -519,6 +519,12 @@ local function main()--the main function it's only a function because I needed t
                         end
                         tell(name,"&6"..tostring(added).."g transferred")
                         gsave()
+                    elseif isAdmin(name)
+                        if command[2] == "setdefault" then
+                            --add stuff here
+                        else
+                            tell(name,"&6Invalid command")
+                        end
                     else
                         tell(name,"&6Invalid command")
                     end
