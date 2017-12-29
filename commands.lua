@@ -548,7 +548,7 @@ local function main()--the main function it's only a function because I needed t
                                 tell(name,"&6"..command[3].."'s account set to "..tostring(m).."g")
                                 gsave()
                             end
-                        elseif command[2] == "resetAll"
+                        elseif command[2] == "resetAll" then
                             if #command ~= 2 and #command ~= 3 then
                                 tell(name,badsyntax)
                             elseif command[3] and ((not tonumber(command[3])) or tonumber(command[3]) < 0 or math.floor(tonumber(command[4])) ~= tonumber(command[4])) then
