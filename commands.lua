@@ -496,6 +496,7 @@ local function main()--the main function it's only a function because I needed t
                             gsave()
                         end
                     elseif command[2] == "usecoins" then
+                        local added = 0
                         for k,v in pairs(gcoins) do
                             local a,b = commands.clear(name,"thermalfoundation:coin",k)
                             local num
@@ -507,8 +508,10 @@ local function main()--the main function it's only a function because I needed t
                                     end
                                 end
                                 gamma[name] = gamma[name] + num*v
+                                added = added + num*v
                             end
                         end
+                        tell(name,"&6"..tostring(added).."g transferred")
                         gsave()
                     else
                         tell(name,"&6Invalid command")
