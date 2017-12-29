@@ -521,7 +521,64 @@ local function main()--the main function it's only a function because I needed t
                         gsave()
                     elseif isAdmin(name)
                         if command[2] == "setdefault" then
-                            --add stuff here
+                            if #command ~= 3 then
+                                tell(name,badsyntax)
+                            elseif (not tonumber(command[3])) or tonumber(command[3]) < 0 then
+                                tell(name,"&6Invalid number amount")
+                            else
+                                gamma.default = command[3]
+                                tell(name,"&6Default balance set to "..command[3])
+                                gsave()
+                            end
+                        elseif command[2] == "reset" then
+                            if #command ~= 3 and #command ~= 4 then
+                                tell(name,badsyntax)
+                            elseif not gamma[command[3]] then
+                                tell(name,"&6Name is not in database")
+                            elseif command[4] and ((not tonumber(command[4])) or tonumber(command[4]) > 0 or math.floor(tonumber(command[4])) ~= tonumber(command[4])) then
+                                tell(name,"&6Invalid number amount")
+                            else
+                                local m
+                                if command[4] then
+                                    m = tonumber(m)
+                                else
+                                    m = gamma.default
+                                end
+                                gamma[command[3]] = m
+                                tell(name,"&6"..command[3].."'s account set to "..tostring(m)..g")
+                                gsave()
+                            end
+                        elseif command[2] == "resetAll"
+                            if #command ~= 2 and #command ~= 3 then
+                                tell(name,badsyntax)
+                            elseif command[3] and ((not tonumber(command[3])) or tonumber(command[3]) < 0 or math.floor(tonumber(command[4])) ~= tonumber(command[4])) then
+                                tell(name,"&6Invalid number amount")
+                            else
+                                local m
+                                if command[3] then
+                                    m = tonumber(m)
+                                else
+                                    m = gamma.default
+                                end
+                                for k,v in pairs(gamma) do
+                                    if k ~= "default" then
+                                        gamma[k] = m
+                                    end
+                                end
+                                tell(name,"&6All players reset to "..tostring(m).."g")
+                                gsave()
+                            end
+                        elseif command[2] == "money" then
+                            if #command ~= 4 then
+                                tell(name,badsyntax) 
+                            elseif not gamma[command[3]] then
+                                tell(name,"&6Name is not in database") 
+                            elseif (not tonumber(command[4])) or math.floor(tonumber(command[4])) ~= tonumber(command[4]) then
+                                tell(name,"&6Invalid number amount") 
+                            else
+                                gamma[command[3]] = gamma[command[3]] + tonumber(command[4])
+                                tell(name,"&6"..command[4].."g added to "..command[3].."'s account")
+                            end
                         else
                             tell(name,"&6Invalid command")
                         end
