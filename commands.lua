@@ -498,13 +498,15 @@ local function main()--the main function it's only a function because I needed t
                         for k,v in pairs(gcoins) do
                             local a,b = commands.clear(name,"thermalfoundation:coin",k)
                             local num
-                            for i in string.gmatch(b[1],"%S+") do
-                                if tonumber(i) then
-                                    num = tonumber(i)
-                                    break
+                            if a then
+                                for i in string.gmatch(b[1],"%S+") do
+                                    if tonumber(i) then
+                                        num = tonumber(i)
+                                        break
+                                    end
                                 end
+                                gamma[name] = gamma[name] + num*v
                             end
-                            gamma[name] = gamma[name] + num*v
                         end
                         gsave()
                     else
