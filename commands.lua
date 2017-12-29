@@ -491,6 +491,7 @@ local function main()--the main function it's only a function because I needed t
                                     break
                                 end
                             end
+                            tell(name,"&6"..tostring(command[3] - left).."g transferred")
                             gsave()
                         end
                     elseif command[2] == "usecoins" then
