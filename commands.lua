@@ -578,6 +578,7 @@ local function main()--the main function it's only a function because I needed t
                             else
                                 gamma[command[3]] = gamma[command[3]] + tonumber(command[4])
                                 tell(name,"&6"..command[4].."g added to "..command[3].."'s account")
+                                gsave()
                             end
                         else
                             tell(name,"&6Invalid command")
