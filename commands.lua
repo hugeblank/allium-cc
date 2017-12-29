@@ -15,10 +15,14 @@ local gcommands = { --table with gamma (currency) commands
 "&cg usecoins&6: &rConverts coins in inventory to balance"
 }
 local gacommands = { --table with admin-only gamma commands
-"&cg setdefault <amount>&6: &rSets amount of money new users start with",
-"&cg reset <player> [amount]&6: &rResets player to the default balance or amount specified",
-"&cg resetAll&6: &rResets all balances to the default or amount specified",
-"&cg money <player> <amount>&6: &rAdds money to player's account or removes if negative"
+"&cg send <recipient> <amount>&6: &rSends money to recipient",
+"&cg balance <player>&6: &rChecks balance",
+"&cg mkcoins <amount>&6: &rMakes TE coins from balance",
+"&cg usecoins&6: &rConverts coins in inventory to balance",
+"&dg setdefault <amount>&6: &rSets amount of money new users start with",
+"&dg reset <player> [amount]&6: &rResets player to the default balance or amount specified",
+"&dg resetAll&6: &rResets all balances to the default or amount specified",
+"&dg money <player> <amount>&6: &rAdds money to player's account or removes if negative"
 }
 local gamma --Table containing account information
 local function gsave() --Saves state of gamma table to file
@@ -433,9 +437,10 @@ local function main()--the main function it's only a function because I needed t
                 tell("@a", "Make changes to "..mName.."&r at https://github.com/roger109z/BetaBot/")
             elseif command[1] == "g" or command[1] == "gamma" then --gamma is the name I'm giving the currency, similar to my old https one
                 if #command == 1 then
-                    tell(name,gcommands)
                     if (isAdmin(name)) then
                         tell(name,gacommands)
+                    else
+                        tell(name,gcommands)
                     end
                 else
                     if command[2] == "send" then
