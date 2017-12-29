@@ -62,8 +62,7 @@ local admins = { --table with all server admins(DO NOT TOUCH OR YOUR PR WILL NOT
 "roger109z",
 "hugeblank",
 "cyborgtwins",
-"EldidiStroyrr",
-"TheDacinator", --JUST FOR TESTING, I will remove before making a PR unless I forget
+"EldidiStroyrr"
 }
 local function isAdmin(name) --checks if admin(DO NOT TOUCH OR YOUR PR WILL NOT BE ACCEPTED!)
     for _, v in pairs(admins) do
