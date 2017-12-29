@@ -526,7 +526,7 @@ local function main()--the main function it's only a function because I needed t
                             elseif (not tonumber(command[3])) or tonumber(command[3]) < 0 then
                                 tell(name,"&6Invalid number amount")
                             else
-                                gamma.default = command[3]
+                                gamma.default = tonumber(command[3])
                                 tell(name,"&6Default balance set to "..command[3])
                                 gsave()
                             end
