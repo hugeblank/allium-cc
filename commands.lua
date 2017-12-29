@@ -9,12 +9,14 @@ local incorrect = {} --incorrect letters in hangman
 local badsyntax = "&6Invalid Syntax!" --Canned answer to give when messing up syntax of a command
 local gcoins = {[0]=30,[1]=40,[64]=30,[65]=30,[66]=40,[67]=40,[68]=40,[69]=60,[70]=80,[71]=100,[72]=150,[96]=40,[97]=40,[98]=40,[99]=30,[100]=45,[101]=100,[102]=100,[103]=150} --list of all the coins with their rf values divided by 1000, used for conversions to gamma
 local gcommands = { --table with gamma (currency) commands
+"&cg login&6: &rMay be used every 24 hours to gain 10 gamma.",
 "&cg send <recipient> <amount>&6: &rSends money to recipient",
 "&cg balance <player>&6: &rChecks balance",
 "&cg mkcoins <amount>&6: &rMakes TE coins from balance",
 "&cg usecoins&6: &rConverts coins in inventory to balance"
 }
 local gacommands = { --table with admin-only gamma commands
+"&cg login&6: &rMay be used every 24 hours to gain 10 gamma.",
 "&cg send <recipient> <amount>&6: &rSends money to recipient",
 "&cg balance <player>&6: &rChecks balance",
 "&cg mkcoins <amount>&6: &rMakes TE coins from balance",
@@ -33,6 +35,7 @@ end
 local function gadd(name) --Adds gamma account information for given user if it doesn't exist
     if not gamma[name] then
         gamma[name] = gamma.default
+        gamma.lastLogins[name] = 0 --Makes sure people who login for the first time get to use !g login
     end
 end
 if (fs.exists("gamma")) then
@@ -40,7 +43,7 @@ if (fs.exists("gamma")) then
     gamma = textutils.unserialize(f.readAll())
     f.close()
 else
-    gamma = {["default"]=100}
+    gamma = {["default"]=100,["lastLogins"]={}}
 end
 local _, plrs = commands.testfor("@a")
 for i = 1,#plrs do
@@ -518,6 +521,21 @@ local function main()--the main function it's only a function because I needed t
                         end
                         tell(name,"&6"..tostring(added).."g transferred")
                         gsave()
+                    elseif command[2] == "login" then
+                        if os.epoch("utc") >= gamma.lastLogins[name] + 86400000 then
+                            gamma.lastLogins[name] = os.epoch("utc")
+                            gamma[name] = gamma[name] + 10
+                            tell(name,"&610g received")
+                            gsave()
+                        else
+                            local t = (gamma.lastLogins[name] + 86400000) - os.epoch("utc")
+                            local h = math.floor(t/3600000)
+                            t = t - h*3600000
+                            local m = math.floor(t/60000)
+                            t = t - m*60000
+                            local s = math.floor(t/1000)
+                            tell(name,"&6"..tostring(h).." hours, "..tostring(m).." minutes, and "..tostring(s).." seconds remaining")
+                        end
                     elseif isAdmin(name) then
                         if command[2] == "setdefault" then
                             if #command ~= 3 then
