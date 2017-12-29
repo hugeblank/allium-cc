@@ -494,6 +494,19 @@ local function main()--the main function it's only a function because I needed t
                             end
                             gsave()
                         end
+                    elseif command[2] == "usecoins" then
+                        for k,v in pairs(gcoins) do
+                            local a,b = commands.clear(name,"thermalfoundation:coin",k)
+                            local num
+                            for i in string.gmatch(b[1],"%S+") do
+                                if tonumber(i) then
+                                    num = i
+                                    break
+                                end
+                            end
+                            gamma[name] = gamma[name] + num*v
+                        end
+                        gsave()
                     else
                         tell(name,"&6Invalid command")
                     end
