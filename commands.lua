@@ -15,10 +15,14 @@ local gcommands = { --table with gamma (currency) commands
 "&cg usecoins&6: &rConverts coins in inventory to balance"
 }
 local gacommands = { --table with admin-only gamma commands
-"&cg setdefault <amount>&6: &rSets amount of money new users start with",
-"&cg reset <player> [amount]&6: &rResets player to the default balance or amount specified",
-"&cg resetAll&6: &rResets all balances to the default or amount specified",
-"&cg money <player> <amount>&6: &rAdds money to player's account or removes if negative"
+"&cg send <recipient> <amount>&6: &rSends money to recipient",
+"&cg balance <player>&6: &rChecks balance",
+"&cg mkcoins <amount>&6: &rMakes TE coins from balance",
+"&cg usecoins&6: &rConverts coins in inventory to balance",
+"&dg setdefault <amount>&6: &rSets amount of money new users start with",
+"&dg reset <player> [amount]&6: &rResets player to the default balance or amount specified",
+"&dg resetAll&6: &rResets all balances to the default or amount specified",
+"&dg money <player> <amount>&6: &rAdds money to player's account or removes if negative"
 }
 local gamma --Table containing account information
 local function gsave() --Saves state of gamma table to file
@@ -40,7 +44,7 @@ else
 end
 local _, plrs = commands.testfor("@a")
 for i = 1,#plrs do
-    gadd(plrs[i])
+    gadd(string.sub(plrs[i],7))
 end
 gsave()
 repeat --puts the words into the thingy
@@ -59,6 +63,7 @@ local admins = { --table with all server admins(DO NOT TOUCH OR YOUR PR WILL NOT
 "hugeblank",
 "cyborgtwins",
 "EldidiStroyrr",
+"TheDacinator", --JUST FOR TESTING, I will remove before making a PR unless I forget
 }
 local function isAdmin(name) --checks if admin(DO NOT TOUCH OR YOUR PR WILL NOT BE ACCEPTED!)
     for _, v in pairs(admins) do
@@ -432,9 +437,10 @@ local function main()--the main function it's only a function because I needed t
                 tell("@a", "Make changes to "..mName.."&r at https://github.com/roger109z/BetaBot/")
             elseif command[1] == "g" or command[1] == "gamma" then --gamma is the name I'm giving the currency, similar to my old https one
                 if #command == 1 then
-                    tell(name,gcommands)
                     if (isAdmin(name)) then
                         tell(name,gacommands)
+                    else
+                        tell(name,gcommands)
                     end
                 else
                     if command[2] == "send" then
@@ -442,15 +448,16 @@ local function main()--the main function it's only a function because I needed t
                             tell(name,badsyntax)
                         elseif not gamma[command[3]] then
                             tell(name,"&6Player is not in the database")
-                        elseif not number(command[4]) then
+                        elseif not tonumber(command[4]) or math.floor(tonumber(command[4])) ~= tonumber(command[4]) then
                             tell(name,"&6Invalid number amount")
-                        elseif number(command[4]) < 0 then
+                        elseif tonumber(command[4]) < 0 then
                             tell(name,"&6Amount cannot be negative")
-                        elseif number(command[4]) > gamma[name] then
+                        elseif tonumber(command[4]) > gamma[name] then
                             tell(name,"&6Insufficient funds")
                         else
-                            gamma[name] = gamma[name] - number(command[4])
-                            gamma[command[3]] = gamma[command[3]] + number(command(4))
+                            gamma[name] = gamma[name] - tonumber(command[4])
+                            gamma[command[3]] = gamma[command[3]] + tonumber(command[4])
+                            tell(name,"&6"..command[4].."g sent to "..command[3])
                             gsave()
                         end
                     elseif command[2] == "balance" then
@@ -470,21 +477,53 @@ local function main()--the main function it's only a function because I needed t
                     elseif command[2] == "mkcoins" then
                         if #command ~= 3 then
                             tell(name,badsyntax)
-                        elseif (not number(command[3])) or number(command[3]) < 0 then
+                        elseif (not tonumber(command[3])) or tonumber(command[3]) < 0 then
                             tell(name,"&6Invalid number amount")
-                        elseif number(command[3]) > gamma[name] then
+                        elseif tonumber(command[3]) > gamma[name] then
                             tell(name,"&6Insufficient funds")
                         else
-                            local left = number(command[3])
+                            local left = tonumber(command[3])
                             while left >= 30 do
                                 local biggest
                                 for k,v in pairs(gcoins) do
-                                    if v < left and ((not gcoins[biggest]) or v > gcoins[biggest]) then
+                                    if v <= left and ((not gcoins[biggest]) or v > gcoins[biggest]) then
                                         biggest = k
                                     end
                                 end
-                                --still need to finish this, just don't run this cmd yet
+                                if biggest then
+                                    commands.give(name,"thermalfoundation:coin",1,biggest)
+                                    left = left - gcoins[biggest]
+                                    gamma[name] = gamma[name] - gcoins[biggest]
+                                else
+                                    break
+                                end
                             end
+                            tell(name,"&6"..tostring(command[3] - left).."g transferred")
+                            gsave()
+                        end
+                    elseif command[2] == "usecoins" then
+                        local added = 0
+                        for k,v in pairs(gcoins) do
+                            local a,b = commands.clear(name,"thermalfoundation:coin",k)
+                            local num
+                            if a then
+                                for i in string.gmatch(b[1],"%S+") do
+                                    if tonumber(i) then
+                                        num = tonumber(i)
+                                        break
+                                    end
+                                end
+                                gamma[name] = gamma[name] + num*v
+                                added = added + num*v
+                            end
+                        end
+                        tell(name,"&6"..tostring(added).."g transferred")
+                        gsave()
+                    elseif isAdmin(name)
+                        if command[2] == "setdefault" then
+                            --add stuff here
+                        else
+                            tell(name,"&6Invalid command")
                         end
                     else
                         tell(name,"&6Invalid command")
