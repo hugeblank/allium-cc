@@ -450,7 +450,7 @@ local function main()--the main function it's only a function because I needed t
                             tell(name,"&6Insufficient funds")
                         else
                             gamma[name] = gamma[name] - tonumber(command[4])
-                            gamma[command[3]] = gamma[command[3]] + tonumber(command(4))
+                            gamma[command[3]] = gamma[command[3]] + tonumber(command[4])
                             gsave()
                         end
                     elseif command[2] == "balance" then
