@@ -519,7 +519,7 @@ local function main()--the main function it's only a function because I needed t
                         end
                         tell(name,"&6"..tostring(added).."g transferred")
                         gsave()
-                    elseif isAdmin(name)
+                    elseif isAdmin(name) then
                         if command[2] == "setdefault" then
                             if #command ~= 3 then
                                 tell(name,badsyntax)
