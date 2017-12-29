@@ -442,7 +442,7 @@ local function main()--the main function it's only a function because I needed t
                             tell(name,badsyntax)
                         elseif not gamma[command[3]] then
                             tell(name,"&6Player is not in the database")
-                        elseif not tonumber(command[4]) then
+                        elseif not tonumber(command[4]) or math.floor(tonumber(command[4])) ~= tonumber(command[4]) then
                             tell(name,"&6Invalid number amount")
                         elseif tonumber(command[4]) < 0 then
                             tell(name,"&6Amount cannot be negative")
@@ -451,6 +451,7 @@ local function main()--the main function it's only a function because I needed t
                         else
                             gamma[name] = gamma[name] - tonumber(command[4])
                             gamma[command[3]] = gamma[command[3]] + tonumber(command[4])
+                            tell(name,"&6"..command[4].."g sent to "..command[3])
                             gsave()
                         end
                     elseif command[2] == "balance" then
