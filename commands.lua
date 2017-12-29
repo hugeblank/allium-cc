@@ -484,7 +484,7 @@ local function main()--the main function it's only a function because I needed t
                                     end
                                 end
                                 if biggest then
-                                    commands.give(name,"thermalfoundation:coin",biggest)
+                                    commands.give(name,"thermalfoundation:coin",1,biggest)
                                     left = left - gcoins[biggest]
                                     gamma[name] = gamma[name] - gcoins[biggest]
                                 else
