@@ -545,7 +545,7 @@ local function main()--the main function it's only a function because I needed t
                                     m = gamma.default
                                 end
                                 gamma[command[3]] = m
-                                tell(name,"&6"..command[3].."'s account set to "..tostring(m)..g")
+                                tell(name,"&6"..command[3].."'s account set to "..tostring(m).."g")
                                 gsave()
                             end
                         elseif command[2] == "resetAll"
