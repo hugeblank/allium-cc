@@ -479,7 +479,7 @@ local function main()--the main function it's only a function because I needed t
                             while left >= 30 do
                                 local biggest
                                 for k,v in pairs(gcoins) do
-                                    if v < left and ((not gcoins[biggest]) or v > gcoins[biggest]) then
+                                    if v <= left and ((not gcoins[biggest]) or v > gcoins[biggest]) then
                                         biggest = k
                                     end
                                 end
