@@ -535,7 +535,7 @@ local function main()--the main function it's only a function because I needed t
                                 tell(name,badsyntax)
                             elseif not gamma[command[3]] then
                                 tell(name,"&6Name is not in database")
-                            elseif command[4] and ((not tonumber(command[4])) or tonumber(command[4]) > 0 or math.floor(tonumber(command[4])) ~= tonumber(command[4])) then
+                            elseif command[4] and ((not tonumber(command[4])) or tonumber(command[4]) < 0 or math.floor(tonumber(command[4])) ~= tonumber(command[4])) then
                                 tell(name,"&6Invalid number amount")
                             else
                                 local m
