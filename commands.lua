@@ -606,7 +606,7 @@ local function main()--the main function it's only a function because I needed t
                     end
                 end
             elseif isAdmin(name) and command[1] == "exec" then
-                table.remove(command[1])
+                table.remove(command, 1)
                 local string = ""
                 for k, v in pairs(command) do
                     string = string..v
