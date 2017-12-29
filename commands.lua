@@ -500,7 +500,7 @@ local function main()--the main function it's only a function because I needed t
                             local num
                             for i in string.gmatch(b[1],"%S+") do
                                 if tonumber(i) then
-                                    num = i
+                                    num = tonumber(i)
                                     break
                                 end
                             end
