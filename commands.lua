@@ -14,7 +14,10 @@ local gcommands = { --table with gamma (currency) commands
 "&cg send <recipient> <amount>&6: &rSends money to recipient",
 "&cg balance <player>&6: &rChecks balance",
 "&cg mkcoins <amount>&6: &rMakes TE coins from balance",
-"&cg usecoins&6: &rConverts coins in inventory to balance"
+"&cg usecoins&6: &rConverts coins in inventory to balance",
+"&cgshop list [name]&6: &rLists all shops or all shops belonging to a certain player",
+"&cgshop create <name> <x> <y> <z> [price]&6: &rCreates a shop using the coordinates as the location of the disk drive for the shop. A price can be added to restrict amounts that can be payed",
+"&cgshop remove <name>&6: &rRemoves chosen shop"
 }
 local gacommands = { --table with admin-only gamma commands
 "&cg login&6: &rMay be used every 24 hours to gain 10 gamma.",
@@ -22,6 +25,9 @@ local gacommands = { --table with admin-only gamma commands
 "&cg balance <player>&6: &rChecks balance",
 "&cg mkcoins <amount>&6: &rMakes TE coins from balance",
 "&cg usecoins&6: &rConverts coins in inventory to balance",
+"&cgshop list [name]&6: &rLists all shops or all shops belonging to a certain player",
+"&cgshop create <name> <x> <y> <z> [price]&6: &rCreates a shop using the coordinates as the location of the disk drive for the shop. A price can be added to restrict amounts that can be payed",
+"&cgshop remove <name>&6: &rRemoves chosen shop",
 "&dg setdefault <amount>&6: &rSets amount of money new users start with",
 "&dg reset <player> [amount]&6: &rResets player to the default balance or amount specified",
 "&dg resetAll&6: &rResets all balances to the default or amount specified",
@@ -32,6 +38,10 @@ local function gsave() --Saves state of gamma table to file
     local f = fs.open("gamma","w")
     f.write(textutils.serialize(gamma))
     f.close()
+end
+if not gamma.shops then
+    gamma.shops = {}
+    gsave()
 end
 local function gadd(name) --Adds gamma account information for given user if it doesn't exist
     if not gamma[name] then
@@ -137,7 +147,7 @@ local cList = { --table with avail commands
 "&c&g!afk&6: &rToggles AFK status and puts you in a safe place",
 "&c&g!motd&6: &rshows message of the day",
 "&c&g!github&6: &rshows how to edit me!",
-"&c&g!g&6: &rlists gamma commands"
+"&c&g!g&6: &rlists gamma commands",
 }
 local tpList = {} --stores all the tp requests
 local function login() --I wasn't sure of a better way to detect login so I made this that checks a list and refreshes every second or so
@@ -610,6 +620,50 @@ local function main()--the main function it's only a function because I needed t
                     else
                         tell(name,"&6Invalid command")
                     end
+                end
+            elseif command[1] = "gshop" then
+                if command[2] == "create" then
+                    if #command ~= 6 and #command ~= 7 then
+                        tell(name,badsyntax)
+                    elseif #command[3] > 16 then
+                        tell(name,"&6Max name length is 16")
+                    elseif (not tonumber(command[4])) or (not tonumber(command[5])) or (not tonumber(command[6])) or math.floor(tonumber(command[4])) ~= tonumber(command[4]) or math.floor(tonumber(command[5])) ~= tonumber(command[5])or math.floor(tonumber(command[6])) ~= tonumber(command[6]) then
+                        tell(name,"&6Invalid number coordinates")
+                    elseif command[7] and ((not tonumber(command[7])) or math.floor(tonumber(command[7])) ~= tonumber(command[7]) or tonumber(command[7] < 0)) then
+                        tell(name,"&6Invalid number price")
+                    elseif gamma.shops[command[3]] then
+                        tell(name,"&6"..command[3].." already exists")
+                    elseif commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6]))
+                    
+                    else
+                        gamma.shops[command[3]] = {}
+                        gamma.shops[command[3]].x = tonumber(command[4])
+                        gamma.shops[command[3]].y = tonumber(command[5])
+                        gamma.shops[command[3]].z = tonumber(command[6])
+                        gamma.shops[command[3]].price = tonumber(command[7])
+                        gamma.shops[command[3]].user = name
+                        tell(name,"&6Shop succesfully created")
+                        gsave()
+                    end
+                elseif command[2] == "list" then
+                    if #command ~= 2 and #command ~= 3 then
+                        tell(name,badsyntax)
+                    elseif not gamma[command[3]] then
+                        tell(name,"&6Player is not in database")
+                    else
+                        local out = {}
+                        for k,v in pairs(gamma.shops) do
+                            if (not command[3]) or command[3] == v.user then
+                                out[#out+1] = "&5"..k.."&6: owned by &5"..v.user
+                                if v.price then
+                                    out = out.."&6 for &5"..v.price.."g"
+                                end
+                            end
+                        end
+                        tell(name,out)
+                    end
+                else
+                    tell(name,"&6Invalid command")
                 end
             else
                 if name ~= "join" then --if command unknown it tells them
