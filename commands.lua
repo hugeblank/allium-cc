@@ -632,7 +632,7 @@ local function main()--the main function it's only a function because I needed t
                         tell(name,"&6Invalid number price")
                     elseif gamma.shops[command[3]] then
                         tell(name,"&6"..command[3].." already exists")
-                    elseif commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6])).name ~= "computercraft:peripheral" or commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6])).metadata ~= 0 then
+                    elseif commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6])).name ~= "computercraft:peripheral" or commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6])).metadata < 2 or commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6])).metadata > 5 then
                         tell(name,"&6No disk drive at location")
                     else
                         gamma.shops[command[3]] = {}
