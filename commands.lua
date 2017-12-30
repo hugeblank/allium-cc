@@ -653,11 +653,14 @@ local function main()--the main function it's only a function because I needed t
                         local out = {}
                         for k,v in pairs(gamma.shops) do
                             if (not command[3]) or command[3] == v.user then
-                                out[#out+1] = "&5"..k.."&6: owned by &5"..v.user
+                                out[#out+1] = "&5"..k.."&6 - owned by &5"..v.user
                                 if v.price then
                                     out = out.."&6 for &5"..v.price.."g"
                                 end
                             end
+                        end
+                        if #out = 0 then
+                            out = "&6No shops found"
                         end
                         tell(name,out)
                     end
