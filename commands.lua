@@ -628,7 +628,7 @@ local function main()--the main function it's only a function because I needed t
                         tell(name,"&6Max name length is 16")
                     elseif (not tonumber(command[4])) or (not tonumber(command[5])) or (not tonumber(command[6])) or math.floor(tonumber(command[4])) ~= tonumber(command[4]) or math.floor(tonumber(command[5])) ~= tonumber(command[5])or math.floor(tonumber(command[6])) ~= tonumber(command[6]) then
                         tell(name,"&6Invalid number coordinates")
-                    elseif command[7] and ((not tonumber(command[7])) or math.floor(tonumber(command[7])) ~= tonumber(command[7]) or tonumber(command[7] < 0)) then
+                    elseif command[7] and ((not tonumber(command[7])) or math.floor(tonumber(command[7])) ~= tonumber(command[7]) or tonumber(command[7]) < 0) then
                         tell(name,"&6Invalid number price")
                     elseif gamma.shops[command[3]] then
                         tell(name,"&6"..command[3].." already exists")
