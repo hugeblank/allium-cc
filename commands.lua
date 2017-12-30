@@ -634,7 +634,7 @@ local function main()--the main function it's only a function because I needed t
                     elseif gamma.shops[command[3]] then
                         tell(name,"&6"..command[3].." already exists")
                     elseif commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6])).name ~= "computercraft:peripheral" or commands.getBlockInfo(tonumber(command[4]),tonumber(command[5]),tonumber(command[6])).metadata ~= 0 then
-                        tell(name,"&6No disk drive at location"
+                        tell(name,"&6No disk drive at location")
                     else
                         gamma.shops[command[3]] = {}
                         gamma.shops[command[3]].x = tonumber(command[4])
