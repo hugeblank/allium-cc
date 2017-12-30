@@ -621,7 +621,7 @@ local function main()--the main function it's only a function because I needed t
                         tell(name,"&6Invalid command")
                     end
                 end
-            elseif command[1] = "gshop" then
+            elseif command[1] == "gshop" then
                 if command[2] == "create" then
                     if #command ~= 6 and #command ~= 7 then
                         tell(name,badsyntax)
