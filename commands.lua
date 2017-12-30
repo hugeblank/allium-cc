@@ -647,7 +647,7 @@ local function main()--the main function it's only a function because I needed t
                 elseif command[2] == "list" then
                     if #command ~= 2 and #command ~= 3 then
                         tell(name,badsyntax)
-                    elseif not gamma[command[3]] then
+                    elseif command[3] and (not gamma[command[3]]) then
                         tell(name,"&6Player is not in database")
                     else
                         local out = {}
