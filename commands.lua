@@ -39,10 +39,6 @@ local function gsave() --Saves state of gamma table to file
     f.write(textutils.serialize(gamma))
     f.close()
 end
-if not gamma.shops then
-    gamma.shops = {}
-    gsave()
-end
 local function gadd(name) --Adds gamma account information for given user if it doesn't exist
     if not gamma[name] then
         gamma[name] = gamma.default
@@ -59,6 +55,9 @@ end
 local _, plrs = commands.testfor("@a")
 for i = 1,#plrs do
     gadd(string.sub(plrs[i],7))
+end
+if not gamma.shops then
+    gamma.shops = {}
 end
 gsave()
 repeat --puts the words into the thingy
