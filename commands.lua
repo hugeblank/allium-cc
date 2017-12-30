@@ -7,6 +7,7 @@ local let --something for hangman can't remember rn
 local word --hangman word
 local incorrect = {} --incorrect letters in hangman
 local badsyntax = "&6Invalid Syntax!" --Canned answer to give when messing up syntax of a command
+local usecoins = false --Toggles whether coin conversions are allowed
 local gcoins = {[0]=30,[1]=40,[64]=30,[65]=30,[66]=40,[67]=40,[68]=40,[69]=60,[70]=80,[71]=100,[72]=150,[96]=40,[97]=40,[98]=40,[99]=30,[100]=45,[101]=100,[102]=100,[103]=150} --list of all the coins with their rf values divided by 1000, used for conversions to gamma
 local gcommands = { --table with gamma (currency) commands
 "&cg login&6: &rMay be used every 24 hours to gain 10 gamma.",
@@ -477,7 +478,9 @@ local function main()--the main function it's only a function because I needed t
                             tell(name,"Balance: "..gamma[p])
                         end
                     elseif command[2] == "mkcoins" then
-                        if #command ~= 3 then
+                        if not usecoins then
+                            tell(name,"&6Coin commands are disabled")
+                        elseif #command ~= 3 then
                             tell(name,badsyntax)
                         elseif (not tonumber(command[3])) or tonumber(command[3]) < 0 then
                             tell(name,"&6Invalid number amount")
@@ -504,23 +507,27 @@ local function main()--the main function it's only a function because I needed t
                             gsave()
                         end
                     elseif command[2] == "usecoins" then
-                        local added = 0
-                        for k,v in pairs(gcoins) do
-                            local a,b = commands.clear(name,"thermalfoundation:coin",k)
-                            local num
-                            if a then
-                                for i in string.gmatch(b[1],"%S+") do
-                                    if tonumber(i) then
-                                        num = tonumber(i)
-                                        break
+                        if not usecoins then
+                            tell(name,"&6Coin commands are disabled")
+                        else
+                            local added = 0
+                            for k,v in pairs(gcoins) do
+                                local a,b = commands.clear(name,"thermalfoundation:coin",k)
+                                local num
+                                if a then
+                                    for i in string.gmatch(b[1],"%S+") do
+                                        if tonumber(i) then
+                                            num = tonumber(i)
+                                            break
+                                        end
                                     end
+                                    gamma[name] = gamma[name] + num*v
+                                    added = added + num*v
                                 end
-                                gamma[name] = gamma[name] + num*v
-                                added = added + num*v
                             end
+                            tell(name,"&6"..tostring(added).."g transferred")
+                            gsave()
                         end
-                        tell(name,"&6"..tostring(added).."g transferred")
-                        gsave()
                     elseif command[2] == "login" then
                         if os.epoch("utc") >= gamma.lastLogins[name] + 86400000 then
                             gamma.lastLogins[name] = os.epoch("utc")
