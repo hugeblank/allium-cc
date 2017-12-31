@@ -659,7 +659,7 @@ local function main()--the main function it's only a function because I needed t
                                 end
                             end
                         end
-                        if #out = 0 then
+                        if #out == 0 then
                             out = "&6No shops found"
                         end
                         tell(name,out)
