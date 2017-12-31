@@ -15,9 +15,10 @@ local gcommands = { --table with gamma (currency) commands
 "&cg balance <player>&6: &rChecks balance",
 "&cg mkcoins <amount>&6: &rMakes TE coins from balance",
 "&cg usecoins&6: &rConverts coins in inventory to balance",
-"&cgshop list [name]&6: &rLists all shops or all shops belonging to a certain player",
+"&cgshop list [player]&6: &rLists all shops or all shops belonging to a certain player",
 "&cgshop create <name> <x> <y> <z> [price]&6: &rCreates a shop using the coordinates as the location of the disk drive for the shop. A price can be added to restrict amounts that can be payed",
-"&cgshop remove <name>&6: &rRemoves chosen shop"
+"&cgshop remove <name>&6: &rRemoves chosen shop",
+"&cgshop pay <shop> [amount]&6: &rPays money towards a shop. If shop has no specific price, one must be provided"
 }
 local gacommands = { --table with admin-only gamma commands
 "&cg login&6: &rMay be used every 24 hours to gain 10 gamma.",
@@ -28,6 +29,7 @@ local gacommands = { --table with admin-only gamma commands
 "&cgshop list [name]&6: &rLists all shops or all shops belonging to a certain player",
 "&cgshop create <name> <x> <y> <z> [price]&6: &rCreates a shop using the coordinates as the location of the disk drive for the shop. A price can be added to restrict amounts that can be payed",
 "&cgshop remove <name>&6: &rRemoves chosen shop",
+"&cgshop pay <shop> [amount]&6: &rPays money towards a shop. If shop has no specific price, one must be provided",
 "&dg setdefault <amount>&6: &rSets amount of money new users start with",
 "&dg reset <player> [amount]&6: &rResets player to the default balance or amount specified",
 "&dg resetAll&6: &rResets all balances to the default or amount specified",
@@ -655,7 +657,7 @@ local function main()--the main function it's only a function because I needed t
                             if (not command[3]) or command[3] == v.user then
                                 out[#out+1] = "&5"..k.."&6 - owned by &5"..v.user
                                 if v.price then
-                                    out = out.."&6 for &5"..v.price.."g"
+                                    out[#out] = out[#out].."&6 for &5"..v.price.."g"
                                 end
                             end
                         end
@@ -663,6 +665,56 @@ local function main()--the main function it's only a function because I needed t
                             out = "&6No shops found"
                         end
                         tell(name,out)
+                    end
+                elseif command[2] == "remove" then
+                    if #command ~= 3 then
+                        tell(name,badsyntax)
+                    elseif not gamma.shops[command[3]] then
+                        tell(name,"&6Shop does not exist")
+                    elseif gamma.shops[command[3]].user ~= name then
+                        tell(name,"&6You are not the owner of this shop")
+                    else
+                        gamma.shops[command[3]] = nil
+                        tell(name,"&5"..command[3].."&6 shop removed")
+                        gsave()
+                    end
+                elseif command[2] == "pay" then
+                    local rx,ry,yz = commands.getBlockPosition()
+                    if #command ~= 4 and #command ~= 3 then
+                        tell(name,badsyntax)
+                    elseif not gamma.shops[command[3]] then
+                        tell(name,"&6Shop does not exist")
+                    elseif command[4] and ((not tonumber(command[4])) or tonumber(command[4]) < 0 or math.floor(tonumber(command[4])) ~= math.floor(tonumber(command[4]))) then
+                        tell(name,"&6Invalid number price")
+                    elseif (not gamma.shops[command[3]].price) and command[4] and tonumber(command[4]) ~= gamma.shops[command[3]].price then
+                        tell(name,"&6Price does not match shop's required price")
+                    elseif (not command[4]) and gamma.shops[command[3]].price then
+                        tell(name,"&6Price must be specified for this shop")
+                    elseif not commands.clone(gamma.shops[command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,"~","~1","~") then
+                        tell(name,"&6Drive could not be accessed")
+                    elseif not fs.exists("disk") then
+                        tell(name,"&6Block does not contain a disk")
+                    else
+                        local data
+                        if fs.exists("disk/gshop") then
+                            local f = fs.open("disk/gshop","r")
+                            data = textutils.unserialize(f.readAll())
+                            f.close()
+                        else
+                            data = {}
+                        end
+                        local info = {}
+                        info.user = name
+                        if command[4] then
+                            info.amount = tonumber(command[4])
+                        end
+                        info.shop = command[3]
+                        data[#data+1] = info
+                        local f = fs.open("disk/gshop","w")
+                        f.write(textutils.serialize(data))
+                        f.close()
+                        commands.setblock("~","~1","~","air")
+                        tell(name,"&6Purchase successful")
                     end
                 else
                     tell(name,"&6Invalid command")
