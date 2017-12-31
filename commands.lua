@@ -686,14 +686,16 @@ local function main()--the main function it's only a function because I needed t
                         tell(name,"&6Shop does not exist")
                     elseif command[4] and ((not tonumber(command[4])) or tonumber(command[4]) < 0 or math.floor(tonumber(command[4])) ~= math.floor(tonumber(command[4]))) then
                         tell(name,"&6Invalid number price")
-                    elseif (not gamma.shops[command[3]].price) and command[4] and tonumber(command[4]) ~= gamma.shops[command[3]].price then
+                    elseif gamma.shops[command[3]].price and command[4] and tonumber(command[4]) ~= gamma.shops[command[3]].price then
                         tell(name,"&6Price does not match shop's required price")
-                    elseif (not command[4]) and gamma.shops[command[3]].price then
+                    elseif (not command[4]) and (not gamma.shops[command[3]].price) then
                         tell(name,"&6Price must be specified for this shop")
                     elseif not commands.clone(gamma.shops[command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,gamma.shops[command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,"~","~1","~") then
                         tell(name,"&6Drive could not be accessed")
                     elseif not fs.exists("disk") then
                         tell(name,"&6Block does not contain a disk")
+                    elseif (command[4] and tonumber(command[4]) > gamma[name]) or (gamma.shops[command[3]].price and gamma.shops[command[3]].price > gamma[name]) then
+                        tell(name,"&6Insufficient funds")
                     else
                         local data
                         if fs.exists("disk/gshop") then
@@ -714,6 +716,13 @@ local function main()--the main function it's only a function because I needed t
                         f.write(textutils.serialize(data))
                         f.close()
                         commands.setblock("~","~1","~","air")
+                        if command[4] then
+                            gamma[name] = gamma[name] - tonumber(command[4])
+                            gamma[gamma.shops[command[3]].user] = gamma[gamma.shops[command[3]].user] + tonumber(command[4])
+                        else
+                            gamma[name] = gamma[name] - gamma.shops[command[3]].price
+                            gamma[gamma.shops[command[3]].user] = gamma[gamma.shops[command[3]].user] + gamma.shops[command[3]].price
+                        end
                         tell(name,"&6Purchase successful")
                     end
                 else
