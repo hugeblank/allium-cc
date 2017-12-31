@@ -150,6 +150,7 @@ local cList = { --table with avail commands
 "&c&g!motd&6: &rshows message of the day",
 "&c&g!github&6: &rshows how to edit me!",
 "&c&g!g&6: &rlists gamma commands",
+"&c&g!spawnout&6: &rTP's player out of spawn building!",
 }
 local tpList = {} --stores all the tp requests
 local function login() --I wasn't sure of a better way to detect login so I made this that checks a list and refreshes every second or so
@@ -214,6 +215,9 @@ local function main()--the main function it's only a function because I needed t
                 local _, tps = commands.forge("tps")
                 tell("@a", tps[#tps])
                 print("Told "..name.." the tps")
+            elseif command[1] == "spawnout" then
+                  commands.tp(name, 148, 71, -485)
+                  print("spawnedout: ", name)
             elseif command[1] == "help" then --sends help message
                 tell(name, cList)
                 print("Sent help to", name)
