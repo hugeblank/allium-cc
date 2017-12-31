@@ -690,7 +690,7 @@ local function main()--the main function it's only a function because I needed t
                         tell(name,"&6Price does not match shop's required price")
                     elseif (not command[4]) and gamma.shops[command[3]].price then
                         tell(name,"&6Price must be specified for this shop")
-                    elseif not commands.clone(gamma.shops[command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,"~","~1","~") then
+                    elseif not commands.clone(gamma.shops[command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,gamma.shops[command[3]].x,gamma.shops[command[3]].y,gamma.shops[command[3]].z,"~","~1","~") then
                         tell(name,"&6Drive could not be accessed")
                     elseif not fs.exists("disk") then
                         tell(name,"&6Block does not contain a disk")
