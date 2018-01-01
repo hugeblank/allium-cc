@@ -5,7 +5,9 @@ It uses Computercraft's Command Computer, and Computronics's Creative Chatbox to
 ## API
 The current API is as follows, prefixed by "bagelBot." (subject to change):
 - out (string username, string parameters): provides the program/command with the name and parameters provided after the command. This is the current method used to transfer data to the command that should be executed.
-- tell (string username, string text, boolean hidetag): output colorcode formatted text to the user (name), using the & and then a hexadecimal symbol. &g additionally provides clickable text to the user. Hide the name of the bot by setting hidetag to true.
+- tell (string username, string text): output colorcode formatted text to the user, using the & and then a hexadecimal symbol. &g additionally provides clickable text to the user.
+- setPersistence (string name, any data): sets data that will remain persistent across a reboot of the bot. Stored nicely in "persistence.json"
+- getPersistence (string name): returns the persistent data that was saved to the name.
 
 ## File Structure
 If you want to develop a plugin for BagelBot the structure is as follows:
