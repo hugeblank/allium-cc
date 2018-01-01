@@ -44,29 +44,29 @@ end
 print("Integrating core components...")
 local help = function()
 	name, args = bagelBot.out()
-	bagelBot.tell(name, thelp[args])
+	if args[1] == "help" then
+		bagelBot.tell(name, "This one is tricky to understand, so it has been omitted.")
+	else
+		bagelBot.tell(name, thelp[args])
+	end
 end
-
+commands["help"] = help
 local main = function()
 	while true do
 		local _, _, name, message = os.pullEvent("chat_message")
 		if string.find(message, "!") == 1 then
 			for k in string.gmatch(message, "%S+") do
-	        	command[#command+1] = k
-	    	end
-	    	local cmd = string.sub(command[1], 2)
-	    	if cmd == "help" then
-	    		tell(name, commands.help[cmd])
-	    	else
-	    		table.remove(command, 1)
-	    		if commands[cmd] ~= nil then
-			    	_G.bagelBot.out = function() return name, command end
-		    		local _, out = commands[cmd](table.concat(command)) --the parameter here is only for vanilla command implementation. Use bagelBot.out if you want access to the arguments (they come in a nice table too).
-	    			if out then bagelBot.tell(name, out[1]) end
-	    		else
-		    		bagelBot.tell(name, "&6Invalid Command, use &c&g!help&r&6 for assistance.")
-	    		end
-	    	end
+				command[#command+1] = k
+			end
+			local cmd = string.sub(command[1], 2)
+			table.remove(command, 1)
+			if commands[cmd] ~= nil then
+				_G.bagelBot.out = function() return name, command end
+	    		local _, out = commands[cmd](table.concat(command)) --the parameter here is only for vanilla command implementation. Use bagelBot.out if you want access to the arguments (they come in a nice table too).
+    			if out then bagelBot.tell(name, out[1]) end
+    		else
+	    		bagelBot.tell(name, "&6Invalid Command, use &c&g!help&r&6 for assistance.")
+    		end
 	    end
 	end
 end
