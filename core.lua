@@ -44,7 +44,7 @@ end
 print("Integrating core components...")
 local help = function()
 	name, args = bagelBot.out()
-	tell(name, thelp[args])
+	bagelBot.tell(name, thelp[args])
 end
 
 local main = function()
