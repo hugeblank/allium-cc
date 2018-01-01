@@ -4,7 +4,8 @@ _G.bagelBot = {}
 local command = {}
 local threads = {}
 local thelp = {}
-local mName = "<&6Bagel&eBot>"
+local dir = shell.dir()
+local mName = "<&6Bagel&eBot>" --bot title
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag)
     local m
@@ -21,8 +22,22 @@ _G.bagelBot.tell = function(name, message, hidetag)
     end
     return textutils.serialise(test)
 end
+_G.bagelBot.getPersistence(name)
+	local fper = fs.open("persistence.json", "r")
+	local tpersist = textutils.unserialize(fper.readAll())
+	fper.close()
+	return tpersist[name]
+end
+_G.bagelBot.setPersistence(name, data)
+	local fper = fs.open("persistence.json", "r")
+	local tpersist = textutils.unserialize(fper.readAll())
+	fper.close()
+	tpersist[name] = data
+	local fpers = fs.open("persistence.json")
+	fpers.write(textutils.serialise(tpersist))
+	fpers.close()
+end
 print("Loading plugins...")
-local dir = shell.dir()
 for _, plugin in pairs(fs.list(dir.."plugins")) do 
 	for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
 		local name = v:sub(1, -5)
@@ -76,6 +91,12 @@ local main = function()
 	end
 end
 threads[#threads+1] = coroutine.create(main)
+
+if not fs.exists("persistence.json") then
+	local fpers = fs.open("persistence.json")
+	fpers.write("{}")
+	fpers.close()
+end
 
 print("BagelBot started.")
 bagelBot.tell("@a", "BagelBot loaded.")
