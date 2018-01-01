@@ -3,7 +3,7 @@ os.loadAPI("color.lua")
 _G.bagelBot = {}
 local command = {}
 local threads = {}
-local help = {}
+local thelp = {}
 local mName = "<&6Bagel&eBot>"
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message)
@@ -29,10 +29,10 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 		_G.commands[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
 		if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 			local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
-			help[name] = txt.readAll()
+			thelp[name] = txt.readAll()
 			txt.close()
 		else
-			help[name] = name.." has no information provided."
+			thelp[name] = name.." has no information provided."
 		end
 	end
 	if fs.isDir(dir.."plugins/"..plugin.."/threads") then
@@ -41,7 +41,12 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 		end
 	end
 end
-print("Integrating main thread...")
+print("Integrating core components...")
+local help = function()
+	name, args = bagelBot.out()
+	tell(name, thelp[args])
+end
+
 local main = function()
 	while true do
 		local _, _, name, message = os.pullEvent("chat_message")
@@ -50,13 +55,17 @@ local main = function()
 	        	command[#command+1] = k
 	    	end
 	    	local cmd = string.sub(command[1], 2)
-	    	table.remove(command, 1)
-	    	if commands[cmd] ~= nil then
-		    	_G.bagelBot.out = function() return name, command end
-	    		local _, out = commands[cmd](table.concat(command)) --the parameter here is only for vanilla command implementation. Use bagelBot.out if you want access to the arguments (they come in a nice table too).
-	    		if out then bagelBot.tell(name, out[1]) end
+	    	if cmd == "help" then
+	    		tell(name, commands.help[cmd])
 	    	else
-	    		bagelBot.tell(name, "&6Invalid Command, use &c&g!help&r&6 for assistance.")
+	    		table.remove(command, 1)
+	    		if commands[cmd] ~= nil then
+			    	_G.bagelBot.out = function() return name, command end
+		    		local _, out = commands[cmd](table.concat(command)) --the parameter here is only for vanilla command implementation. Use bagelBot.out if you want access to the arguments (they come in a nice table too).
+	    			if out then bagelBot.tell(name, out[1]) end
+	    		else
+		    		bagelBot.tell(name, "&6Invalid Command, use &c&g!help&r&6 for assistance.")
+	    		end
 	    	end
 	    end
 	end
