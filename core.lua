@@ -25,7 +25,7 @@ print("Loading plugins...")
 local dir = shell.dir()
 for _, plugin in pairs(fs.list(dir.."/plugins")) do 
 	for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
-		local name = v.sub(1, v.find(".")-1)
+		local name = v.sub(1, -5)
 		_G.commands[name] = loadfile(v)
 		if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 			local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
