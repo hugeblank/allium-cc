@@ -1,12 +1,12 @@
 print("Loading BagelBot") --Sponsored by roger109z
 os.loadAPI("color.lua")
-_ENV.bagelBot = {}
+_G.bagelBot = {}
 local command = {}
 local threads = {}
 local help = {}
 local mName = "&6Bagel&eBot"
 print("Integrating API...")
-_ENV.bagelBot.tell = function(name, message)
+_G.bagelBot.tell = function(name, message)
     local m
     if type(message) == "string" then
         m = message
@@ -27,7 +27,7 @@ for _, plugin in pairs(fs.list(dir.."/plugins")) do
 	if fs.isDir() then
 		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
 			local name = v.sub(1, v.find(".")-1)
-			commands[name] = loadfile(v)
+			_G.commands[name] = loadfile(v)
 			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
 				help[name] = txt.readAll()
@@ -36,8 +36,10 @@ for _, plugin in pairs(fs.list(dir.."/plugins")) do
 				help[name] = name.." has no information provided."
 			end
 		end
-		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads") do
-			threads[#threads+1] = coroutine.create(loadfile(v))
+		if fs.isDir(dir.."plugins/"..plugin.."/threads") then
+			for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
+				threads[#threads+1] = coroutine.create(loadfile(v))
+			end
 		end
 	end
 end
@@ -49,16 +51,22 @@ local main = function()
 			for k in string.gmatch(message, "%S+") do
 	        	command[#command+1] = k
 	    	end
+	    	local cmd = string.sub(command[1], 2)
 	    	table.remove(command, 1)
-	    	_ENV.bagelBot.out = function() return name, command end
-	    	local _, out = commands[cmd](message) --the parameter "message" here is only for vanilla command implementation. Use bagelBot.out if you want access to the arguments (they come in a nice table too).
-	    	tell(name, out[1])
+	    	if commands[cmd] ~= nil then
+		    	_G.bagelBot.out = function() return name, command end
+	    		local _, out = commands[cmd](table.concat(command)) --the parameter here is only for vanilla command implementation. Use bagelBot.out if you want access to the arguments (they come in a nice table too).
+	    		if out then bagelBot.tell(name, out[1]) end
+	    	else
+	    		bagelBot.tell(name, "&6Invalid Command, use &c&g!help&r&6 for assistance.")
+	    	end
 	    end
 	end
 end
 threads[#threads+1] = coroutine.create(main)
 
-
+print("BagelBot started.")
+bagelBot.tell("@a", "BagelBot loaded.")
 local count = #threads
 local living = count
 
