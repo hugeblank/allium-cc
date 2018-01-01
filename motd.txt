@@ -1,1 +1,0 @@
-&2===========&aWelcome to the Project Beta Server!&2===========\n&6Staff&f:\n - &ddannysmc95&f: &6Owner&f\n - &droger109z&f: &6Operator&f\n - &dhugeblank&f: &6Admin&f\n - &dcyborgtwins&f: &6Admin&f\n - &dLDDestroyrr&f: &6Admin&f\n\n&6For commands type or click: &c&g!help&r\n&2=====================================================
