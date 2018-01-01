@@ -4,7 +4,7 @@ _G.bagelBot = {}
 local command = {}
 local threads = {}
 local help = {}
-local mName = "&6Bagel&eBot"
+local mName = "<&6Bagel&eBot>"
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message)
     local m
@@ -24,22 +24,20 @@ end
 print("Loading plugins...")
 local dir = shell.dir()
 for _, plugin in pairs(fs.list(dir.."/plugins")) do 
-	if fs.isDir() then
-		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
-			local name = v.sub(1, v.find(".")-1)
-			_G.commands[name] = loadfile(v)
-			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
-				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
-				help[name] = txt.readAll()
-				txt.close()
-			else
-				help[name] = name.." has no information provided."
-			end
+	for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
+		local name = v.sub(1, v.find(".")-1)
+		_G.commands[name] = loadfile(v)
+		if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
+			local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
+			help[name] = txt.readAll()
+			txt.close()
+		else
+			help[name] = name.." has no information provided."
 		end
-		if fs.isDir(dir.."plugins/"..plugin.."/threads") then
-			for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
-				threads[#threads+1] = coroutine.create(loadfile(v))
-			end
+	end
+	if fs.isDir(dir.."plugins/"..plugin.."/threads") then
+		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
+			threads[#threads+1] = coroutine.create(loadfile(v))
 		end
 	end
 end
