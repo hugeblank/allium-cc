@@ -23,17 +23,23 @@ _G.bagelBot.tell = function(name, message, hidetag)
     return textutils.serialise(test)
 end
 _G.bagelBot.getPersistence(name)
-	local fper = fs.open("persistence.json", "r")
-	local tpersist = textutils.unserialize(fper.readAll())
-	fper.close()
-	return tpersist[name]
+	if fs.exists("persistence.json") then
+		local fper = fs.open("persistence.json", "r")
+		local tpersist = textutils.unserialize(fper.readAll())
+		fper.close()
+		return tpersist[name]
+	else
+		return false
+	end
 end
 _G.bagelBot.setPersistence(name, data)
-	local fper = fs.open("persistence.json", "r")
-	local tpersist = textutils.unserialize(fper.readAll())
-	fper.close()
+	if fs.exists("persistence.json") then
+		local fper = fs.open("persistence.json", "r")
+		local tpersist = textutils.unserialize(fper.readAll())
+		fper.close()
+	end
 	tpersist[name] = data
-	local fpers = fs.open("persistence.json")
+	local fpers = fs.open("persistence.json", "w")
 	fpers.write(textutils.serialise(tpersist))
 	fpers.close()
 end
