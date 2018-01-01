@@ -22,7 +22,7 @@ _G.bagelBot.tell = function(name, message, hidetag)
     end
     return textutils.serialise(test)
 end
-_G.bagelBot.getPersistence(name)
+_G.bagelBot.getPersistence = function(name)
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
@@ -32,7 +32,7 @@ _G.bagelBot.getPersistence(name)
 		return false
 	end
 end
-_G.bagelBot.setPersistence(name, data)
+_G.bagelBot.setPersistence = function(name, data)
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
