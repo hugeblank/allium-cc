@@ -1,4 +1,5 @@
 shell.run("fg")
+shell.run("updater.lua")
 while true do
-shell.run("command")
+shell.run("core.lua")
 end
