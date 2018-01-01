@@ -10,7 +10,7 @@ The current API is as follows, prefixed by "bagelBot." (subject to change):
 ## File Structure
 If you want to develop a plugin for BagelBot the structure is as follows:
 * plugins (directory for all plugins)
-	* <Plugin Name> (The name of the plugin)
+	* \<Plugin Name> (The name of the plugin)
 		* commands (where all commands go)
 		* help (where the information for all the commands go. should have the same name as the command it's referring to)
 		* threads (where all code that should be put on the same loop as the main command executor should go)
