@@ -33,9 +33,10 @@ _G.bagelBot.getPersistence = function(name)
 	end
 end
 _G.bagelBot.setPersistence = function(name, data)
+	local tpersist
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
-		local tpersist = textutils.unserialize(fper.readAll())
+		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
 	tpersist[name] = data
@@ -46,11 +47,11 @@ end
 print("Loading plugins...")
 for _, plugin in pairs(fs.list(dir.."plugins")) do
 	if fs.exists(dir.."plugins/"..plugin.."/init.lua") then
-		loadfile(dir.."plugins/"..plugin.."/init.lua")()
+		shell.run(dir.."plugins/"..plugin.."/init.lua")
 	end
 	if fs.isDir(dir.."plugins/"..plugin.."/threads") then
 		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
-			threads[#threads+1] = coroutine.create(loadfile(v))
+			threads[#threads+1] = coroutine.create(loadfile(dir.."plugins/"..plugin.."/threads/"..v))
 		end
 	end
 	for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
@@ -72,7 +73,7 @@ local help = function()
 		bagelBot.tell(name, "&cError Parameter 1: Attempt to call Cheeky Bastard")
 	elseif args[1] == nil then
 		for k, v in pairs(thelp) do
-			bagelBot.tell(name, "&6*&r &g&c!"..k.."&r: "..v, true)
+			bagelBot.tell(name, "&6*&r &c&g!"..k.."&r: "..v, true)
 		end
 	else
 		bagelBot.tell(name, thelp[args[1]])
@@ -107,7 +108,7 @@ end
 threads[#threads+1] = coroutine.create(main)
 
 if not fs.exists("persistence.json") then
-	local fpers = fs.open("persistence.json")
+	local fpers = fs.open("persistence.json", "w")
 	fpers.write("{}")
 	fpers.close()
 end
