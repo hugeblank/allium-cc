@@ -1,35 +1,38 @@
 local cTable = {
-_r = "white",
-_0 = "black",
-_1 = "dark_blue",
-_2 = "dark_green",
-_3 = "dark_aqua",
-_4 = "dark_red",
-_5 = "dark_purple",
-_6 = "gold",
-_7 = "gray",
-_8 = "dark_gray",
-_9 = "blue",
-_a = "green",
-_b = "aqua",
-_c = "red",
-_d = "light_purple",
-_e = "yellow",
-_f = "white"
+r = "white",
+["0"] = "black",
+["1"] = "dark_blue",
+["2"] = "dark_green",
+["3"] = "dark_aqua",
+["4"] = "dark_red",
+["5"] = "dark_purple",
+["6"] = "gold",
+["7"] = "gray",
+["8"] = "dark_gray",
+["9"] = "blue",
+a = "green",
+b = "aqua",
+c = "red",
+d = "light_purple",
+e = "yellow",
+f = "white"
 }
 format = function(sText)
     local seperated = {}
     sText = "&r"..sText
     for k in string.gmatch(sText, "[^&]+") do
-        seperated[#seperated+1] = {"_"..string.sub(k, 1, 1), string.sub(k, 2)}
+        seperated[#seperated+1] = {string.sub(k, 1, 1), string.sub(k, 2)}
     end
     local outText = '["",'
     local prev
     for k, v in pairs(seperated) do
         local color = cTable[v[1]] or prev 
         outText = outText..'{"text":"'..v[2]..'","color":"'..color..'"'
-        if v[1] == "_g" then
-            outText = outText..',"clickEvent":{"action":"run_command","value":"'..v[2]..'"}'
+        if v[1] == "g" then
+            local ind1 = string.find(v[2], "(")
+            local ind2 = string.find(v[2], ")")
+            local action = string.sub(v[2], ind1+1, ind2-1)
+            outText = outText..',"clickEvent":{"action":"run_command","value":"'..action..'"}'
         end
         outText = outText..'},'
         prev = color
