@@ -69,7 +69,7 @@ print("Integrating core components...")
 local help = function()
 	name, args = bagelBot.out()
 	if args[1] == "help" then
-		bagelBot.tell(name, "This one is tricky to understand, so it has been omitted.")
+		bagelBot.tell(name, "&cError Parameter 1: Attempt to call Cheeky Bastard")
 	elseif args[1] == nil then
 		for k, v in pairs(thelp) do
 			bagelBot.tell(name, "&6*&r &g&c!"..k.."&r: "..v, true)
@@ -78,7 +78,12 @@ local help = function()
 		bagelBot.tell(name, thelp[args[1]])
 	end
 end
+local github = function()
+	name, args = bagelBot.out()
+	bagelBot.tell(name, "Contribute to bagelBot here: https://github.com/hugeblank/BagelBot")
+end
 commands["help"] = help
+commands["github"] = github
 local main = function()
 	while true do
 		local _, _, name, message = os.pullEvent("chat_message")
