@@ -60,7 +60,7 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 		end
 		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do --load commands & help entries
 			local name = v:sub(1, -5)
-			_G.botcmds[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
+			botcmds[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
 			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
 				thelp[name] = txt.readAll()
