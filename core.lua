@@ -46,23 +46,25 @@ _G.bagelBot.setPersistence = function(name, data)
 end
 print("Loading plugins...")
 for _, plugin in pairs(fs.list(dir.."plugins")) do
-	if fs.exists(dir.."plugins/"..plugin.."/init.lua") then
-		shell.run(dir.."plugins/"..plugin.."/init.lua")
-	end
-	if fs.isDir(dir.."plugins/"..plugin.."/threads") then
-		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
-			threads[#threads+1] = coroutine.create(loadfile(dir.."plugins/"..plugin.."/threads/"..v))
+	if fs.isDir(dir.."plugins/"..plugin) then
+		if fs.exists(dir.."plugins/"..plugin.."/init.lua") then
+			shell.run(dir.."plugins/"..plugin.."/init.lua")
 		end
-	end
-	for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
-		local name = v:sub(1, -5)
-		_G.commands[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
-		if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
-			local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
-			thelp[name] = txt.readAll()
-			txt.close()
-		else
-			thelp[name] = name.." has no information provided."
+		if fs.isDir(dir.."plugins/"..plugin.."/threads") then
+			for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
+				threads[#threads+1] = coroutine.create(loadfile(dir.."plugins/"..plugin.."/threads/"..v))
+			end
+		end
+		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
+			local name = v:sub(1, -5)
+			_G.commands[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
+			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
+				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
+				thelp[name] = txt.readAll()
+				txt.close()
+			else
+				thelp[name] = name.." has no information provided."
+			end
 		end
 	end
 end
