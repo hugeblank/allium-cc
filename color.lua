@@ -29,14 +29,15 @@ format = function(sText)
         local color = cTable[v[1]] or prev 
         outText = outText..'{"text":"'..v[2]..'","color":"'..color..'"'
         if v[1] == "g" then
-            local ind1 = string.find(v[2], "(")
-            local ind2 = string.find(v[2], ")")
-            local action = string.sub(v[2], ind1+1, ind2-1)
+            local ind = string.find(v[2], ")")
+            local action = string.sub(v[2], 2, ind2-1)
+            outText = string.sub(outText, 1, -(21+string.len(v[2])+string.len(color))
+            outText = outText..'{"text":"'..string.sub(v[2], ind)..'","color":"'..color..'"'
             outText = outText..',"clickEvent":{"action":"run_command","value":"'..action..'"}'
         end
         outText = outText..'},'
         prev = color
     end
-    outText = string.sub(outText, 1, -2)..']'
+    outText = string.sub(outText, 1, -2)..']')
     return outText
 end
