@@ -16,7 +16,7 @@ _G.bagelBot.tell = function(name, message, hidetag) --bagelBot.tell as documente
     else
         m = ""
     end
-    local _, test = commands.tellraw(name, color.format((function(hidetag)if hidetag then return "" else return mName.."&r" end end)(hidetag)..m))
+    local _, test = commands.tellraw(name, color.format((function(hidetag)if hidetag then return "" else return mName.."&r " end end)(hidetag)..m))
     if type(message) == "table" then
         for k, v in pairs(message) do
             local _, l = commands.tellraw(name, color.format(v))
