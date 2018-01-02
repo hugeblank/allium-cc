@@ -44,7 +44,15 @@ _G.bagelBot.setPersistence = function(name, data)
 	fpers.close()
 end
 print("Loading plugins...")
-for _, plugin in pairs(fs.list(dir.."plugins")) do 
+for _, plugin in pairs(fs.list(dir.."plugins")) do
+	if fs.exists(dir.."plugins/"..plugin.."/init.lua") then
+		loadfile(dir.."plugins/"..plugin.."/init.lua")()
+	end
+	if fs.isDir(dir.."plugins/"..plugin.."/threads") then
+		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
+			threads[#threads+1] = coroutine.create(loadfile(v))
+		end
+	end
 	for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do
 		local name = v:sub(1, -5)
 		_G.commands[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
@@ -54,11 +62,6 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 			txt.close()
 		else
 			thelp[name] = name.." has no information provided."
-		end
-	end
-	if fs.isDir(dir.."plugins/"..plugin.."/threads") then
-		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
-			threads[#threads+1] = coroutine.create(loadfile(v))
 		end
 	end
 end
