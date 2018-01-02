@@ -38,6 +38,6 @@ format = function(sText)
         outText = outText..'},'
         prev = color
     end
-    outText = string.sub(outText, 1, -2)..']')
+    outText = string.sub(outText, 1, -2)..']'
     return outText
 end
