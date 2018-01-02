@@ -120,7 +120,7 @@ local main = function()
 				_G.bagelBot.out = function() return name, command end --bagelBot.out as documented in README
 	    		botcmds[cmd]() --Let's execute the command
     		else --this isn't a valid command...
-	    		bagelBot.tell(name, "&6Invalid Command, use &c&g!help&r&6 for assistance.") --bleh!
+	    		bagelBot.tell(name, "&6Invalid Command, use &c&g(!help)!help&r&6 for assistance.") --bleh!
     		end
 	    end
 	end
