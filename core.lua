@@ -74,7 +74,7 @@ end
 print("Integrating core components...")
 local help = function() --!help integration
 	name, args = bagelBot.out()
-	elseif args[1] == nil then
+	if args[1] == nil then
 		for k, v in pairs(thelp) do
 			bagelBot.tell(name, "&6*&r &g&c!"..k.."&r: "..v, true)
 		end
