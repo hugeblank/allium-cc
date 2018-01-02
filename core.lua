@@ -76,7 +76,7 @@ local help = function() --!help integration
 	name, args = bagelBot.out()
 	if args[1] == nil then
 		for k, v in pairs(thelp) do
-			bagelBot.tell(name, "&6*&r &g&c!"..k.."&r: "..v, true)
+			bagelBot.tell(name, "&6*&r &c&g!"..k.."&r: "..v, true)
 		end
 	else
 		bagelBot.tell(name, thelp[args[1]])
