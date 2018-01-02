@@ -31,7 +31,7 @@ format = function(sText)
         if v[1] == "g" then
             local ind = string.find(v[2], ")")
             local action = string.sub(v[2], 2, ind2-1)
-            outText = string.sub(outText, 1, -(21+string.len(v[2])+string.len(color))
+            outText = string.sub(outText, 1, -(21+string.len(v[2])+string.len(color)))
             outText = outText..'{"text":"'..string.sub(v[2], ind)..'","color":"'..color..'"'
             outText = outText..',"clickEvent":{"action":"run_command","value":"'..action..'"}'
         end
