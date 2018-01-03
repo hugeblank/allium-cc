@@ -92,6 +92,7 @@ local help = function() --!help integration
       repeat
         ind = tmp:find("\n")
         if ind ~= -1 then
+	  print(ind)
           str[#str+1] = tmp:sub(1, ind-1)
           tmp = tmp:sub(ind+1)
         end
