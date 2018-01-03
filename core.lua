@@ -7,7 +7,7 @@ local command = {}
 local threads = {}
 local thelp = {}
 local dir = shell.dir()
-local mName = "<&6Bagel&eBot&f>" --bot title
+local mName = "</&cBeta&r>&6Bot" --bot title
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag) --bagelBot.tell as documented in README
     local m
