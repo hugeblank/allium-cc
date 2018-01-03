@@ -88,7 +88,7 @@ local help = function() --!help integration
     if n >= skip-9 and n <= skip then
       local ind
       local str = {}
-      local tmp = outTbl[#outTbl]
+      local tmp = "&c&g(!"..k..")"..k..": &r"..v
       repeat
         ind = tmp:find("\n")
         if ind ~= -1 then
