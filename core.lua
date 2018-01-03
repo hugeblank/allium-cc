@@ -73,13 +73,14 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 end
 print("Integrating core components...")
 local help = function() --!help integration
-	name = bagelbot.out()
+	local name, args = bagelbot.out()
+	local page = args[1]
 	if tonumber(page) == nil then
 		page = 1
 	end
 	local pages = math.ceil(#thelp/9)
 	local skip = page*9
-	local outTbl = {"&cHelp Page: "..tostring(page).."&6&g(!help "..page-1..")<<&6 &g(!help "..page+1..")>>"}
+	local outTbl = {"&cHelp Page: "..tostring(page).."&6&g(!help "..tostring(page-1)..")<<&6 &g(!help "..tostring(page+1)..")>>"}
 	for k, v in pairs(thelp) do
     n = n+1
     if n >= skip-9 and n <= skip then
