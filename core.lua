@@ -80,7 +80,7 @@ local help = function() --!help integration
 	end
 	local pages = math.ceil(#thelp/9)
 	local skip = page*9
-	local outTbl = {"&cHelp: &6&g(!help "..tostring(page-1)..")<<&c "..tostring(page).." &g(!help "..tostring(page+1)..")>>"}
+	local outTbl = {"&cHelp: &6&g(!help "..tostring(page-1)..")<<&c "..tostring(page).." &6&g(!help "..tostring(page+1)..")>>"}
   local n = 0
   local line = 1
 	for k, v in pairs(thelp) do
