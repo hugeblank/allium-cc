@@ -84,7 +84,8 @@ local help = function() --!help integration
 	for k, v in pairs(thelp) do
     n = n+1
     if n >= skip-9 and n <= skip then
-		outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
+		  outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
+    end
 	end
   if #outTbl >= 1 then
     _G.bagelBot.tell(name, outTbl)
