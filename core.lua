@@ -91,12 +91,12 @@ local help = function() --!help integration
       local tmp = "&c&g(!"..k..")"..k..": &r"..v
       repeat
         ind = tmp:find("\n")
-        if ind ~= -1 then
-	  print(ind)
+        if ind ~= nil then
+	        print(ind)
           str[#str+1] = tmp:sub(1, ind-1)
           tmp = tmp:sub(ind+1)
         end
-      until ind == -1
+      until ind == nil
       local num = 0
       for _, v in pairs(str) do
         num = num+(math.ceil(string.len(v)/53))
