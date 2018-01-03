@@ -81,6 +81,7 @@ local help = function() --!help integration
 	local pages = math.ceil(#thelp/9)
 	local skip = page*9
 	local outTbl = {"&cHelp Page: "..tostring(page).."&6&g(!help "..tostring(page-1)..")<<&6 &g(!help "..tostring(page+1)..")>>"}
+  n = 0
 	for k, v in pairs(thelp) do
     n = n+1
     if n >= skip-9 and n <= skip then
