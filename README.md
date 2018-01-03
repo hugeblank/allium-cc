@@ -12,7 +12,7 @@ From installing this, you can now install a variety of BagelBot plugins that are
 
 To install BagelBot, run this command
 
-**2.** `github clone hugeblank/BagelBot`
+**2.** `github clone hugeblank/BagelBot /`
 
 and just like that, BagelBot is installed.
 
