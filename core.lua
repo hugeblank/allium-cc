@@ -73,7 +73,7 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 end
 print("Integrating core components...")
 local help = function() --!help integration
-	local name, args = _G.bagelbot.out()
+	local name, args = bagelBot.out()
 	local page = args[1]
 	if tonumber(page) == nil then
 		page = 1
