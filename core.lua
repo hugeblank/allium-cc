@@ -79,16 +79,16 @@ local help = function() --!help integration
 		page = 1
 	end
 	local pages = math.ceil(#thelp/9)
-	local skip = page*9
+	local skip = page*7
 	local outTbl = {"&cHelp Page: "..tostring(page).."&6&g(!help "..tostring(page-1)..")<<&6 &g(!help "..tostring(page+1)..")>>"}
   local n = 0
 	for k, v in pairs(thelp) do
     n = n+1
-    if n >= skip-9 and n <= skip then
+    if n >= skip-7 and n <= skip then
 		  outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
     end
 	end
-  if #outTbl >= 1 then
+  if #outTbl > 1 then
     _G.bagelBot.tell(name, outTbl)
   end
 end
