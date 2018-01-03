@@ -95,7 +95,7 @@ local help = function() --!help integration
           str[#str+1] = tmp:sub(1, ind-1)
           tmp = tmp:sub(ind+1)
         end
-      until ind = -1
+      until ind == -1
       local num = 0
       for _, v in pairs(str) do
         num = num+(math.ceil(string.len(v)/53))
