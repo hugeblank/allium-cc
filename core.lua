@@ -73,14 +73,20 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 end
 print("Integrating core components...")
 local help = function() --!help integration
-	name, args = bagelBot.out()
-	if args[1] == nil then
-		for k, v in pairs(thelp) do
-			bagelBot.tell(name, "&6*&r &c&g(!"..k..")!"..k.."&r: "..v, true)
-		end
-	else
-		bagelBot.tell(name, thelp[args[1]])
+	if tonumber(page) == nil then
+		page = 1
 	end
+	local pages = math.ceil(#thelp/9)
+	local skip = page*9
+	local outTbl = {"&cHelp Page: "..tostring(page).."&6&g(!help "..page-1..")<<&6 &g(!help "..page+1..")>>"}
+	for k, v in pairs(thelp) do
+    n = n+1
+    if n >= skip-9 and n <= skip then
+		outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
+	end
+  if #outTbl >= 1 then
+    _G.bagelBot.tell(name, outTbl)
+  end
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
