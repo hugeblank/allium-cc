@@ -59,7 +59,7 @@ format = function(sText, bAction)
     end
     local outText = '["",'
     local prev
-	local function escape(tbl)
+	function escape(tbl)
 		for k, v in pairs(tbl) do
 			if v[2]:find("\\") == v[2]:len() then
 				tbl[k] = {v[1], v[2]:sub(1, -1).."&"..tbl[tonumber(k)+1][1]..tbl[tonumber(k)+1][2]}
