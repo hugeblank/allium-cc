@@ -2,19 +2,20 @@
 BagelBot is a simple lua plugin interface for minecraft.
 It uses Computercraft's Command Computer, and Computronics's Creative Chatbox to function.
 ## Install
-It is highly recommended that you use ccgithub to clone the repository into your command computer.
 
-**1.** `pastebin run p8PJVxC4`
+To install BagelBot, run this command, it's that simple!
 
-You can view the repository here: https://github.com/eric-wieser/computercraft-github
+**1.** `pastebin run LGwrkjxm`
 
-From installing this, you can now install a variety of BagelBot plugins that are also found on github. Plugins for BagelBot can be quite hefty in terms of how many files they have, and ccgithub is the best option for installation.
+The installer installs [Eric Wieser's](https://github.com/eric-wieser/) [computercraft-github](https://github.com/eric-wieser/computercraft-github), a github repository downloader that is necessary to download the bot, and the plugins that can be installed.
 
-To install BagelBot, run this command
+## Base Commands
 
-**2.** `github clone hugeblank/BagelBot /`
+`!help`: lists the help entries for the installed plugins
 
-and just like that, BagelBot is installed.
+`!plugins`: Lists the plugins that are installed.
+
+`!github`: Links to the github repo for [BagelBot](https://github.com/hugeblank/BagelBot).
 
 ## API
 The current API is as follows, prefixed by "bagelBot." (subject to change):
