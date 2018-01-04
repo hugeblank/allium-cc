@@ -125,8 +125,8 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 	local fstr = "!"..k..": "..v
 	local fftbl = {} --rows of words >=55 chars long
 	local pstr = "" --row of words >=55 chars long
-	local preword
 	for word in string.gmatch(fstr, "%S+") do --add each word to a line until it's closest to 55 chars it can get
+		local preword
 		if word == "!"..k..":" then --if the word is this then assign a different preword to take its place
 			if not tsuggest[k] then --if it doesn't have a suggested command, fill it in.
 				tsuggest[k] = "!"..k
@@ -141,7 +141,11 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 			fftbl[#fftbl+1] = pstr.."\n"
 			pstr = word.." "
 		else --otherwise, assign words normally
-				pstr = pstr..word.." "
+			if preword then --but don't forget to add what is needed
+				pstr = string.sub(pstr, string.len("!"..k..":"))
+				pstr = preword..pstr
+			end
+			pstr = pstr..word.." "
 		end
 	end
 	if pstr ~= "" then --if the string isn't blank, and the word loop hasn't been exited, assign it its own row
