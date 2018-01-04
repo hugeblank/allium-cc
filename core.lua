@@ -91,7 +91,7 @@ local help = function() --!help integration
 	local outStr = "&2&l=================&r&eBagelBot !help Menu&r&2&l=================&r\n"
 	outStr = outStr..tthelp[page].."\n"
 	local bottomInt = 7+string.len(tostring(page)..tostring(#tthelp))
-	outStr = outStr.."\n&2&l"..string.rep("=", math.ceil((55-bottomInt)/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt/2)))
+	outStr = outStr.."&2&l"..string.rep("=", math.ceil((55-bottomInt)/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2))
 	bagelBot.tell(name, outStr, true)
 end
 local github = function() --!github integration
