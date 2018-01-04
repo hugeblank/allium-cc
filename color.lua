@@ -85,7 +85,7 @@ format = function(sText, bAction)
 			local ind = string.find(v[2], ")")
 			if ind ~= nil then
             	current["actionText"] = string.sub(v[2], 2, ind-1)
-				v[2] = v[2]:sub(1, ind)
+				v[2] = v[2]:sub(ind+1)
 			else
 				current["actionText"] = v[2]
 			end
@@ -95,7 +95,7 @@ format = function(sText, bAction)
 				local ind = string.find(v[2], ")")
 				if ind ~= nil then
 					current["hoverText"] = format(string.sub(v[2], 2, ind-1), false)
-					v[2] = v[2]:sub(1, ind)
+					v[2] = v[2]:sub(ind+1)
 				else
 					current["hoverText"] = v[2]
 				end
