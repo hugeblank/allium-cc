@@ -27,7 +27,7 @@ local actions = {
     s = "suggest_command",
     g = "run_command" ,
     h = "link" ,
-end
+}
 local other = {
     i = "hovertext",
     r = "reset",
