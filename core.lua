@@ -110,7 +110,7 @@ local help = function() --!help integration
         outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
       end
       line = line+num
-      print(line)
+      print(num)
       if line >= 9 then
         break
       end
