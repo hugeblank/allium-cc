@@ -46,12 +46,18 @@ local dCurrent = {
 	actionText = "",
 	hoverText = "",
 }
-    
+local function copy(tbl)
+	local ret = {}
+	for k, v in pairs(tbl) do
+		ret[k] = v
+	end
+	return ret
+end
 format = function(sText, bAction)
 	if type(bAction) ~= "boolean" then
 		bAction = true
 	end
-    local current = dCurrent
+    local current = copy(dCurrent)
     local seperated = {}
     sText = "&r"..sText
     for k in string.gmatch(sText, "[^&]+") do
@@ -99,8 +105,8 @@ format = function(sText, bAction)
 				else
 					current["hoverText"] = v[2]
 				end
-			elseif actions[v[1]] == "reset" then
-				current = dCurrent
+			elseif other[v[1]] == "reset" then
+				current = copy(dCurrent)
 			end
 		else
 			v[2] = "&"..v[1]..v[2]
