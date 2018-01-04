@@ -88,15 +88,11 @@ local help = function() --!help integration
 	if tonumber(page) == nil then
 		page = 1
 	end
-	local pages = math.ceil(#thelp/cmdamt)
-	local skip = page*cmdamt
 	local outStr = "&2&l==================&r&eBagelBot !help Menu&r&2&l==================&r\n"
 	outStr = outStr..tthelp[page].."\n"
-	local bottomInt = 7+string.len(tostring(page-1)..tostring(#thelp))
-	outStr = outStr.."\n"..string.rep("=", math.ceil(55-bottomInt/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#thelp.." &6&g(!help "..tostring(page+1)..")>>&r"..string.rep("=", math.floor(55-bottomInt/2))
-	if #outTbl > 1 then
-		bagelBot.tell(name, outStr, true)
-	end
+	local bottomInt = 7+string.len(tostring(page)..tostring(#tthelp))
+	outStr = outStr.."\n"..string.rep("=", math.ceil(55-bottomInt/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r"..string.rep("=", math.floor(55-bottomInt/2))
+	bagelBot.tell(name, outStr, true)
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
@@ -135,7 +131,7 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 			if not tsuggest[k] then --if it doesn't have a suggested command, fill it in.
 				tsuggest[k] = "!"..k
 			end
-			preword = "&g(!.."..k..")&s("..tsuggest[k]..")&h(Click for Autocompletion)!"..k.."&r:" 
+			preword = "&g(!"..k..")&s("..tsuggest[k]..")&h(Click for Autocompletion)!"..k.."&r:" 
 		end
 		if string.len(pstr..word.." ") > 55 then --if the string combined with the word is larger than 55 chars, pack the string up, and reset it.
 			fftbl[#fftbl+1] = pstr.."\n"
@@ -157,7 +153,7 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 		end
 	else --otherwise, convert `rowtbl` into a string of `cmdamt` lines, set the remaining rows in a table to `rowtbl`, and add it all to `tthelp`
 		for i = 1, #rowtbl do
-			tstring = tstring..rowtbl[i].."\n"
+			tstring = tstring..rowtbl[i]
 		end
 		rowtbl = fftbl
 		tthelp[#tthelp+1] = tstring
