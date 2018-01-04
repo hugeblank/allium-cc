@@ -89,9 +89,9 @@ local help = function() --!help integration
 		page = 1
 	end
 	local outStr = "&2&l=================&r&eBagelBot !help Menu&r&2&l=================&r\n"
-	outStr = outStr..tthelp[page].."\n"
+	outStr = outStr..tthelp[page]
 	local bottomInt = 7+string.len(tostring(page)..tostring(#tthelp))
-	outStr = outStr.."&2&l"..string.rep("=", math.ceil((55-bottomInt)/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2))
+	outStr = outStr.."&2&l"..string.rep("=", math.ceil((55-bottomInt)/2)-1).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-1)
 	bagelBot.tell(name, outStr, true)
 end
 local github = function() --!github integration
@@ -131,11 +131,11 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 			if not tsuggest[k] then --if it doesn't have a suggested command, fill it in.
 				tsuggest[k] = "!"..k
 			end
-			preword = "&h("..tsuggest[k]..")!&c&g(!"..k..")"..k.."&r:" 
+			preword = "&c&g(!"..k..")!"..k.."&r" 
 		end
 		if string.len(pstr..word.." ") > 55 then --if the string combined with the word is larger than 55 chars, pack the string up, and reset it.
 				if preword then --but don't forget to add what is needed
-					pstr = string.sub(pstr, string.len("!"..k..":"), -1)
+					pstr = string.sub(pstr, string.len("!"..k..":"))
 					pstr = preword..pstr
 				end
 			fftbl[#fftbl+1] = pstr.."\n"
