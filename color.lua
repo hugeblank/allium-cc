@@ -114,8 +114,8 @@ format = function(sText, bAction)
 		end
 		if current["hoverEvent"] ~= false and bAction then
 			outText = outText..',"hoverEvent":{"action":"show_text","value":"'..current["hoverText"]..'"}'
+		end
         outText = outText..'},'
-        prev = color
     end
     outText = string.sub(outText, 1, -2)..']'
     return outText
