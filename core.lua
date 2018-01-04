@@ -96,7 +96,7 @@ local help = function() --!help integration
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
-	bagelBot.tell(name, "Contribute to BagelBot here: &b&n&ihttps://github.com/hugeblank/BagelBot")
+	bagelBot.tell(name, "Contribute to BagelBot here: &1&n&ihttps://github.com/hugeblank/BagelBot")
 end
 local plugins = function() --!plugins integration
 	name = bagelBot.out()
