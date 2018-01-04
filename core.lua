@@ -96,7 +96,6 @@ local help = function() --!help integration
       repeat
         ind = tmp:find("\n")
         if ind ~= nil then
-	        print(ind)
           str[#str+1] = tmp:sub(1, ind-1)
           tmp = tmp:sub(ind+1)
         end
@@ -111,6 +110,7 @@ local help = function() --!help integration
         outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
       end
       line = line+num
+      print(line)
       if line >= 9 then
         break
       end
