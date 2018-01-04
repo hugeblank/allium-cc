@@ -46,6 +46,17 @@ local dCurrent = {
 	actionText = "",
 	hoverText = "",
 }
+local function escape(tbl)
+	for k, v in pairs(tbl) do
+		if v[2]:find("\\") == v[2]:len() then
+			tbl[k] = {v[1], v[2]:sub(1, -1).."&"..tbl[tonumber(k)+1][1]..tbl[tonumber(k)+1][2]}
+			table.remove(tbl, tonumer(k)+1)
+			local ret = escape(tbl)
+			return ret
+		end
+	end
+	return tbl
+end
 local function copy(tbl)
 	local ret = {}
 	for k, v in pairs(tbl) do
@@ -69,17 +80,6 @@ format = function(sText, bAction)
     end
     local outText = '["",'
     local prev
-	function escape(tbl)
-		for k, v in pairs(tbl) do
-			if v[2]:find("\\") == v[2]:len() then
-				tbl[k] = {v[1], v[2]:sub(1, -1).."&"..tbl[tonumber(k)+1][1]..tbl[tonumber(k)+1][2]}
-				table.remove(tbl, tonumer(k)+1)
-				local ret = escape(tbl)
-				return ret
-			end
-		end
-		return tbl
-	end
 	seperated = escape(seperated)
     for k, v in pairs(seperated) do
         if cTable[v[1]] ~= nil then
@@ -131,4 +131,17 @@ format = function(sText, bAction)
     end
     outText = string.sub(outText, 1, -2)..']'
     return outText
+end
+
+deformat = function(string)
+    local seperated = {}
+	local out = ""
+    for k in string.gmatch(sText, "[^&]+") do
+        seperated[#seperated+1] = {string.sub(k, 1, 1), string.sub(k, 2)}
+    end
+	seperated = escape(seperated)
+	for k, v in pairs(seperated) do
+		out = out..v
+	end
+	return out
 end
