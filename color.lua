@@ -18,7 +18,7 @@ local cTable = {
 }
 local formats = {
     l = "bold",
-    n = "underline",
+    n = "underlined",
     o = "italic",
     k = "obfuscated",
     m = "strikethrough",
@@ -49,7 +49,11 @@ local dCurrent = {
 local function copy(tbl)
 	local ret = {}
 	for k, v in pairs(tbl) do
-		ret[k] = v
+		if type(v) ~= "table" then
+			ret[k] = v
+		else
+			ret[k] = copy(v)
+		end
 	end
 	return ret
 end
