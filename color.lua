@@ -26,7 +26,7 @@ local formats = {
 local actions = {
     s = "suggest_command",
     g = "run_command" ,
-    i = "link" ,
+    i = "open_url" ,
 }
 local other = {
     h = "hoverEvent",
