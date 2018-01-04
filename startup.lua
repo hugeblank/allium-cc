@@ -7,7 +7,7 @@ if fs.exists("/.repoList") then
     file.close()
 else
     local file = fs.open("/.repoList", "w")
-    file.write("hugeblank/BagelBot")
+    file.write("hugeblank/BagelBot") --Forkers change this to their repository.
     file.close()
     error("No valid repo file! Default repo file created!")
 end
