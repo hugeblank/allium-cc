@@ -39,7 +39,7 @@ local dCurrent = {
     	italic = false,
     	obfuscated = false,
     	strikethrough = false,
-	end
+	}
     color = "white",
     hoverEvent = false,
     action = false
