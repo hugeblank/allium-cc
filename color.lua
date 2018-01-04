@@ -24,13 +24,13 @@ local formats = {
     m = "strikethrough",
 }
 local actions = {
-    s = "suggest_command"
-    g = "run_command" 
-    h = "link" 
+    s = "suggest_command",
+    g = "run_command" ,
+    h = "link" ,
 end
 local other = {
-    i = "hovertext"
-    r = "reset"
+    i = "hovertext",
+    r = "reset",
 }
 format = function(sText)
     local current = {}
