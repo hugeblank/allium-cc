@@ -8,6 +8,9 @@ local command = {}
 local threads = {}
 local thelp = {}
 local tsuggest = {}
+local tthelp = {}
+local tstring = ""
+local rowtbl = {}
 local cmdamt = 18
 local dir = shell.dir()
 print("Integrating API...")
@@ -88,7 +91,7 @@ local help = function() --!help integration
 	local pages = math.ceil(#thelp/cmdamt)
 	local skip = page*cmdamt
 	local outStr = "&2&l==================&r&eBagelBot !help Menu&r&2&l==================&r\n"
-	outStr = outStr..thelp[page].."\n"
+	outStr = outStr..tthelp[page].."\n"
 	local bottomInt = 7+string.len(tostring(page-1)..tostring(#thelp))
 	outStr = outStr.."\n"..string.rep("=", math.ceil(55-bottomInt/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#thelp.." &6&g(!help "..tostring(page+1)..")>>&r"..string.rep("=", math.floor(55-bottomInt/2))
 	if #outTbl > 1 then
@@ -122,50 +125,48 @@ tsuggest["github"] = "!github"
 tsuggest["plugins"] = "!plugins"
 tsuggest["help"] = "!help"
 
-local tthelp = {}
-local tstring = ""
-local rowtbl = {}
-for k, v in pairs(thelp) do --create sets of tables that are exactly `cmdamt` large
+for k, v in pairs(thelp) do --create a string that has rows that are exactly `cmdamt` large
 	local fstr = "!"..k..": "..v
-	local ffstr = ""
-	local pstr = ""
-	for word in string.gmatch(fstr, "%S+") do
+	local fftbl = {} --rows of words >=55 chars long
+	local pstr = "" --row of words >=55 chars long
+	for word in string.gmatch(fstr, "%S+") do --add each word to a line until it's closest to 55 chars it can get
 		local preword
-		if word == "!"..k..":" then
-			if not tsuggest[k] then
+		if word == "!"..k..":" then --if the word is this then assign a different preword to take its place
+			if not tsuggest[k] then --if it doesn't have a suggested command, fill it in.
 				tsuggest[k] = "!"..k
 			end
-			preword = "&g(!.."..k..")&s("..tsuggest[k]..")&h(Click for Autocompletion)!"..k.."&r:"
+			preword = "&g(!.."..k..")&s("..tsuggest[k]..")&h(Click for Autocompletion)!"..k.."&r:" 
 		end
-		if string.len(pstr..word.." ") > 55 then
-			fftbl[fftbl+1] = pstr.."\n"
+		if string.len(pstr..word.." ") > 55 then --if the string combined with the word is larger than 55 chars, pack the string up, and reset it.
+			fftbl[#fftbl+1] = pstr.."\n"
 			pstr = word.." "
-		else
-			if not preword then
+		else --otherwise, assign words normally
+			if not preword then --override word if there is a preword
 				pstr = pstr..word.." "
 			else
 				pstr = pstr..preword.." "
 			end
 		end
 	end
-	if pstr ~= "" then
-		fftbl[fftbl+1] = pstr
+	if pstr ~= "" then --if the string isn't blank, and the word loop hasn't been exited, assign it its own row
+		fftbl[#fftbl+1] = pstr
 	end
-	if #rowtbl+#fftbl > cmdamt then
+	if #rowtbl+#fftbl < cmdamt then --if the existing rows in addition with the incoming rows is smaller than `cmdamt` slap them in
 		for i = 1, #fftbl do
 			rowtbl[#rowtbl+1] = fftbl[i]
 		end
-	else
+	else --otherwise, convert `rowtbl` into a string of `cmdamt` lines, set the remaining rows in a table to `rowtbl`, and add it all to `tthelp`
 		for i = 1, #rowtbl do
 			tstring = tstring..rowtbl[i].."\n"
 		end
-		tthelp[tthelp+1] = tstring
+		rowtbl = fftbl
+		tthelp[#tthelp+1] = tstring
 	end
 end
-thelp = tthelp
-thelp = nil
+--clean things up a bit.
 tstring = nil
 rowtbl = nil
+thelp = nil
 
 local main = function()
 	while true do
