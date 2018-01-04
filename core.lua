@@ -16,7 +16,7 @@ _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as 
     else
         m = ""
     end
-    if type(botname) ~= "string "then
+    if type(botname) ~= "string" then
     	botname = mName
     end
     local _, test = commands.tellraw(name, color.format((function(hidetag)if hidetag then return "" else return botname.."&r " end end)(hidetag)..m))
