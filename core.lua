@@ -7,7 +7,7 @@ local command = {}
 local threads = {}
 local thelp = {}
 local dir = shell.dir()
-local mName = "</&cBeta&r>&6Bot" --bot title
+local mName = "<&eBagel&6Bot>" --bot title
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag) --bagelBot.tell as documented in README
     local m
@@ -113,7 +113,7 @@ local help = function() --!help integration
     end
 	end
   if #outTbl > 1 then
-    _G.bagelBot.tell(name, outTbl)
+    bagelBot.tell(name, outTbl)
   end
 end
 local github = function() --!github integration
