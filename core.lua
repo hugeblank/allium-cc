@@ -91,7 +91,7 @@ local help = function() --!help integration
 	local outStr = "&2&l=================&r&eBagelBot !help Menu&r&2&l=================&r\n"
 	outStr = outStr..tthelp[page].."\n"
 	local bottomInt = 7+string.len(tostring(page)..tostring(#tthelp))
-	outStr = outStr.."\n&2&l"..string.rep("=", math.ceil((55-bottomInt)/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt/2))
+	outStr = outStr.."\n&2&l"..string.rep("=", math.ceil((55-bottomInt)/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt/2)))
 	bagelBot.tell(name, outStr, true)
 end
 local github = function() --!github integration
@@ -135,7 +135,8 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 		end
 		if string.len(pstr..word.." ") > 55 then --if the string combined with the word is larger than 55 chars, pack the string up, and reset it.
 				if preword then --but don't forget to add what is needed
-					string.sub(pstr, 1, string.len("!"..k..":"), preword)
+					pstr = string.sub(pstr, string.len("!"..k..":"), -1)
+					pstr = preword..pstr
 				end
 			fftbl[#fftbl+1] = pstr.."\n"
 			pstr = word.." "
@@ -144,7 +145,7 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 		end
 	end
 	if pstr ~= "" then --if the string isn't blank, and the word loop hasn't been exited, assign it its own row
-		fftbl[#fftbl+1] = pstr
+		fftbl[#fftbl+1] = pstr.."\n"
 	end
 	if #rowtbl+#fftbl < cmdamt then --if the existing rows in addition with the incoming rows is smaller than `cmdamt` slap them in
 		for i = 1, #fftbl do
