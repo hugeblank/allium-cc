@@ -1,4 +1,5 @@
 local cTable = {
+    r = "white"
     ["0"] = "black",
     ["1"] = "dark_blue",
     ["2"] = "dark_green",
