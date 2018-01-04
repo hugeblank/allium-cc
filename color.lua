@@ -68,6 +68,7 @@ format = function(sText, bAction)
 				return ret
 			end
 		end
+		return tbl
 	end
 	seperated = escape(seperated)
     for k, v in pairs(seperated) do
