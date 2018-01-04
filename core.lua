@@ -7,7 +7,7 @@ local command = {}
 local threads = {}
 local thelp = {}
 local dir = shell.dir()
-local mName = "<&6Bagel&eBot&f>" --bot title
+local mName = "<&eBagel&6Bot>" --bot title
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag) --bagelBot.tell as documented in README
     local m
@@ -73,14 +73,48 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 end
 print("Integrating core components...")
 local help = function() --!help integration
-	name, args = bagelBot.out()
-	if args[1] == nil then
-		for k, v in pairs(thelp) do
-			bagelBot.tell(name, "&6*&r &c&g(!"..k..")!"..k.."&r: "..v, true)
-		end
-	else
-		bagelBot.tell(name, thelp[args[1]])
+	local name, args = bagelBot.out()
+	local page = args[1]
+	if tonumber(page) == nil then
+		page = 1
 	end
+	local pages = math.ceil(#thelp/9)
+	local skip = page*9
+	local outTbl = {"&cHelp: &6&g(!help "..tostring(page-1)..")<<&c "..tostring(page).." &6&g(!help "..tostring(page+1)..")>>"}
+  local n = 0
+  local line = 1
+	for k, v in pairs(thelp) do
+    n = n+1
+    if n >= skip-9 and n <= skip then
+      local ind
+      local str = {}
+      local tmp = "&c&g(!"..k..")"..k..": &r"..v
+      repeat
+        ind = tmp:find("\n")
+        if ind ~= nil then
+	        print(ind)
+          str[#str+1] = tmp:sub(1, ind-1)
+          tmp = tmp:sub(ind+1)
+        end
+      until ind == nil
+      local num = 0
+      for _, v in pairs(str) do
+        num = num+(math.ceil(string.len(v)/53))
+      end
+      if line+num > 9 then
+        break
+      else
+        outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
+      end
+      line = line+num
+      if line >= 9 then
+        break
+      end
+    end
+	end
+  if #outTbl > 1 then
+    bagelBot.tell(name, outTbl)
+  end
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
