@@ -102,7 +102,7 @@ local help = function() --!help integration
       until ind == nil
       local num = 0
       for _, v in pairs(str) do
-        num = num+(math.ceil(string.len(v)/53))
+        num = num+(math.ceil(string.len(v)/53))+1
       end
       if line+num > 9 then
         break
@@ -110,7 +110,6 @@ local help = function() --!help integration
         outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
       end
       line = line+num
-      print(num)
       if line >= 9 then
         break
       end
