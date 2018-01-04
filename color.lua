@@ -121,7 +121,7 @@ format = function(sText, bAction)
 			outText = outText..',"clickEvent":{"action":"'..current["action"]..'","value":"'..current["actionText"]..'"}'
 		end
 		if current["hoverEvent"] ~= false and bAction then
-			outText = outText..',"hoverEvent":{"action":"show_text","value":"'..current["hoverText"]..'"}'
+			outText = outText..',"hoverEvent":{"action":"show_text","value":'..current["hoverText"]..'}'
 		end
         outText = outText..'},'
     end
