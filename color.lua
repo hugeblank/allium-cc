@@ -104,7 +104,7 @@ format = function(sText, bAction)
 			v[2] = "&"..v[1]..v[2]
 		end
         outText = outText..'{"text":"'..v[2]..'","color":"'..current["color"]..'"'
-		for k, v in pairs(current["format"])
+		for k, v in pairs(current["format"]) do
 			if v then
 				outText = outText..",\""..k.."\":true"
 			end
