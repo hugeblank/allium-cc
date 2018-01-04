@@ -64,7 +64,8 @@ format = function(sText, bAction)
 			if v[2]:find("\\") == v[2]:len() then
 				tbl[k] = {v[1], v[2]:sub(1, -1).."&"..tbl[tonumber(k)+1][1]..tbl[tonumber(k)+1][2]}
 				table.remove(tbl, tonumer(k)+1)
-				return escape(tbl)
+				local ret = escape(tbl)
+				return ret
 			end
 		end
 	end
