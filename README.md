@@ -2,7 +2,6 @@
 BagelBot is a simple lua plugin interface for minecraft.
 It uses Computercraft's Command Computer, and Computronics's Creative Chatbox to function.
 ## Install
-
 To install BagelBot, run this command, it's that simple!
 
 **1.** `pastebin run LGwrkjxm`
@@ -10,7 +9,6 @@ To install BagelBot, run this command, it's that simple!
 The installer installs [Eric Wieser's](https://github.com/eric-wieser/) [computercraft-github](https://github.com/eric-wieser/computercraft-github), a github repository downloader that is necessary to download the bot, and the plugins that can be installed.
 
 ## Base Commands
-
 `!help`: lists the help entries for the installed plugins
 
 `!plugins`: Lists the plugins that are installed.
@@ -40,3 +38,9 @@ If you want to develop a plugin for BagelBot the file/directory structure is as 
 		* help (where the information for all the commands go. should have the same name as the command it's referring to)
 		* threads (where all code that should be put on the same loop as the main command executor should go)
 		* init.lua (variables and such that you want initialized at the start of the computer)
+
+## Cloning this repository
+It's worth noting that there are some places you might want to check out after you fork, and before you start testing your code. 
+
+1. The pastebin [installer](https://www.pastebin.com/LGwrkjxm). You are free to make your own installer to your fork with this code, simply change the `repo` string to "your github username"/"the name of your BetaBot repository".
+2. The startup file of your fork. There is a line that has a comment along with it. Change that repo name from the official BagelBot repository to your forked repository, similar to the style shown above.
