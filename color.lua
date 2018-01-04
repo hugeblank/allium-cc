@@ -73,7 +73,7 @@ format = function(sText, bAction)
         if cTable[v[1]] ~= nil then
             current["color"] = cTable[v[1]]
         elseif formats[v[1]] ~= nil then 
-			if current["format"][formats[v[1]]] = false then
+			if current["format"][formats[v[1]]] == false then
 				current["format"][formats[v[1]]] = true
 		    else
 				current["format"][formats[v[1]]] = false
