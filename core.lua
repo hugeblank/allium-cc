@@ -7,6 +7,8 @@ local pluginlist = {}
 local command = {}
 local threads = {}
 local thelp = {}
+local tsuggest = {}
+local cmdamt = 18
 local dir = shell.dir()
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
@@ -67,7 +69,8 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 			botcmds[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
 			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
-				thelp[name] = txt.readAll()
+				thelp[name] = txt.readLine()
+				tsuggest[name] = txt.readLine()
 				txt.close()
 			else
 				thelp[name] = name.." has no information provided."
@@ -82,47 +85,19 @@ local help = function() --!help integration
 	if tonumber(page) == nil then
 		page = 1
 	end
-	local pages = math.ceil(#thelp/9)
-	local skip = page*9
-	local outTbl = {"&cHelp: &6&g(!help "..tostring(page-1)..")<<&c "..tostring(page).." &6&g(!help "..tostring(page+1)..")>>"}
-  local n = 0
-  local line = 1
-	for k, v in pairs(thelp) do
-    n = n+1
-    if n >= skip-9 and n <= skip then
-      local ind
-      local str = {}
-      local tmp = "&c&g(!"..k..")"..k..": &r"..v
-      repeat
-        ind = tmp:find("\n")
-        if ind ~= nil then
-	        print(ind)
-          str[#str+1] = tmp:sub(1, ind-1)
-          tmp = tmp:sub(ind+1)
-        end
-      until ind == nil
-      local num = 0
-      for _, v in pairs(str) do
-        num = num+(math.ceil(string.len(v)/53))
-      end
-      if line+num > 9 then
-        break
-      else
-        outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
-      end
-      line = line+num
-      if line >= 9 then
-        break
-      end
-    end
+	local pages = math.ceil(#thelp/cmdamt)
+	local skip = page*cmdamt
+	local outStr = "&2&l==================&r&eBagelBot !help Menu&r&2&l==================&r\n"
+	outStr = outStr..thelp[page].."\n"
+	local bottomInt = 7+string.len(tostring(page-1)..tostring(#thelp))
+	outStr = outStr.."\n"..string.rep("=", math.ceil(55-bottomInt/2)).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#thelp.." &6&g(!help "..tostring(page+1)..")>>&r"..string.rep("=", math.floor(55-bottomInt/2))
+	if #outTbl > 1 then
+		bagelBot.tell(name, outStr, true)
 	end
-  if #outTbl > 1 then
-    bagelBot.tell(name, outTbl)
-  end
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
-	bagelBot.tell(name, "Contribute to bagelBot here: https://github.com/hugeblank/BagelBot")
+	bagelBot.tell(name, "Contribute to BagelBot here: https://github.com/hugeblank/BagelBot")
 end
 local plugins = function() --!plugins integration
 	name = bagelBot.out()
@@ -143,6 +118,54 @@ botcmds["plugins"] = plugins
 thelp["github"] = "Provides the github repo to check out"
 thelp["plugins"] = "Lists the name of all plugins installed on the bot"
 thelp["help"] = "Provides help for help for help for help for help for help"
+tsuggest["github"] = "!github"
+tsuggest["plugins"] = "!plugins"
+tsuggest["help"] = "!help"
+
+local tthelp = {}
+local tstring = ""
+local rowtbl = {}
+for k, v in pairs(thelp) do --create sets of tables that are exactly `cmdamt` large
+	local fstr = "!"..k..": "..v
+	local ffstr = ""
+	local pstr = ""
+	for word in string.gmatch(fstr, "%S+") do
+		local preword
+		if word == "!"..k..":" then
+			if not tsuggest[k] then
+				tsuggest[k] = "!"..k
+			end
+			preword = "&g(!.."..k..")&s("..tsuggest[k]..")&h(Click for Autocompletion)!"..k.."&r:"
+		end
+		if string.len(pstr..word.." ") > 55 then
+			fftbl[fftbl+1] = pstr.."\n"
+			pstr = word.." "
+		else
+			if not preword then
+				pstr = pstr..word.." "
+			else
+				pstr = pstr..preword.." "
+			end
+		end
+	end
+	if pstr ~= "" then
+		fftbl[fftbl+1] = pstr
+	end
+	if #rowtbl+#fftbl > cmdamt then
+		for i = 1, #fftbl do
+			rowtbl[#rowtbl+1] = fftbl[i]
+		end
+	else
+		for i = 1, #rowtbl do
+			tstring = tstring..rowtbl[i].."\n"
+		end
+		tthelp[tthelp+1] = tstring
+	end
+end
+thelp = tthelp
+thelp = nil
+tstring = nil
+rowtbl = nil
 
 local main = function()
 	while true do
