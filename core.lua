@@ -1,22 +1,25 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
+local mName = "<&eBagel&6Bot>" --bot title
 local botcmds = {}
 local pluginlist = {}
 local command = {}
 local threads = {}
 local thelp = {}
 local dir = shell.dir()
-local mName = "<&eBagel&6Bot>" --bot title
 print("Integrating API...")
-_G.bagelBot.tell = function(name, message, hidetag) --bagelBot.tell as documented in README
+_G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
     local m
     if type(message) == "string" then
         m = message
     else
         m = ""
     end
-    local _, test = commands.tellraw(name, color.format((function(hidetag)if hidetag then return "" else return mName.."&r " end end)(hidetag)..m))
+    if type(botname) ~= "string "then
+    	botname = mName
+    end
+    local _, test = commands.tellraw(name, color.format((function(hidetag)if hidetag then return "" else return botname.."&r " end end)(hidetag)..m))
     if type(message) == "table" then
         for k, v in pairs(message) do
             local _, l = commands.tellraw(name, color.format(v))
@@ -46,6 +49,7 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 	fpers.write(textutils.serialise(tpersist))
 	fpers.close()
 end
+
 print("Loading plugins...")
 for _, plugin in pairs(fs.list(dir.."plugins")) do
 	pluginlist[#pluginlist+1] = plugin
