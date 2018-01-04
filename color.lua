@@ -1,23 +1,39 @@
 local cTable = {
-r = "white",
-["0"] = "black",
-["1"] = "dark_blue",
-["2"] = "dark_green",
-["3"] = "dark_aqua",
-["4"] = "dark_red",
-["5"] = "dark_purple",
-["6"] = "gold",
-["7"] = "gray",
-["8"] = "dark_gray",
-["9"] = "blue",
-a = "green",
-b = "aqua",
-c = "red",
-d = "light_purple",
-e = "yellow",
-f = "white"
+    ["0"] = "black",
+    ["1"] = "dark_blue",
+    ["2"] = "dark_green",
+    ["3"] = "dark_aqua",
+    ["4"] = "dark_red",
+    ["5"] = "dark_purple",
+    ["6"] = "gold",
+    ["7"] = "gray",
+    ["8"] = "dark_gray",
+    ["9"] = "blue",
+    a = "green",
+    b = "aqua",
+    c = "red",
+    d = "light_purple",
+    e = "yellow",
+    f = "white"
+}
+local formats = {
+    l = "bold",
+    n = "underline",
+    o = "italic",
+    k = "obfuscated",
+    m = "strikethrough",
+}
+local actions = {
+    s = "suggest_command"
+    g = "run_command" 
+    h = "link" 
+end
+local other = {
+    i = "hovertext"
+    r = "reset"
 }
 format = function(sText)
+    local current = {}
     local seperated = {}
     sText = "&r"..sText
     for k in string.gmatch(sText, "[^&]+") do
