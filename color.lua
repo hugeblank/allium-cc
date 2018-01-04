@@ -39,12 +39,12 @@ local dCurrent = {
     	italic = false,
     	obfuscated = false,
     	strikethrough = false,
-	}
+	},
     color = "white",
     hoverEvent = false,
-    action = false
-	actionText = ""
-	hoverText = ""
+    action = false,
+	actionText = "",
+	hoverText = "",
 }
     
 format = function(sText, bAction)
