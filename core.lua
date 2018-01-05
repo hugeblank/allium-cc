@@ -10,9 +10,9 @@ local thelp = {}
 local tsuggest = {}
 local rowhelp = {}
 local tstring = ""
-local rowtbl = {}
 local cmdamt = 18
 local dir = shell.dir()
+rowtbl = {}
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
     local m
