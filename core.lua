@@ -95,7 +95,7 @@ local help = function() --!help integration
 			end
 		end
 		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
-		outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&g(!help "..tostring(args[1]-1)..")<<&r&c "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &6&g(!help "..tostring(args[1]+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-4)
+		outStr = outStr.."&2l"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&l&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &6&l&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-4)
 		bagelBot.tell(name, outStr, true)
 	elseif type(tonumber(args[1])) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
@@ -149,7 +149,7 @@ for k, v in pairs(thelp) do --create a table that has rows that are exactly 55 c
 	for i = 1, #rowtbl do
 		if string.find(rowtbl[i], "!"..k..":") then
 			rowtbl[i] = string.sub(rowtbl[i], string.len("!"..k..":")+1)
-			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)"..k.."&r:"..rowtbl[i]
+			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)!"..k.."&r:"..rowtbl[i]
 		end
 	end
 end
