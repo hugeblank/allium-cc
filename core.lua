@@ -72,6 +72,8 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
 				thelp[name] = txt.readLine()
 				tsuggest[name] = txt.readLine()
+				if not tsuggest[name] then
+					tsuggest[name] = "!"..name
 				txt.close()
 			else
 				thelp[name] = name.." has no information provided."
