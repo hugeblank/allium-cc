@@ -7,6 +7,9 @@ local pluginlist = {}
 local command = {}
 local threads = {}
 local thelp = {}
+local tsuggest = {}
+local rowtbl = {}
+local cmdamt = 18
 local dir = shell.dir()
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
@@ -67,10 +70,15 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 			botcmds[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
 			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
-				thelp[name] = txt.readAll()
+				thelp[name] = txt.readLine()
+				tsuggest[name] = txt.readLine()
+				if not tsuggest[name] then
+					tsuggest[name] = "!"..name
+				end
 				txt.close()
 			else
 				thelp[name] = name.." has no information provided."
+				tsuggest[name] = "!"..name
 			end
 		end
 	end
@@ -78,58 +86,41 @@ end
 print("Integrating core components...")
 local help = function() --!help integration
 	local name, args = bagelBot.out()
-	local page = args[1]
-	if tonumber(page) == nil then
-		page = 1
+	if tonumber(args[1]) then
+		args[1] = tonumber(args[1])
+	elseif args[1] == nil then
+		args[1] = 1
 	end
-	local pages = math.ceil(#thelp/9)
-	local skip = page*9
-	local outTbl = {"&cHelp: &6&g(!help "..tostring(page-1)..")<<&c "..tostring(page).." &6&g(!help "..tostring(page+1)..")>>"}
-  local n = 0
-  local line = 1
-	for k, v in pairs(thelp) do
-    n = n+1
-    if n >= skip-9 and n <= skip then
-      local ind
-      local str = {}
-      local tmp = "&c&g(!"..k..")"..k..": &r"..v
-      repeat
-        ind = tmp:find("\n")
-        if ind ~= nil then
-          str[#str+1] = tmp:sub(1, ind-1)
-          tmp = tmp:sub(ind+1)
-        end
-      until ind == nil
-      local num = 0
-      for _, v in pairs(str) do
-        num = num+(math.ceil(string.len(v)/53))+1
-      end
-      if line+num > 9 then
-        break
-      else
-        outTbl[#outTbl+1] = "&c&g(!"..k..")"..k..": &r"..v
-      end
-      line = line+num
-      print(line)
-      if line >= 9 then
-        break
-      end
-    end
+	if type(args[1]) == "number" and args[1] > 0 and args[1] <= math.ceil(#rowtbl/18) then
+		local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l================&r\n"
+		for i = 1+(cmdamt*(args[1]-1)), cmdamt+(cmdamt*(args[1]-1)) do 
+			if rowtbl[i] ~= nil then
+				outStr = outStr..rowtbl[i]
+			else
+				outStr = outStr.."\n"
+			end
+		end
+		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
+		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-3).."&r&6&l&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &r&6&l&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-4).."&r"
+		bagelBot.tell(name, outStr, true)
+	elseif type(args[1]) == "number" then
+		bagelBot.tell(name, "&cPage does not exist.")
+	elseif type(args[1]) == "string" and thelp[args[1]] then
+		bagelBot.tell(name, "&c&s("..tsuggest[args[1]]..")&h(Click for !"..args[1].." autofill)&r!"..args[1]..":"..thelp[args[1]])
+	else
+		bagelBot.tell(name, "&cCommand does not exist.")
 	end
-  if #outTbl > 1 then
-    bagelBot.tell(name, outTbl)
-  end
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
-	bagelBot.tell(name, "Contribute to bagelBot here: https://github.com/hugeblank/BagelBot")
+	bagelBot.tell(name, "Contribute to BagelBot here: &b&n&ihttps://github.com/hugeblank/BagelBot")
 end
 local plugins = function() --!plugins integration
 	name = bagelBot.out()
 	local str = ""
 	for i = 1, #pluginlist do
 		if i < #pluginlist then
-			str = str.."&a"..pluginlist[i].."&f, "
+			str = str.."&a"..pluginlist[i].."&r, "
 		else
 			str = str.."&a"..pluginlist[i]
 		end
@@ -143,6 +134,31 @@ botcmds["plugins"] = plugins
 thelp["github"] = "Provides the github repo to check out"
 thelp["plugins"] = "Lists the name of all plugins installed on the bot"
 thelp["help"] = "Provides help for help for help for help for help for help"
+tsuggest["github"] = "!github"
+tsuggest["plugins"] = "!plugins"
+tsuggest["help"] = "!help"
+
+for k, v in pairs(thelp) do --create a table that has rows that are exactly 55 characters large
+	local exstr = "!"..k..": "..v
+	local row = ""
+	for word in string.gmatch(exstr, "%S+") do
+		if string.len(row..word) > 55 then
+			rowtbl[#rowtbl+1] = row.."\n"
+			row = word.." "
+		else
+			row = row..word.." "
+		end
+	end
+	if row ~= "" then
+		rowtbl[#rowtbl+1] = row.."\n"
+	end
+	for i = 1, #rowtbl do
+		if string.find(rowtbl[i], "!"..k..":") then
+			rowtbl[i] = string.sub(rowtbl[i], string.len("!"..k..":")+1)
+			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)!"..k.."&r:"..rowtbl[i]
+		end
+	end
+end
 
 local main = function()
 	while true do
