@@ -102,7 +102,7 @@ local help = function() --!help integration
 	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
 	elseif type(args[1]) == "string" and thelp[args[1]] then
-		bagelBot.tell(name, "&c&s("..tsuggest[args[1]]..")&h(Click for !"..k.." autofill)&r:"..thelp[args[1]])
+		bagelBot.tell(name, "&c&s("..tsuggest[args[1]]..")&h(Click for !"..args[1].." autofill)&r:"..thelp[args[1]])
 	else
 		bagelBot.tell(name, "&cCommand does not exist.")
 	end
