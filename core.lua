@@ -84,16 +84,28 @@ end
 print("Integrating core components...")
 local help = function() --!help integration
 	local name, args = bagelBot.out()
-	if args[1] == nil or type(tonumber(args[1])) ~= "number" then
+	if args[1] == nil then
 		args[1] = 1
 	end
-	local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l===============&r\n"
-	for i = 1+(cmdamt*args[1]-1), cmdamt+(cmdamt*args[1]-1) do 
-		outStr = outStr..rowtbl[i]
+	if args[1] > 0 and args[1] < math.ceil(#rowtbl/18) and type(tonumber(args[1]) == "number" then
+		local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l================&r\n"
+		for i = 1+(cmdamt*(args[1]-1)), cmdamt+(cmdamt*(args[1]-1)) do 
+			if rowtbl[i] ~= nil then
+				outStr = outStr..rowtbl[i]
+			else
+				outStr = outStr.."\n"
+			end
+		end
+		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
+		outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&g(!help "..tostring(args[1]-1)..")<<&r&c "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &6&g(!help "..tostring(args[1]+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-4)
+		bagelBot.tell(name, outStr, true)
+	elseif type(tonumber(args[1]) == "number" then
+		bagelBot.tell(name, "&cPage does not exist.")
+	elseif type(tonumber(args[1]) == "string" and thelp[args[1]] then
+		bagelBot.tell(name, "&c&s("..tsuggest[args[1]]..")&h(Click for !"..k.." autofill)&r:"..thelp[args[1]])
+	else
+		bagelBot.tell(name, "&cCommand does not exist.")
 	end
-	local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
-	outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&g(!help "..tostring(args[1]-1)..")<<&r&c "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &6&g(!help "..tostring(args[1]+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-4)
-	bagelBot.tell(name, outStr, true)
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
@@ -104,7 +116,7 @@ local plugins = function() --!plugins integration
 	local str = ""
 	for i = 1, #pluginlist do
 		if i < #pluginlist then
-			str = str.."&a"..pluginlist[i].."&f, "
+			str = str.."&a"..pluginlist[i].."&r, "
 		else
 			str = str.."&a"..pluginlist[i]
 		end
@@ -138,7 +150,7 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 	end
 	for i = 1, #rowtbl do
 		if string.find(rowtbl[i], "!"..k..":") then
-			rowtbl[i] = string.sub(rowtbl[i], string.len"!"..k..":")+1)
+			rowtbl[i] = string.sub(rowtbl[i], string.len("!"..k..":")+1)
 			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)&r:"..rowtbl[i]
 		end
 	end
