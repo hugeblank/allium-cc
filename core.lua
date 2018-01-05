@@ -78,6 +78,7 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 				txt.close()
 			else
 				thelp[name] = name.." has no information provided."
+				tsuggest[name] = "!"..name
 			end
 		end
 	end
