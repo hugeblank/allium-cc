@@ -8,7 +8,7 @@ local command = {}
 local threads = {}
 local thelp = {}
 local tsuggest = {}
-local tthelp = {}
+local rowhelp = {}
 local tstring = ""
 local rowtbl = {}
 local cmdamt = 18
@@ -84,14 +84,15 @@ end
 print("Integrating core components...")
 local help = function() --!help integration
 	local name, args = bagelBot.out()
-	local page = args[1]
-	if tonumber(page) == nil then
-		page = 1
+	if args[1] == nil or type(tonumber(args[1])) ~= "number" then
+		args[1] = 1
 	end
-	local outStr = "&2&l=================&r&eBagelBot !help Menu&r&2&l=================&r\n"
-	outStr = outStr..tthelp[page]
-	local bottomInt = 7+string.len(tostring(page)..tostring(#tthelp))
-	outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-1).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-1)
+	local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l===============&r\n"
+	for i = 1+(cmdamt*args[1]-1), cmdamt+(cmdamt*args[1]-1) do 
+		outStr = outStr..rowtbl[i]
+	end
+	local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
+	outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&g(!help "..tostring(args[1]-1)..")<<&r&c "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &6&g(!help "..tostring(args[1]+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-4)
 	bagelBot.tell(name, outStr, true)
 end
 local github = function() --!github integration
@@ -122,53 +123,29 @@ tsuggest["plugins"] = "!plugins"
 tsuggest["help"] = "!help"
 
 for k, v in pairs(thelp) do --create a string that has rows that are exactly `cmdamt` large
-	local fstr = "!"..k..": "..v
-	local fftbl = {} --rows of words >=55 chars long
-	local pstr = "" --row of words >=55 chars long
-	for word in string.gmatch(fstr, "%S+") do --add each word to a line until it's closest to 55 chars it can get
-		local preword = ""
-		print(word) --debug ##REMOVE##
-		sleep(.05) --debug ##REMOVE##
-		if word == "!"..k..":" then --if the word is this then assign a different preword to take its place
-			if not tsuggest[k] then --if it doesn't have a suggested command, fill it in.
-				tsuggest[k] = "!"..k
-			end
-			preword = "&g(!"..k..")&c!"..k.."&r" 
-		end
-		if string.len(pstr..word.." ") > 55 then --if the string combined with the word is larger than 55 chars, pack the string up, and reset it.
-				if preword ~= "" then --but don't forget to add what is needed
-					pstr = string.sub(pstr, string.len("!"..k..":"), -1)
-					pstr = preword..pstr.."\n"
-				end
-			fftbl[#fftbl+1] = pstr
-			pstr = word.." "
-		else --otherwise, assign words normally
-			pstr = pstr..word.." "
+	local exstr = "!"..k..": "..v
+	local row = ""
+	for word in string.gmatch(exstr, "%S+") do
+		if string.len(row..word) > 55 then
+			rowtbl[#rowtbl+1] = row.."\n"
+			row = word.." "
+		else
+			row = row..word.." "
 		end
 	end
-	if pstr ~= "" then --if the string isn't blank, and the word loop hasn't been exited, assign it its own row
-		if preword ~= "" then --but don't forget to add what is needed
-			pstr = string.sub(pstr, string.len("!"..k..":"), -1)
-			pstr = preword..pstr.."\n"
-		end
-		fftbl[#fftbl+1] = pstr.."\n"
+	if row ~= "" then
+		rowtbl[#rowtbl+1] = row.."\n"
 	end
-	if #rowtbl+#fftbl < cmdamt then --if the existing rows in addition with the incoming rows is smaller than `cmdamt` slap them in
-		for i = 1, #fftbl do
-			rowtbl[#rowtbl+1] = fftbl[i]
+	for i = 1, #rowtbl do
+		if string.find(rowtbl[i], "!"..k..":") then
+			rowtbl[i] = string.sub(rowtbl[i], string.len"!"..k..":")+1)
+			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)&r:"..rowtbl[i]
 		end
-	else --otherwise, convert `rowtbl` into a string of `cmdamt` lines, set the remaining rows in a table to `rowtbl`, and add it all to `tthelp`
-		for i = 1, #rowtbl do
-			tstring = tstring..rowtbl[i]
-		end
-		rowtbl = fftbl
-		tthelp[#tthelp+1] = tstring
 	end
 end
 --clean things up a bit.
 tstring = nil
 rowtbl = nil
-thelp = nil
 
 local main = function()
 	while true do
