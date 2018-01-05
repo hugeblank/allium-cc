@@ -82,10 +82,12 @@ end
 print("Integrating core components...")
 local help = function() --!help integration
 	local name, args = bagelBot.out()
-	if args[1] == nil then
+	if tonumber(args[1]) then
+		args[1] = tonumber(args[1])
+	elseif args[1] == nil then
 		args[1] = 1
 	end
-	if args[1] > 0 and args[1] <= math.ceil(#rowtbl/18) and type(tonumber(args[1])) == "number" then
+	if type(args[1]) == "number" and args[1] > 0 and args[1] <= math.ceil(#rowtbl/18) then
 		local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l================&r\n"
 		for i = 1+(cmdamt*(args[1]-1)), cmdamt+(cmdamt*(args[1]-1)) do 
 			if rowtbl[i] ~= nil then
@@ -97,9 +99,9 @@ local help = function() --!help integration
 		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
 		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&r&6&l&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &r&6&l&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-4).."&r"
 		bagelBot.tell(name, outStr, true)
-	elseif type(tonumber(args[1])) == "number" then
+	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
-	elseif type(tonumber(args[1])) == "string" and thelp[args[1]] then
+	elseif type(args[1]) == "string" and thelp[args[1]] then
 		bagelBot.tell(name, "&c&s("..tsuggest[args[1]]..")&h(Click for !"..k.." autofill)&r:"..thelp[args[1]])
 	else
 		bagelBot.tell(name, "&cCommand does not exist.")
