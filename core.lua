@@ -91,7 +91,7 @@ local help = function() --!help integration
 	local outStr = "&2&l=================&r&eBagelBot !help Menu&r&2&l=================&r\n"
 	outStr = outStr..tthelp[page]
 	local bottomInt = 7+string.len(tostring(page)..tostring(#tthelp))
-	outStr = outStr.."&2&l"..string.rep("=", math.ceil((55-bottomInt)/2)-1).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-1)
+	outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-1).."&6&g(!help "..tostring(page-1)..")<<&r&c "..tostring(page).."/"..#tthelp.." &6&g(!help "..tostring(page+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-1)
 	bagelBot.tell(name, outStr, true)
 end
 local github = function() --!github integration
@@ -126,29 +126,31 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 	local fftbl = {} --rows of words >=55 chars long
 	local pstr = "" --row of words >=55 chars long
 	for word in string.gmatch(fstr, "%S+") do --add each word to a line until it's closest to 55 chars it can get
-		local preword
+		local preword = ""
+		print(word) --debug ##REMOVE##
+		sleep(.05) --debug ##REMOVE##
 		if word == "!"..k..":" then --if the word is this then assign a different preword to take its place
 			if not tsuggest[k] then --if it doesn't have a suggested command, fill it in.
 				tsuggest[k] = "!"..k
 			end
-			preword = "&c&g(!"..k..")!"..k.."&r" 
+			preword = "&g(!"..k..")&c!"..k.."&r" 
 		end
 		if string.len(pstr..word.." ") > 55 then --if the string combined with the word is larger than 55 chars, pack the string up, and reset it.
-				if preword then --but don't forget to add what is needed
-					pstr = string.sub(pstr, string.len("!"..k..":"))
-					pstr = preword..pstr
+				if preword ~= "" then --but don't forget to add what is needed
+					pstr = string.sub(pstr, string.len("!"..k..":"), -1)
+					pstr = preword..pstr.."\n"
 				end
-			fftbl[#fftbl+1] = pstr.."\n"
+			fftbl[#fftbl+1] = pstr
 			pstr = word.." "
 		else --otherwise, assign words normally
-			if preword then --but don't forget to add what is needed
-				pstr = string.sub(pstr, string.len("!"..k..":"))
-				pstr = preword..pstr
-			end
 			pstr = pstr..word.." "
 		end
 	end
 	if pstr ~= "" then --if the string isn't blank, and the word loop hasn't been exited, assign it its own row
+		if preword ~= "" then --but don't forget to add what is needed
+			pstr = string.sub(pstr, string.len("!"..k..":"), -1)
+			pstr = preword..pstr.."\n"
+		end
 		fftbl[#fftbl+1] = pstr.."\n"
 	end
 	if #rowtbl+#fftbl < cmdamt then --if the existing rows in addition with the incoming rows is smaller than `cmdamt` slap them in
