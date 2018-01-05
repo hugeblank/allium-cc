@@ -52,8 +52,8 @@ end
 
 print("Loading plugins...")
 for _, plugin in pairs(fs.list(dir.."plugins")) do
-	pluginlist[#pluginlist+1] = plugin
 	if fs.isDir(dir.."plugins/"..plugin) then
+		pluginlist[#pluginlist+1] = plugin
 		if fs.exists(dir.."plugins/"..plugin.."/init.lua") then --load init.lua
 			shell.run(dir.."plugins/"..plugin.."/init.lua")
 		end
