@@ -10,8 +10,8 @@ local thelp = {}
 local tsuggest = {}
 local cmdamt = 18
 local dir = shell.dir()
-_G.bagelBot.rowtbl = {}
 print("Integrating API...")
+_G.bagelBot.rowtbl = {}
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
     local m
     if type(message) == "string" then
