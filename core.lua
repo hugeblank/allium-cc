@@ -8,10 +8,10 @@ local command = {}
 local threads = {}
 local thelp = {}
 local tsuggest = {}
+local rowtbl = {}
 local cmdamt = 18
 local dir = shell.dir()
 print("Integrating API...")
-_G.bagelBot.rowtbl = {}
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
     local m
     if type(message) == "string" then
@@ -85,17 +85,17 @@ local help = function() --!help integration
 	if args[1] == nil then
 		args[1] = 1
 	end
-	if args[1] > 0 and args[1] <= math.ceil(#bagelBot.rowtbl/18) and type(tonumber(args[1])) == "number" then
+	if args[1] > 0 and args[1] <= math.ceil(#rowtbl/18) and type(tonumber(args[1])) == "number" then
 		local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l================&r\n"
 		for i = 1+(cmdamt*(args[1]-1)), cmdamt+(cmdamt*(args[1]-1)) do 
-			if bagelBot.rowtbl[i] ~= nil then
-				outStr = outStr..bagelBot.rowtbl[i]
+			if rowtbl[i] ~= nil then
+				outStr = outStr..rowtbl[i]
 			else
 				outStr = outStr.."\n"
 			end
 		end
-		local bottomInt = 7+string.len(tostring(args[1])..tostring(#bagelBot.rowtbl))
-		outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&g(!help "..tostring(args[1]-1)..")<<&r&c "..tostring(args[1]).."/"..math.ceil(#bagelBot.rowtbl/18).." &6&g(!help "..tostring(args[1]+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-4)
+		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
+		outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&g(!help "..tostring(args[1]-1)..")<<&r&c "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &6&g(!help "..tostring(args[1]+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-4)
 		bagelBot.tell(name, outStr, true)
 	elseif type(tonumber(args[1])) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
@@ -132,7 +132,7 @@ tsuggest["github"] = "!github"
 tsuggest["plugins"] = "!plugins"
 tsuggest["help"] = "!help"
 
-for k, v in pairs(thelp) do --create a string that has rows that are exactly `cmdamt` large
+for k, v in pairs(thelp) do --create a table that has rows that are exactly 55 characters large
 	local exstr = "!"..k..": "..v
 	local row = ""
 	for word in string.gmatch(exstr, "%S+") do
@@ -153,9 +153,6 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 		end
 	end
 end
---clean things up a bit.
-tstring = nil
-rowtbl = nil
 
 local main = function()
 	while true do
