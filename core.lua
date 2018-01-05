@@ -87,7 +87,7 @@ local help = function() --!help integration
 	if args[1] == nil then
 		args[1] = 1
 	end
-	if args[1] > 0 and args[1] < math.ceil(#rowtbl/18) and type(tonumber(args[1]) == "number" then
+	if args[1] > 0 and args[1] <= math.ceil(#rowtbl/18) and type(tonumber(args[1])) == "number" then
 		local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l================&r\n"
 		for i = 1+(cmdamt*(args[1]-1)), cmdamt+(cmdamt*(args[1]-1)) do 
 			if rowtbl[i] ~= nil then
@@ -99,9 +99,9 @@ local help = function() --!help integration
 		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
 		outStr = outStr.."&l&2"..string.rep("=", math.ceil((55-bottomInt)/2)-4).."&6&g(!help "..tostring(args[1]-1)..")<<&r&c "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &6&g(!help "..tostring(args[1]+1)..")>>&r&l&2"..string.rep("=", math.floor((55-bottomInt)/2)-4)
 		bagelBot.tell(name, outStr, true)
-	elseif type(tonumber(args[1]) == "number" then
+	elseif type(tonumber(args[1])) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
-	elseif type(tonumber(args[1]) == "string" and thelp[args[1]] then
+	elseif type(tonumber(args[1])) == "string" and thelp[args[1]] then
 		bagelBot.tell(name, "&c&s("..tsuggest[args[1]]..")&h(Click for !"..k.." autofill)&r:"..thelp[args[1]])
 	else
 		bagelBot.tell(name, "&cCommand does not exist.")
@@ -151,7 +151,7 @@ for k, v in pairs(thelp) do --create a string that has rows that are exactly `cm
 	for i = 1, #rowtbl do
 		if string.find(rowtbl[i], "!"..k..":") then
 			rowtbl[i] = string.sub(rowtbl[i], string.len("!"..k..":")+1)
-			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)&r:"..rowtbl[i]
+			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)"..k.."&r:"..rowtbl[i]
 		end
 	end
 end
