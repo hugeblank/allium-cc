@@ -1,7 +1,8 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local mName = "&g(urmomhavetriplegay)<&eBagel&6Bot&r>" --bot title
+local easterEgg = {"urmomhavetriplegay", "https://www.pornhub.com","does anyone know the command for !help?", "What's the name of that one bagel dude...", "BagelBot is pretty badass", "gucci gang", "Sorry people, this is a christian minecraft server, so no swearing.", "hugeblank added random easter egg bogus to this crap and still hasn't implemented (insert feature here)!!! REEEE!"}
+local mName = "&g("..easterEgg[math.random(1, #easterEgg)]..")<&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {}
 local command = {}
