@@ -9,7 +9,7 @@ local threads = {}
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
-local cmdamt = 9
+local cmdamt = 8
 local dir = shell.dir()
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
@@ -91,7 +91,7 @@ local help = function() --!help integration
 	elseif args[1] == nil then
 		args[1] = 1
 	end
-	if type(args[1]) == "number" and args[1] > 0 and args[1] <= math.ceil(#rowtbl/18) then
+	if type(args[1]) == "number" and args[1] > 0 and args[1] <= math.ceil(#rowtbl/cmdamt) then
 		local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l================&r\n"
 		for i = 1+(cmdamt*(args[1]-1)), cmdamt+(cmdamt*(args[1]-1)) do 
 			if rowtbl[i] ~= nil then
@@ -101,7 +101,7 @@ local help = function() --!help integration
 			end
 		end
 		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
-		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-3).."&r&6&l&h(Previous Page)&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &r&6&l&h(Next Page)&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-4).."&r"
+		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-2).."&r&6&l&h(Previous Page)&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/cmdamt).." &r&6&l&h(Next Page)&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-3).."&r"
 		bagelBot.tell(name, outStr, true)
 	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
