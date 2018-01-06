@@ -4,7 +4,7 @@ _G.bagelBot = {}
 local easterEgg = {"urmomhavetriplegay", "https://www.pornhub.com","does anyone know the command for !help?", "What's the name of that one bagel dude...", "BagelBot is pretty badass", "gucci gang", "Sorry people, this is a christian minecraft server, so no swearing.", "hugeblank added random easter egg bogus to this crap and still hasn't implemented (insert feature here)!!! REEEE!"}
 local mName = "&g("..easterEgg[math.random(1, #easterEgg)]..")<&eBagel&6Bot&r>" --bot title
 local botcmds = {}
-local pluginlist = {}
+local pluginlist = {"BagelCore"}
 local command = {}
 local threads = {}
 local thelp = {}
@@ -36,7 +36,7 @@ _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documen
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
-		return tpersist[name]
+		return tpersist[plugin][name]
 	else
 		return false
 	end
@@ -48,7 +48,7 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
-	tpersist[name] = data
+	tpersist[plugin][name] = data
 	local fpers = fs.open("persistence.json", "w")
 	fpers.write(textutils.serialise(tpersist))
 	fpers.close()
@@ -68,18 +68,18 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 		end
 		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do --load commands & help entries
 			local name = v:sub(1, -5)
-			botcmds[name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
+			botcmds[plugin][name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
 			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
-				thelp[name] = txt.readLine()
-				tsuggest[name] = txt.readLine()
-				if not tsuggest[name] then
-					tsuggest[name] = "!"..name
+				thelp[plugin][name] = txt.readLine()
+				tsuggest[plugin][name] = txt.readLine()
+				if not tsuggest[plugin][name] then
+					tsuggest[plugin][name] = "!"..name
 				end
 				txt.close()
 			else
-				thelp[name] = name.." has no information provided."
-				tsuggest[name] = "!"..name
+				thelp[plugin][name] = name.." has no information provided."
+				tsuggest[plugin][name] = "!"..name
 			end
 		end
 	end
@@ -114,7 +114,7 @@ local help = function() --!help integration
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
-	bagelBot.tell(name, "Contribute to BagelBot here: &b&n&ihttps://github.com/hugeblank/BagelBot")
+	bagelBot.tell(name, "Contribute to BagelBot here: &9&n&ihttps://github.com/hugeblank/BagelBot")
 end
 local plugins = function() --!plugins integration
 	name = bagelBot.out()
@@ -129,15 +129,15 @@ local plugins = function() --!plugins integration
 	bagelBot.tell(name, "\nPlugins installed: "..str)
 end
 --adding commands and integrating help entries for them
-botcmds["help"] = help
-botcmds["github"] = github
-botcmds["plugins"] = plugins
-thelp["github"] = "Provides the github repo to check out"
-thelp["plugins"] = "Lists the name of all plugins installed on the bot"
-thelp["help"] = "Provides help for help for help for help for help for help"
-tsuggest["github"] = "!github"
-tsuggest["plugins"] = "!plugins"
-tsuggest["help"] = "!help"
+botcmds["BagelCore"]["help"] = help
+botcmds["BagelCore"]["github"] = github
+botcmds["BagelCore"]["plugins"] = plugins
+thelp["BagelCore"]["github"] = "Provides the github repo to check out"
+thelp["BagelCore"]["plugins"] = "Lists the name of all plugins installed on the bot"
+thelp["BagelCore"]["help"] = "Provides help for help for help for help for help for help"
+tsuggest["BagelCore"]["github"] = "!github"
+tsuggest["BagelCore"]["plugins"] = "!plugins"
+tsuggest["BagelCore"]["help"] = "!help"
 
 for k, v in pairs(thelp) do --create a table that has rows that are exactly 55 characters large
 	local exstr = "!"..k..": "..v
@@ -171,9 +171,24 @@ local main = function()
 			end
 			local cmd = string.sub(command[1], 2)
 			table.remove(command, 1) --remove the first parameter given (!command)
-			if botcmds[cmd] ~= nil then --is it really a command?
-				_G.bagelBot.out = function() return name, command end --bagelBot.out as documented in README
-	    		botcmds[cmd]() --Let's execute the command
+			local possiblecmds = {}
+			if not string.find(cmd, ":") then
+				for k, v in pairs(botcmds) do
+					for l, w in pairs(v) do
+						if l == cmd then
+							possiblecmds[#possiblecmds+1] = w
+						end
+					end
+				end
+			else
+				local splitat = string.find(":")
+				possiblecmds[#possiblecmds+1] = botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)]
+			end
+			_G.bagelBot.out = function() return name, command end --bagelBot.out as documented in README
+			if #possiblecmds == 1 then --is it really a command?
+	    		possiblecmds[1]() --Let's execute the command
+	    	elseif #possiblecmds > 1 then
+	    		bagelBot.tell(name, "&eCommand collision. Specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. ex: &c&g(!BagelCore:github)!BagelCore:github")
     		else --this isn't a valid command...
 	    		bagelBot.tell(name, "&6Invalid Command, use &c&g(!help)!help&r&6 for assistance.") --bleh!
     		end
