@@ -9,7 +9,7 @@ local threads = {}
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
-local cmdamt = 18
+local cmdamt = 9
 local dir = shell.dir()
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
