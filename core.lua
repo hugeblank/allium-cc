@@ -1,7 +1,8 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local mName = "&g(urmomhavetriplegay)<&eBagel&6Bot&r>" --bot title
+local easterEgg = {"urmomhavetriplegay", "https://www.pornhub.com","does anyone know the command for !help?", "What's the name of that one bagel dude...", "BagelBot is pretty badass", "gucci gang", "Sorry people, this is a christian minecraft server, so no swearing.", "hugeblank added random easter egg bogus to this crap and still hasn't implemented (insert feature here)!!! REEEE!"}
+local mName = "&g("..easterEgg[math.random(1, #easterEgg)]..")<&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {}
 local command = {}
@@ -9,7 +10,7 @@ local threads = {}
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
-local cmdamt = 18
+local cmdamt = 8
 local dir = shell.dir()
 print("Integrating API...")
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
@@ -55,8 +56,8 @@ end
 
 print("Loading plugins...")
 for _, plugin in pairs(fs.list(dir.."plugins")) do
-	pluginlist[#pluginlist+1] = plugin
 	if fs.isDir(dir.."plugins/"..plugin) then
+		pluginlist[#pluginlist+1] = plugin
 		if fs.exists(dir.."plugins/"..plugin.."/init.lua") then --load init.lua
 			shell.run(dir.."plugins/"..plugin.."/init.lua")
 		end
@@ -91,7 +92,7 @@ local help = function() --!help integration
 	elseif args[1] == nil then
 		args[1] = 1
 	end
-	if type(args[1]) == "number" and args[1] > 0 and args[1] <= math.ceil(#rowtbl/18) then
+	if type(args[1]) == "number" and args[1] > 0 and args[1] <= math.ceil(#rowtbl/cmdamt) then
 		local outStr = "&2&l===============&r&eBagelBot !help Menu&r&2&l================&r\n"
 		for i = 1+(cmdamt*(args[1]-1)), cmdamt+(cmdamt*(args[1]-1)) do 
 			if rowtbl[i] ~= nil then
@@ -101,7 +102,7 @@ local help = function() --!help integration
 			end
 		end
 		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
-		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-3).."&r&6&l&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/18).." &r&6&l&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-4).."&r"
+		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-2).."&r&6&l&h(Previous Page)&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/cmdamt).." &r&6&l&h(Next Page)&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-3).."&r"
 		bagelBot.tell(name, outStr, true)
 	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
