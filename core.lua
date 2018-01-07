@@ -63,7 +63,7 @@ _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documen
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
-		if type(name) ~= "string" then
+		if type(name) == "string" then
 			return tpersist[name]
 		end
 	end
@@ -76,7 +76,7 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
-	if type(name) ~= "string" then
+	if type(name) == "string" then
 		tpersist[name] = data
 		local fpers = fs.open("persistence.json", "w")
 		fpers.write(textutils.serialise(tpersist))
