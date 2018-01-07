@@ -172,7 +172,7 @@ local help = function() --!help integration
 		args[1] = string.sub(args[1], 2)
 		local clist = bagelBot.findCommand(args[1], nil, "command")
 		local pgin = nil
-		if type(clist) == "table" then
+		if type(clist) == "table" or type(clist) == "function" then
 			if string.find(args[1], ":") then
 				local splitat = string.find(args[1], ":")
 				pgin = string.sub(args[1], 1, splitat-1)
@@ -187,7 +187,7 @@ local help = function() --!help integration
 					bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
 				end
 			else
-				bagelBot.tell(name, "&c&s(!"..solist[..":"..args[1].." "..slist..")&h(Click for "..solist.."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist)
+				bagelBot.tell(name, "&c&s(!"..solist..":"..args[1].." "..slist..")&h(Click for "..solist.."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist)
 			end
 		else
 			bagelBot.tell(name, "&cCommand does not exist.")
