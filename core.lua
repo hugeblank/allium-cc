@@ -165,8 +165,8 @@ local help = function() --!help integration
 		if type(clist) == "table" then
 			if string.find(args[1], ":") then
 				local splitat = string.find(args[1], ":")
-				args[1] = string.sub(args[1], splitat+1)
 				pgin = string.sub(args[1], 1, splitat-1)
+				args[1] = string.sub(args[1], splitat+1)
 			end
 			local slist = bagelBot.findCommand(args[1], pgin, "suggest")
 			local hlist = bagelBot.findCommand(args[1], pgin, "help")
