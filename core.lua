@@ -34,19 +34,19 @@ end
 _G.bagelBot.findCommand = function(command, plugin, tbl)
 	local possiblecmds = {}
 	if command and not plugin then
-		for i = 1, #pluginList do
-			for k, v in pairs(botcmds[pluginList[i]]) do
+		for i = 1, #pluginlist do
+			for k, v in pairs(botcmds[pluginlist[i]]) do
 				if k == command then
 					if tbl == "command" then
-						possiblecmds[#possiblecmds+1] = botcmds[pluginList[i]][command]
+						possiblecmds[#possiblecmds+1] = botcmds[pluginlist[i]][command]
 					elseif tbl == "help" then
-						possiblecmds[#possiblecmds+1] = thelp[pluginList[i]][command]
+						possiblecmds[#possiblecmds+1] = thelp[pluginlist[i]][command]
 					elseif tbl == "suggest" then
-						possiblecmds[#possiblecmds+1] = tsuggest[pluginList[i]][command]
-					elseif tbl = "source" then
+						possiblecmds[#possiblecmds+1] = tsuggest[pluginlist[i]][command]
+					elseif tbl == "source" then
 						possiblecmds[#possiblecmds+1] = pluginlist[i]
 					else
-						possiblecmds[#possiblecmds+1] = {botcmds[pluginList[i]][command], thelp[pluginlist[i]][command], tsuggest[pluginList[i]][command]}
+						possiblecmds[#possiblecmds+1] = {botcmds[pluginlist[i]][command], thelp[pluginlist[i]][command], tsuggest[pluginlist[i]][command]}
 					end
 				end
 			end
@@ -85,6 +85,9 @@ print("Loading plugins...")
 for _, plugin in pairs(fs.list(dir.."plugins")) do
 	if fs.isDir(dir.."plugins/"..plugin) then
 		pluginlist[#pluginlist+1] = plugin
+		botcmds[plugin] = {}
+		thelp[plugin] = {}
+		tsuggest[plugin] = {}
 		if fs.exists(dir.."plugins/"..plugin.."/init.lua") then --load init.lua
 			shell.run(dir.."plugins/"..plugin.."/init.lua")
 		end
@@ -165,12 +168,15 @@ local plugins = function() --!plugins integration
 	bagelBot.tell(name, "\nPlugins installed: "..str)
 end
 --adding commands and integrating help entries for them
+botcmds["BagelCore"] = {}
 botcmds["BagelCore"]["help"] = help
 botcmds["BagelCore"]["github"] = github
 botcmds["BagelCore"]["plugins"] = plugins
+thelp["BagelCore"] = {}
 thelp["BagelCore"]["github"] = "Provides the github repo to check out"
 thelp["BagelCore"]["plugins"] = "Lists the name of all plugins installed on the bot"
 thelp["BagelCore"]["help"] = "Provides help for help for help for help for help for help"
+tsuggest["BagelCore"] = {}
 tsuggest["BagelCore"]["github"] = "!github"
 tsuggest["BagelCore"]["plugins"] = "!plugins"
 tsuggest["BagelCore"]["help"] = "!help"
@@ -230,7 +236,7 @@ local main = function()
 			if #possiblecmds == 1 then --is it really a command, and is there only one that is titled this?
 				_G.bagelBot.out = function() return name, command, possiblecmds[2] end --bagelBot.out as documented in README
 	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
-	    		if stat == false --it crashed...
+	    		if stat == false then--it crashed...
 	    			bagelBot.tell(name, "&2"..command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&2. Error:\n&c"..err)
 	    			print(command.."errored. Error:\n"..err)
 	    		end
@@ -241,6 +247,7 @@ local main = function()
 	    				colstr = colstr.."&a"..possiblecmds[i][2].."&e, "
 	    			else
 	    				colstr = colstr.."and &a"..possiblecmds[i][2].."&e."
+	    			end
 	    		end --how dare you inconvenience me...
 	    		bagelBot.tell(name, "&eCommand collision beween "..colstr.." Specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. ex: &c&g(!BagelCore:github)!BagelCore:github&r&e.") --REEEEEEEE
     		else --this isn't even a valid command...
