@@ -159,9 +159,9 @@ local help = function() --!help integration
 		local hlist = bagelBot.findCommand(args[1], nil, "help")
 		local solist = bagelBot.findCommand(args[1], nil, "source")
 		if #hlist > 1 then
-			tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
+			bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
 			for i = 1, #hlist do
-				bagelBot.tell(name, "&c&s(!"..solist[i]..":"..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)&r!"..args[1]..": "..hlist[i])
+				bagelBot.tell(name, "&c&s(!"..solist[i]..":"..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
 			end
 		end
 	else
