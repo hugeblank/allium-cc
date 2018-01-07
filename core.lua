@@ -160,6 +160,10 @@ local help = function() --!help integration
 		bagelBot.tell(name, "&cPage does not exist.")
 	elseif type(args[1]) == "string" then
 		args[1] = string.sub(args[1], 2)
+		if string.find(args[1], ":") then
+			local splitat = string.find(args[1], ":")
+			args[1] = string.sub(args[1], splitat+1)
+		end
 		local slist = bagelBot.findCommand(args[1], nil, "suggest")
 		local hlist = bagelBot.findCommand(args[1], nil, "help")
 		local solist = bagelBot.findCommand(args[1], nil, "source")
@@ -264,7 +268,7 @@ local main = function()
 	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 	    		if stat == false then--it crashed...
 	    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
-	    			print(cmd.."errored. Error:\n"..err)
+	    			print(cmd.." errored. Error:\n"..err)
 	    		end
 	    	elseif #possiblecmds > 1 then --WHAT MORE THAN ONE OUTCOME!?!?
 	    		local colstr = ""
