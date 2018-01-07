@@ -61,13 +61,13 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 		if botcmds[plugin] then
 			if botcmds[plugin][command] then
 				if tbl == "command" then
-					return botcmds[plugin][command]
+					return {botcmds[plugin][command]}
 				elseif tbl == "help" then
-					return thelp[plugin][command]
+					return {thelp[plugin][command]}
 				elseif tbl == "suggest" then
-					return tsuggest[plugin][command]
+					return {tsuggest[plugin][command]}
 				elseif tbl == "source" then
-					return plugin
+					return {plugin}
 				else
 					return {botcmds[plugin][command], thelp[plugin][command], tsuggest[plugin][command], plugin}
 				end
@@ -176,7 +176,6 @@ local help = function() --!help integration
 	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
 	elseif type(args[1]) == "string" then
-		args[1] = string.sub(args[1], 2)
 		local clist = bagelBot.findCommand(args[1], nil, "command")
 		local pgin = nil
 		if type(clist) == "table" or type(clist) == "function" then
@@ -188,13 +187,11 @@ local help = function() --!help integration
 			local slist = bagelBot.findCommand(args[1], pgin, "suggest")
 			local hlist = bagelBot.findCommand(args[1], pgin, "help")
 			local solist = bagelBot.findCommand(args[1], pgin, "source")
-			if not pgin then
+			if #hlist > 1 then
 				bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
-				for i = 1, #hlist do
-					bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
-				end
-			else
-				bagelBot.tell(name, "&c&s(!"..solist..":"..args[1].." "..slist..")&h(Click for "..solist.."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist)
+			end
+			for i = 1, #hlist do
+				bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
 			end
 		else
 			bagelBot.tell(name, "&cCommand does not exist.")
