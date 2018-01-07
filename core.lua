@@ -291,7 +291,7 @@ local main = function()
 				end
 			end
 			if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
-				_G.bagelBot.out = function() return name, command, possiblecmds[2] end --bagelBot.out as documented in README
+				_G.bagelBot.out = function() return name, command, possiblecmds[1][2] end --bagelBot.out as documented in README
 	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 	    		if stat == false then--it crashed...
 	    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
