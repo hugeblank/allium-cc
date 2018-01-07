@@ -79,24 +79,32 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
 	if fs.exists("persistence.json") then
+		local _, _, plugin = bagelBot.out()
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
+		if not tpersist[plugin] then
+			tpersist[plugin] = {}
+		end
 		if type(name) == "string" then
-			return tpersist[name]
+			return tpersist[plugin][name]
 		end
 	end
 	return false
 end
 _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as documented in README
 	local tpersist
+	local _, _, plugin = bagelBot.out()
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
+	if not tpersist[plugin] then
+		tpersist[plugin] = {}
+	end
 	if type(name) == "string" then
-		tpersist[name] = data
+		tpersist[plugin][name] = data
 		local fpers = fs.open("persistence.json", "w")
 		fpers.write(textutils.serialise(tpersist))
 		fpers.close()
