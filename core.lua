@@ -162,7 +162,7 @@ local help = function() --!help integration
 			bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
 		end
 		for i = 1, #hlist do
-			bagelBot.tell(name, "&c&s(!"..solist[i]..":"..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
+			bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
 		end
 	else
 		bagelBot.tell(name, "&cCommand does not exist.")
