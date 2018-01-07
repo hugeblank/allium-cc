@@ -34,8 +34,8 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 	local possiblecmds = {}
 	if string.find(command, ":") then
 		local splitAt = string.find(command, ":")
-		plugin = string.sub(command, 1, splitat-1)
-		command = string.sub(command, splitat+1)
+		plugin = string.sub(command, 1, splitAt-1)
+		command = string.sub(command, splitAt+1)
 	end
 	if command and not plugin then
 		for i = 1, #pluginlist do
