@@ -33,7 +33,7 @@ end
 _G.bagelBot.findCommand = function(command, plugin, tbl)
 	local possiblecmds = {}
 	if string.find(command, ":") then
-		local splitAt = string.find(":")
+		local splitAt = string.find(command, ":")
 		plugin = string.sub(command, 1, splitat-1)
 		command = string.sub(command, splitat+1)
 	end
