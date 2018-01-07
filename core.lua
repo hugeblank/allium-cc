@@ -1,7 +1,7 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local mName = "&h(bagel & roger wuz here.)<&eBagel&6Bot&r>" --bot title
+local mName = "&h(bagel 'n roger wuz here.)<&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {"BagelCore"}
 local command = {}
