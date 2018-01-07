@@ -161,14 +161,16 @@ local help = function() --!help integration
 	elseif type(args[1]) == "string" then
 		args[1] = string.sub(args[1], 2)
 		local clist = bagelBot.findCommand(args[1], nil, "command")
+		local pgin = nil
 		if type(clist) == "table" then
 			if string.find(args[1], ":") then
 				local splitat = string.find(args[1], ":")
 				args[1] = string.sub(args[1], splitat+1)
+				pgin = string.sub(args[1], 1, splitat-1)
 			end
-			local slist = bagelBot.findCommand(args[1], nil, "suggest")
-			local hlist = bagelBot.findCommand(args[1], nil, "help")
-			local solist = bagelBot.findCommand(args[1], nil, "source")
+			local slist = bagelBot.findCommand(args[1], pgin, "suggest")
+			local hlist = bagelBot.findCommand(args[1], pgin, "help")
+			local solist = bagelBot.findCommand(args[1], pgin, "source")
 			if #hlist > 1 then
 				bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
 			end
