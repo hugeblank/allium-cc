@@ -52,7 +52,12 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 		end
 		return possiblecmds
 	elseif command and plugin then
-		return {botcmds[plugin][command], thelp[plugin][command], tsuggest[plugin][command]}
+		if botcmds[plugin] then
+			if botcmds[plugin][command] then
+				return {botcmds[plugin][command], thelp[plugin][command], tsuggest[plugin][command]}
+			end
+		end
+		return false
 	else
 		return false
 	end
@@ -150,9 +155,9 @@ local help = function() --!help integration
 		bagelBot.tell(name, "&cPage does not exist.")
 	elseif type(args[1]) == "string" then
 		args[1] = string.sub(args[1], 2)
-		local slist = bagelBot.findCommand(args[1], "suggest")
-		local hlist = bagelBot.findCommand(args[1], "help")
-		local solist = bagelBot.findCommand(args[1], "source")
+		local slist = bagelBot.findCommand(args[1], nil, "suggest")
+		local hlist = bagelBot.findCommand(args[1], nil, "help")
+		local solist = bagelBot.findCommand(args[1], nil, "source")
 		if #hlist > 1 then
 			tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
 			for i = 1, #hlist do
