@@ -161,7 +161,7 @@ local help = function() --!help integration
 	elseif type(args[1]) == "string" then
 		args[1] = string.sub(args[1], 2)
 		local clist = bagelBot.findCommand(args[1], nil, "command")
-		if #clist > 0 then
+		if type(clist) == "table" then
 			if string.find(args[1], ":") then
 				local splitat = string.find(args[1], ":")
 				args[1] = string.sub(args[1], splitat+1)
