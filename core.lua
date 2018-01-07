@@ -181,11 +181,13 @@ local help = function() --!help integration
 			local slist = bagelBot.findCommand(args[1], pgin, "suggest")
 			local hlist = bagelBot.findCommand(args[1], pgin, "help")
 			local solist = bagelBot.findCommand(args[1], pgin, "source")
-			if #hlist > 1 then
+			if not pgin then
 				bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
-			end
-			for i = 1, #hlist do
-				bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
+				for i = 1, #hlist do
+					bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
+				end
+			else
+				bagelBot.tell(name, "&c&s(!"..solist[..":"..args[1].." "..slist..")&h(Click for "..solist.."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist)
 			end
 		else
 			bagelBot.tell(name, "&cCommand does not exist.")
