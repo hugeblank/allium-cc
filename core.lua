@@ -1,7 +1,7 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local mName = "&h(bagel 'n roger wuz here.)<&r&eBagel&6Bot&r>" --bot title
+local mName = "&h(bagel 'n roger wuz here.)&i(https://www.youtube.com/watch?v=ByC8sRdL-Ro)<&r&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {"BagelCore"}
 local command = {}
@@ -9,6 +9,7 @@ local threads = {}
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
+local origin = ""
 local cmdamt = 8
 local dir = shell.dir()
 print("Integrating API...")
@@ -82,8 +83,11 @@ _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documen
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
+		if not tpersist[origin] then
+			tpersist[origin] = {}
+		end
 		if type(name) == "string" then
-			return tpersist[name]
+			return tpersist[origin][name]
 		end
 	end
 	return false
@@ -95,8 +99,11 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
+	if not tpersist[origin] then
+		tpersist[origin] = {}
+	end
 	if type(name) == "string" then
-		tpersist[name] = data
+		tpersist[origin][name] = data
 		local fpers = fs.open("persistence.json", "w")
 		fpers.write(textutils.serialise(tpersist))
 		fpers.close()
@@ -222,9 +229,9 @@ thelp["BagelCore"]["github"] = "Provides the github repo to check out"
 thelp["BagelCore"]["plugins"] = "Lists the name of all plugins installed on the bot"
 thelp["BagelCore"]["help"] = "Provides help for help for help for help for help for help"
 tsuggest["BagelCore"] = {}
-tsuggest["BagelCore"]["github"] = "!github"
-tsuggest["BagelCore"]["plugins"] = "!plugins"
-tsuggest["BagelCore"]["help"] = "!help"
+tsuggest["BagelCore"]["github"] = ""
+tsuggest["BagelCore"]["plugins"] = ""
+tsuggest["BagelCore"]["help"] = ""
 
 for i = 1, #pluginlist do
 	local plugin = pluginlist[i]
@@ -283,7 +290,8 @@ local main = function()
 				end
 			end
 			if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
-				_G.bagelBot.out = function() return name, command, possiblecmds[2] end --bagelBot.out as documented in README
+				_G.bagelBot.out = function() return name, command, possiblecmds[1][2] end --bagelBot.out as documented in README
+				origin = possiblecmds[1][2]
 	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 	    		if stat == false then--it crashed...
 	    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
