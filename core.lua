@@ -59,7 +59,17 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 	elseif command and plugin then
 		if botcmds[plugin] then
 			if botcmds[plugin][command] then
-				return {botcmds[plugin][command], thelp[plugin][command], tsuggest[plugin][command]}
+				if tbl == "command" then
+					return botcmds[plugin][command]
+				elseif tbl == "help" then
+					return thelp[plugin][command]
+				elseif tbl == "suggest" then
+					return tsuggest[plugin][command]
+				elseif tbl == "source" then
+					return plugin
+				else
+					return {botcmds[plugin][command], thelp[plugin][command], tsuggest[plugin][command], plugin}
+				end
 			end
 		end
 		return false
