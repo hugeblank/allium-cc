@@ -32,6 +32,11 @@ _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as 
 end
 _G.bagelBot.findCommand = function(command, plugin, tbl)
 	local possiblecmds = {}
+	if string.find(":") then
+		local splitAt = string.find(":")
+		plugin = string.sub(command, 1, splitat-1)
+		command = string.sub(command, splitat+1)
+	end
 	if command and not plugin then
 		for i = 1, #pluginlist do
 			for k, v in pairs(botcmds[pluginlist[i]]) do
