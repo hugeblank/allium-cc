@@ -32,7 +32,7 @@ _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as 
 end
 _G.bagelBot.findCommand = function(command, plugin, tbl)
 	local possiblecmds = {}
-	if string.find(":") then
+	if string.find(command, ":") then
 		local splitAt = string.find(":")
 		plugin = string.sub(command, 1, splitat-1)
 		command = string.sub(command, splitat+1)
