@@ -1,7 +1,7 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local easterEgg = {"urmomhavetriplegay", "https://www.pornhub.com","does anyone know the command for !help?", "What's the name of that one bagel dude...", "BagelBot is pretty badass", "gucci gang", "Sorry people, this is a christian minecraft server, so no swearing.", "hugeblank added random easter egg bogus to this crap and still hasn't implemented (insert feature here)!!! REEEE!"}
+local easterEgg = {"urmomhavetriplegay", "https://www.pornhub.com","does anyone know the command for !help?", "What's the name of that one bagel dude...", "BagelBot is pretty badass", "gucci gang", "Sorry people, this is a christian minecraft server, so no swearing.", "hugeblank added random easter egg bogus to this crap and still hasn't implemented *insert feature here*!!! REEEE!"}
 local mName = "&g("..easterEgg[math.random(1, #easterEgg)]..")<&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {"BagelCore"}
@@ -63,7 +63,7 @@ _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documen
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
-		return tpersist[plugin][name]
+		return tpersist[name]
 	else
 		return false
 	end
@@ -75,7 +75,7 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
-	tpersist[plugin][name] = data
+	tpersist[name] = data
 	local fpers = fs.open("persistence.json", "w")
 	fpers.write(textutils.serialise(tpersist))
 	fpers.close()
@@ -93,23 +93,31 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 		end
 		if fs.isDir(dir.."plugins/"..plugin.."/threads") then --load threads
 			for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
-				threads[#threads+1] = coroutine.create(loadfile(dir.."plugins/"..plugin.."/threads/"..v))
+				if loadfile(dir.."plugins/"..plugin.."/threads/"..v) then
+					threads[#threads+1] = coroutine.create(loadfile(dir.."plugins/"..plugin.."/threads/"..v))
+				else
+					print(v.." Could not load successfully.")
+				end
 			end
 		end
 		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do --load commands & help entries
-			local name = v:sub(1, -5)
+			local subAt = string.find(v, ".")
+			local name = v:sub(1, subAt-1)
 			botcmds[plugin][name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
+			if not botcmds[plugin][name] then
+				print("Failed to load !"..plugin..":"..name..". Command will not show up in registrar.")
+			end
 			if fs.exists(dir.."plugins/"..plugin.."/help/"..name..".txt") then
 				local txt = fs.open(dir.."plugins/"..plugin.."/help/"..name..".txt", "r")
 				thelp[plugin][name] = txt.readLine()
 				tsuggest[plugin][name] = txt.readLine()
 				if not tsuggest[plugin][name] then
-					tsuggest[plugin][name] = "!"..name
+					tsuggest[plugin][name] = ""
 				end
 				txt.close()
 			else
 				thelp[plugin][name] = name.." has no information provided."
-				tsuggest[plugin][name] = "!"..name
+				tsuggest[plugin][name] = ""
 			end
 		end
 	end
@@ -230,15 +238,19 @@ local main = function()
 					end
 				end
 			else --hey they did! +1 karma.
-				local splitat = string.find(":")
-				possiblecmds[#possiblecmds+1] = {botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)], string.sub(cmd, 1, splitat-1)} --split it into the function, and then the source
+				local splitat = string.find(cmd, ":")
+				if botcmds[string.sub(cmd, 1, splitat-1)] then --check plugin existence
+					if botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)] then --check command existence
+						possiblecmds[#possiblecmds+1] = {botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)], string.sub(cmd, 1, splitat-1)} --split it into the function, and then the source
+					end
+				end
 			end
-			if #possiblecmds == 1 then --is it really a command, and is there only one that is titled this?
+			if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
 				_G.bagelBot.out = function() return name, command, possiblecmds[2] end --bagelBot.out as documented in README
 	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 	    		if stat == false then--it crashed...
-	    			bagelBot.tell(name, "&2"..command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&2. Error:\n&c"..err)
-	    			print(command.."errored. Error:\n"..err)
+	    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
+	    			print(cmd.."errored. Error:\n"..err)
 	    		end
 	    	elseif #possiblecmds > 1 then --WHAT MORE THAN ONE OUTCOME!?!?
 	    		local colstr = ""
