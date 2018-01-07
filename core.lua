@@ -149,7 +149,7 @@ local help = function() --!help integration
 	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
 	elseif type(args[1]) == "string" then
-		args[1] = string.sub(2, args[1])
+		args[1] = string.sub(args[1], 2)
 		local slist = bagelBot.findCommand(args[1], "suggest")
 		local hlist = bagelBot.findCommand(args[1], "help")
 		local solist = bagelBot.findCommand(args[1], "source")
