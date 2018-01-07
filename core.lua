@@ -1,8 +1,7 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local easterEgg = {"urmomhavetriplegay", "https://www.pornhub.com","does anyone know the command for !help?", "What's the name of that one bagel dude...", "BagelBot is pretty badass", "gucci gang", "Sorry people, this is a christian minecraft server, so no swearing.", "hugeblank added random easter egg bogus to this crap and still hasn't implemented *insert feature here*!!! REEEE!"}
-local mName = "&g("..easterEgg[math.random(1, #easterEgg)]..")<&eBagel&6Bot&r>" --bot title
+local mName = "&h(bagel & roger wuz here.)<&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {"BagelCore"}
 local command = {}
@@ -46,7 +45,7 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 					elseif tbl == "source" then
 						possiblecmds[#possiblecmds+1] = pluginlist[i]
 					else
-						possiblecmds[#possiblecmds+1] = {botcmds[pluginlist[i]][command], thelp[pluginlist[i]][command], tsuggest[pluginlist[i]][command]}
+						possiblecmds[#possiblecmds+1] = {botcmds[pluginlist[i]][command], thelp[pluginlist[i]][command], tsuggest[pluginlist[i]][command], pluginlist[i]}
 					end
 				end
 			end

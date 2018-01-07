@@ -16,10 +16,10 @@ The installer installs [Eric Wieser's](https://github.com/eric-wieser/) [compute
 `!github`: Links to the github repo for [BagelBot](https://github.com/hugeblank/BagelBot).
 
 ## API
-The current API is as follows, prefixed by "bagelBot." (subject to change):
+The current API is as follows, prefixed by "bagelBot.":
 - out: provides the program/command with the name and parameters provided after the command. This is the current method used to transfer data to the command that should be executed.
 	- inputs: **none**
-	- outputs: **String** name of user, **Table** arguments given after the command
+	- outputs: **String** name of user, **Table** arguments given after the command, **String** plugin that the command originates from
 - tell: output colorcode formatted text to the user, using the & and then a hexadecimal symbol. &g additionally provides clickable text to the user.
 	- inputs: **String** name of user, **String** of text or **Table** of strings, **Boolean** hide the username
 	- outputs: **nothing**
@@ -29,6 +29,9 @@ The current API is as follows, prefixed by "bagelBot." (subject to change):
 - getPersistence: returns the persistent data that was saved to the name.
 	- inputs: **String** name of persistent cache
 	- output: **Any** data that was stored
+- findCommand: returns a command, or data pertaining to a command.
+	- inputs: **String** name of command, **String** (optional) name of plugin, **String** (optional) *"command"*; list executable command functions, *"help"*; list help text entries, *"suggest"*; list command suggestion entries, *"source"*; list the plugin sources of executable command functions, *nil*; put all of these into a table, in the same order they appear here.
+	- outputs: **Table** of data dependent on what the third parameter was.
 
 ## File Structure
 If you want to develop a plugin for BagelBot the file/directory structure is as follows:
