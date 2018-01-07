@@ -1,7 +1,7 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local mName = "&h(bagel 'n roger wuz here.)<&r&eBagel&6Bot&r>" --bot title
+local mName = "&h(bagel 'n roger wuz here.)&i(https://www.youtube.com/watch?v=ByC8sRdL-Ro)<&r&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {"BagelCore"}
 local command = {}
@@ -229,9 +229,9 @@ thelp["BagelCore"]["github"] = "Provides the github repo to check out"
 thelp["BagelCore"]["plugins"] = "Lists the name of all plugins installed on the bot"
 thelp["BagelCore"]["help"] = "Provides help for help for help for help for help for help"
 tsuggest["BagelCore"] = {}
-tsuggest["BagelCore"]["github"] = "!github"
-tsuggest["BagelCore"]["plugins"] = "!plugins"
-tsuggest["BagelCore"]["help"] = "!help"
+tsuggest["BagelCore"]["github"] = ""
+tsuggest["BagelCore"]["plugins"] = ""
+tsuggest["BagelCore"]["help"] = ""
 
 for i = 1, #pluginlist do
 	local plugin = pluginlist[i]
