@@ -58,15 +58,16 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 		return false
 	end
 end
-_G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README
+_G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
-		return tpersist[name]
-	else
-		return false
+		if tostring(name) then
+			return tpersist[name]
+		end
 	end
+	return false
 end
 _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as documented in README
 	local tpersist
@@ -75,10 +76,14 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
-	tpersist[name] = data
-	local fpers = fs.open("persistence.json", "w")
-	fpers.write(textutils.serialise(tpersist))
-	fpers.close()
+	if tostring(name) then
+		tpersist[name] = data
+		local fpers = fs.open("persistence.json", "w")
+		fpers.write(textutils.serialise(tpersist))
+		fpers.close()
+		return true
+	end
+	return false
 end
 
 print("Loading plugins...")
@@ -101,7 +106,7 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 			end
 		end
 		for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/commands")) do --load commands & help entries
-			local subAt = string.find(v, ".")
+			local subAt = string.find(v, "[.]")
 			local name = v:sub(1, subAt-1)
 			botcmds[plugin][name] = loadfile(dir.."plugins/"..plugin.."/commands/"..v)
 			if not botcmds[plugin][name] then
