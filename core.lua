@@ -31,6 +31,33 @@ _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as 
     end
     return textutils.serialise(test)
 end
+_G.bagelBot.findCommand = function(command, plugin, tbl)
+	local possiblecmds = {}
+	if command and not plugin then
+		for i = 1, #pluginList do
+			for k, v in pairs(botcmds[pluginList[i]]) do
+				if k == command then
+					if tbl == "command" then
+						possiblecmds[#possiblecmds+1] = botcmds[pluginList[i]][command]
+					elseif tbl == "help" then
+						possiblecmds[#possiblecmds+1] = thelp[pluginList[i]][command]
+					elseif tbl == "suggest" then
+						possiblecmds[#possiblecmds+1] = tsuggest[pluginList[i]][command]
+					elseif tbl = "source" then
+						possiblecmds[#possiblecmds+1] = pluginlist[i]
+					else
+						possiblecmds[#possiblecmds+1] = {botcmds[pluginList[i]][command], thelp[pluginlist[i]][command], tsuggest[pluginList[i]][command]}
+					end
+				end
+			end
+		end
+		return possiblecmds
+	elseif command and plugin then
+		return {botcmds[plugin][command], thelp[plugin][command], tsuggest[plugin][command]}
+	else
+		return false
+	end
+end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
@@ -102,12 +129,21 @@ local help = function() --!help integration
 			end
 		end
 		local bottomInt = 7+string.len(tostring(args[1])..tostring(#rowtbl))
-		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-2).."&r&6&l&h(Previous Page)&g(!help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/cmdamt).." &r&6&l&h(Next Page)&g(!help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-3).."&r"
+		outStr = outStr.."&2"..string.rep("=", math.ceil((55-bottomInt)/2)-2).."&r&6&l&h(Previous Page)&g(!BagelCore:help "..tostring(args[1]-1)..")<<&r&c&l "..tostring(args[1]).."/"..math.ceil(#rowtbl/cmdamt).." &r&6&l&h(Next Page)&g(!BagelCore:help "..tostring(args[1]+1)..")>>&r&2&l"..string.rep("=", math.floor((55-bottomInt)/2)-3).."&r"
 		bagelBot.tell(name, outStr, true)
 	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
-	elseif type(args[1]) == "string" and thelp[args[1]] then
-		bagelBot.tell(name, "&c&s("..tsuggest[args[1]]..")&h(Click for !"..args[1].." autofill)&r!"..args[1]..":"..thelp[args[1]])
+	elseif type(args[1]) == "string" then
+		args[1] = string.sub(2, args[1])
+		local slist = bagelBot.findCommand(args[1], "suggest")
+		local hlist = bagelBot.findCommand(args[1], "help")
+		local solist = bagelBot.findCommand(args[1], "source")
+		if #hlist > 1 then
+			tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
+			for i = 1, #hlist do
+				bagelBot.tell(name, "&c&s(!"..solist[i]..":"..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)&r!"..args[1]..": "..hlist[i])
+			end
+		end
 	else
 		bagelBot.tell(name, "&cCommand does not exist.")
 	end
@@ -139,24 +175,31 @@ tsuggest["BagelCore"]["github"] = "!github"
 tsuggest["BagelCore"]["plugins"] = "!plugins"
 tsuggest["BagelCore"]["help"] = "!help"
 
-for k, v in pairs(thelp) do --create a table that has rows that are exactly 55 characters large
-	local exstr = "!"..k..": "..v
-	local row = ""
-	for word in string.gmatch(exstr, "%S+") do
-		if string.len(row..word) > 55 then
-			rowtbl[#rowtbl+1] = row.."\n"
-			row = word.." "
-		else
-			row = row..word.." "
+for i = 1, #pluginlist do
+	local plugin = pluginlist[i]
+	for k, v in pairs(thelp[plugin]) do --create a table that has rows that are as close to 55 characters large as they can get while respecting spaces.
+		local exstr = "!"..k..": "..v
+		local row = ""
+		for word in string.gmatch(exstr, "%S+") do
+			if string.len(row..word) > 55 then
+				rowtbl[#rowtbl+1] = row.."\n"
+				row = word.." "
+			else
+				row = row..word.." "
+			end
 		end
-	end
-	if row ~= "" then
-		rowtbl[#rowtbl+1] = row.."\n"
-	end
-	for i = 1, #rowtbl do
-		if string.find(rowtbl[i], "!"..k..":") then
-			rowtbl[i] = string.sub(rowtbl[i], string.len("!"..k..":")+1)
-			rowtbl[i] = "&c&s("..tsuggest[k]..")&h(Click for !"..k.." autofill)!"..k.."&r:"..rowtbl[i]
+		if row ~= "" then
+			rowtbl[#rowtbl+1] = row.."\n"
+		end
+		for i = 1, #rowtbl do
+			if string.find(rowtbl[i], "!"..k..":") then
+				rowtbl[i] = string.sub(rowtbl[i], string.len("!"..k..":")+1)
+				if #bagelBot.findCommand(k, nil, "command") == 1 then
+					rowtbl[i] = "&c&s(!"..k.." "..tsuggest[plugin][k]..")&h(Click for !"..k.." autofill)!"..k.."&r:"..rowtbl[i]
+				else
+					rowtbl[i] = "&c&s(!"..plugin..":"..k.." "..tsuggest[plugin][k]..")&h(Click for "..plugin.."'s !"..k.." autofill)!"..k.."&r:"..rowtbl[i]
+				end
+			end
 		end
 	end
 end
@@ -172,24 +215,35 @@ local main = function()
 			local cmd = string.sub(command[1], 2)
 			table.remove(command, 1) --remove the first parameter given (!command)
 			local possiblecmds = {}
-			if not string.find(cmd, ":") then
-				for k, v in pairs(botcmds) do
+			if not string.find(cmd, ":") then --did they not specify the plugin source?
+				for k, v in pairs(botcmds) do --nope... gonna have to find it for them.
 					for l, w in pairs(v) do
-						if l == cmd then
-							possiblecmds[#possiblecmds+1] = w
+						if l == cmd then --well I found it, but there may be more...
+							possiblecmds[#possiblecmds+1] = {w, k} --split into command function, source
 						end
 					end
 				end
-			else
+			else --hey they did! +1 karma.
 				local splitat = string.find(":")
-				possiblecmds[#possiblecmds+1] = botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)]
+				possiblecmds[#possiblecmds+1] = {botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)], string.sub(cmd, 1, splitat-1)} --split it into the function, and then the source
 			end
-			_G.bagelBot.out = function() return name, command end --bagelBot.out as documented in README
-			if #possiblecmds == 1 then --is it really a command?
-	    		possiblecmds[1]() --Let's execute the command
-	    	elseif #possiblecmds > 1 then
-	    		bagelBot.tell(name, "&eCommand collision. Specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. ex: &c&g(!BagelCore:github)!BagelCore:github")
-    		else --this isn't a valid command...
+			if #possiblecmds == 1 then --is it really a command, and is there only one that is titled this?
+				_G.bagelBot.out = function() return name, command, possiblecmds[2] end --bagelBot.out as documented in README
+	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
+	    		if stat == false --it crashed...
+	    			bagelBot.tell(name, "&2"..command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&2. Error:\n&c"..err)
+	    			print(command.."errored. Error:\n"..err)
+	    		end
+	    	elseif #possiblecmds > 1 then --WHAT MORE THAN ONE OUTCOME!?!?
+	    		local colstr = ""
+	    		for i = 1, #possiblecmds do --idiot, I'm going to have to list them out for you...
+	    			if i ~= #possiblecmds then
+	    				colstr = colstr.."&a"..possiblecmds[i][2].."&e, "
+	    			else
+	    				colstr = colstr.."and &a"..possiblecmds[i][2].."&e."
+	    		end --how dare you inconvenience me...
+	    		bagelBot.tell(name, "&eCommand collision beween "..colstr.." Specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. ex: &c&g(!BagelCore:github)!BagelCore:github&r&e.") --REEEEEEEE
+    		else --this isn't even a valid command...
 	    		bagelBot.tell(name, "&6Invalid Command, use &c&g(!help)!help&r&6 for assistance.") --bleh!
     		end
 	    end
