@@ -1,7 +1,7 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local mName = "&h(bagel 'n roger wuz here.)<&eBagel&6Bot&r>" --bot title
+local mName = "&h(bagel 'n roger wuz here.)<&r&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {"BagelCore"}
 local command = {}
@@ -260,12 +260,12 @@ local main = function()
 	    		local colstr = ""
 	    		for i = 1, #possiblecmds do --idiot, I'm going to have to list them out for you...
 	    			if i ~= #possiblecmds then
-	    				colstr = colstr.."&a"..possiblecmds[i][2].."&e, "
+	    				colstr = colstr.."&a&g(!"..possiblecmds[i][2]..":"..cmd..")&h(Click to run !"..possiblecmds[i][2]..":"..cmd..")"..possiblecmds[i][2].."&r&e, "
 	    			else
-	    				colstr = colstr.."and &a"..possiblecmds[i][2].."&e."
+	    				colstr = colstr.."and &a&g(!"..possiblecmds[i][2]..":"..cmd..")&h(Click to run !"..possiblecmds[i][2]..":"..cmd..")"..possiblecmds[i][2].."&r&e."
 	    			end
 	    		end --how dare you inconvenience me...
-	    		bagelBot.tell(name, "&eCommand collision beween "..colstr.." Specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. ex: &c&g(!BagelCore:github)!BagelCore:github&r&e.") --REEEEEEEE
+	    		bagelBot.tell(name, "&eCommand collision beween "..colstr.." Click on the plugin that you want to run the command from. Optionally specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. Ex: &c&g(!BagelCore:github)!BagelCore:github&r&e.") --REEEEEEEE
     		else --this isn't even a valid command...
 	    		bagelBot.tell(name, "&6Invalid Command, use &c&g(!help)!help&r&6 for assistance.") --bleh!
     		end
