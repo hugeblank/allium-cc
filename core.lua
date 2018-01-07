@@ -9,7 +9,7 @@ local threads = {}
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
-local origin
+local origin = ""
 local cmdamt = 8
 local dir = shell.dir()
 print("Integrating API...")
