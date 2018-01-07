@@ -160,18 +160,23 @@ local help = function() --!help integration
 		bagelBot.tell(name, "&cPage does not exist.")
 	elseif type(args[1]) == "string" then
 		args[1] = string.sub(args[1], 2)
-		if string.find(args[1], ":") then
-			local splitat = string.find(args[1], ":")
-			args[1] = string.sub(args[1], splitat+1)
-		end
-		local slist = bagelBot.findCommand(args[1], nil, "suggest")
-		local hlist = bagelBot.findCommand(args[1], nil, "help")
-		local solist = bagelBot.findCommand(args[1], nil, "source")
-		if #hlist > 1 then
-			bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
-		end
-		for i = 1, #hlist do
-			bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
+		local clist = bagelBot.findCommand(args[1], nil, "command")
+		if #clist > 0 then
+			if string.find(args[1], ":") then
+				local splitat = string.find(args[1], ":")
+				args[1] = string.sub(args[1], splitat+1)
+			end
+			local slist = bagelBot.findCommand(args[1], nil, "suggest")
+			local hlist = bagelBot.findCommand(args[1], nil, "help")
+			local solist = bagelBot.findCommand(args[1], nil, "source")
+			if #hlist > 1 then
+				bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
+			end
+			for i = 1, #hlist do
+				bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
+			end
+		else
+			bagelBot.tell(name, "&cCommand does not exist.")
 		end
 	else
 		bagelBot.tell(name, "&cCommand does not exist.")
