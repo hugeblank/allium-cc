@@ -78,6 +78,21 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 		return false
 	end
 end
+_G.bagelBot.getPlayers = function()
+	local _, input = commands.exec("list")
+	local out = {}
+	for user in string.gmatch(input[2], "%S+") do
+		out[#out+1] = string.sub(user, 0, -2)
+	end
+	return out
+end
+_G.bagelBot.getCommands = function(plugin)
+	if not plugin then
+		return botcmds
+	else
+		return botcmds[plugin]
+	end
+end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
