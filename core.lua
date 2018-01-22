@@ -85,7 +85,9 @@ _G.bagelBot.getPlayers = function()
 	end
 	local out = {}
 	for user in string.gmatch(input[2], "%S+") do
-		out[#out+1] = string.sub(user, 0, -2)
+		local comma = string.find(user, ",")
+		if not comma then comma = -1 else comma=comma-1 end
+		out[#out+1] = string.sub(user, 0, comma)
 	end
 	return out
 end
