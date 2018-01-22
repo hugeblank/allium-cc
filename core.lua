@@ -80,6 +80,9 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 end
 _G.bagelBot.getPlayers = function()
 	local _, input = commands.exec("list")
+	if not input then 
+		return {string.sub(({commands.testfor("@a")})[2][1], 7, -1}
+	end
 	local out = {}
 	for user in string.gmatch(input[2], "%S+") do
 		out[#out+1] = string.sub(user, 0, -2)
