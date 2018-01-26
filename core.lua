@@ -281,7 +281,7 @@ end
 
 local main = function()
 	while true do
-		local _, _, name, message = os.pullEvent("chat_message") --Pull chat messages
+		local _, name, message = os.pullEvent("chat_message") --Pull chat messages
 		if string.find(message, "!") == 1 then --are they for BagelBot?
 			command = {}
 			for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
