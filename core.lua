@@ -245,7 +245,7 @@ local function repeatName(name, message)
 	end
 	local nick = nicks[name] or name
 	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
-	commands.tell("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
+	commands.tellraw("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
