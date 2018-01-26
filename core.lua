@@ -3,7 +3,7 @@ os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
 local moduleManip = peripheral.wrap("top")
 if moduleManip ~= nil then
-	moduleManip.capture("^!")
+	moduleManip.capture(".")
 end
 local mName = "&h(bagel 'n roger wuz here.)&i(https://www.youtube.com/watch?v=ByC8sRdL-Ro)<&r&eBagel&6Bot&r>" --bot title
 local botcmds = {}
@@ -224,6 +224,29 @@ local help = function() --!help integration
 		bagelBot.tell(name, "&cCommand does not exist.")
 	end
 end
+local function repeatName(name, message)
+    local prefixes = bagelBot.getPersistence("prefixes")
+    local nicks = bagelBot.getPersistence("nicknames")
+	local rank = betaBot.getLevel(name)+1
+    if not prefixes then
+        prefixes = { 
+			user = {},
+			ranks = {
+				"&r[&amember&r]",
+				"&r[&eVIP&r]",
+				"&r[&cadmin&r]",
+			}
+		}
+		bagelBot.setPersistence("prefixes", prefixes)
+	end
+	if not nicks then
+		nicks = {}
+		bagelBot.setPersistence("nicknames", nicks)
+	end
+	local nick = nicks[name] or name
+	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
+	commands.tellraw("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
+end
 local github = function() --!github integration
 	name, args = bagelBot.out()
 	bagelBot.tell(name, "Contribute to BagelBot here: &9&n&ihttps://github.com/hugeblank/BagelBot")
@@ -286,7 +309,9 @@ end
 local main = function()
 	while true do
 		local _, message, _, name = os.pullEvent("chat_capture") --Pull chat messages
-		if string.find(message, "!") == 1 then --are they for BagelBot?
+		if string.find(message, "!") ~= 1 then --generic messages
+			repeatName(name, message)
+		elseif string.find(message, "!") == 1 then --are they for BagelBot?
 			command = {}
 			for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
 				command[#command+1] = k
