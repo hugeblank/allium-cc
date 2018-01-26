@@ -104,6 +104,7 @@ _G.bagelBot.getCommands = function(plugin)
 end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
 	if fs.exists("persistence.json") then
+		_, _, plugin = bagelBot.out()
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
