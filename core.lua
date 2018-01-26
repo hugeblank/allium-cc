@@ -224,7 +224,7 @@ local help = function() --!help integration
 		bagelBot.tell(name, "&cCommand does not exist.")
 	end
 end
-local function repeat(name, message)
+function repeat(name, message)
     local prefixes = bagelBot.getPersistence("prefixes")
     local nicks = bagelBot.getPersistence("nicknames")
 	local rank = betaBot.getLevel(name)+1
