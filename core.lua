@@ -104,7 +104,6 @@ _G.bagelBot.getCommands = function(plugin)
 end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
 	if fs.exists("persistence.json") then
-		_, _, plugin = bagelBot.out()
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
@@ -246,7 +245,7 @@ local function repeatName(name, message)
 	end
 	local nick = nicks[name] or name
 	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
-	commands.tellraw("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
+	commands.tellraw("@a", color.format(prefix.." &r<"..nick.."&r> "..message))
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
