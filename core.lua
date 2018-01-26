@@ -224,7 +224,7 @@ local help = function() --!help integration
 		bagelBot.tell(name, "&cCommand does not exist.")
 	end
 end
-function repeat(name, message)
+local function repeatName(name, message)
     local prefixes = bagelBot.getPersistence("prefixes")
     local nicks = bagelBot.getPersistence("nicknames")
 	local rank = betaBot.getLevel(name)+1
@@ -310,7 +310,7 @@ local main = function()
 	while true do
 		local _, message, _, name = os.pullEvent("chat_capture") --Pull chat messages
 		if string.find(message, "!") ~= 1 then --generic messages
-			repeat(name, message)
+			repeatName(name, message)
 		elseif string.find(message, "!") == 1 then --are they for BagelBot?
 			command = {}
 			for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
