@@ -1,7 +1,11 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local mName = "&h(bagel 'n roger wuz here.)<&r&eBagel&6Bot&r>" --bot title
+local moduleManip = peripheral.wrap("top")
+if moduleManip ~= nil then
+	moduleManip.capture(".")
+end
+local mName = "&h(bagel 'n roger wuz here.)&i(https://www.youtube.com/watch?v=ByC8sRdL-Ro)<&r&eBagel&6Bot&r>" --bot title
 local botcmds = {}
 local pluginlist = {"BagelCore"}
 local command = {}
@@ -9,6 +13,7 @@ local threads = {}
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
+local origin = ""
 local cmdamt = 8
 local dir = shell.dir()
 print("Integrating API...")
@@ -60,13 +65,13 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 		if botcmds[plugin] then
 			if botcmds[plugin][command] then
 				if tbl == "command" then
-					return botcmds[plugin][command]
+					return {botcmds[plugin][command]}
 				elseif tbl == "help" then
-					return thelp[plugin][command]
+					return {thelp[plugin][command]}
 				elseif tbl == "suggest" then
-					return tsuggest[plugin][command]
+					return {tsuggest[plugin][command]}
 				elseif tbl == "source" then
-					return plugin
+					return {plugin}
 				else
 					return {botcmds[plugin][command], thelp[plugin][command], tsuggest[plugin][command], plugin}
 				end
@@ -77,17 +82,37 @@ _G.bagelBot.findCommand = function(command, plugin, tbl)
 		return false
 	end
 end
+_G.bagelBot.getPlayers = function()
+	local didexec, input = commands.exec("list")
+	if not didexec then 
+		return {string.sub(({commands.testfor("@a")})[2][1], 7, -1)}
+	end
+	local out = {}
+	for user in string.gmatch(input[2], "%S+") do
+		local comma = string.find(user, ",")
+		if not comma then comma = -1 else comma=comma-1 end
+		out[#out+1] = string.sub(user, 0, comma)
+	end
+	return out
+end
+_G.bagelBot.getCommands = function(plugin)
+	if not plugin then
+		return botcmds
+	else
+		return botcmds[plugin]
+	end
+end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
 	if fs.exists("persistence.json") then
 		_, _, plugin = bagelBot.out()
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
-		if not tpersist[plugin] then
-			tpersist[plugin] = {}
+		if not tpersist[origin] then
+			tpersist[origin] = {}
 		end
 		if type(name) == "string" then
-			return tpersist[plugin][name]
+			return tpersist[origin][name]
 		end
 	end
 	return false
@@ -99,11 +124,11 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
-	if not tpersist[plugin] then
-		tpersist[plugin] = {}
+	if not tpersist[origin] then
+		tpersist[origin] = {}
 	end
 	if type(name) == "string" then
-		tpersist[plugin][name] = data
+		tpersist[origin][name] = data
 		local fpers = fs.open("persistence.json", "w")
 		fpers.write(textutils.serialise(tpersist))
 		fpers.close()
@@ -176,7 +201,6 @@ local help = function() --!help integration
 	elseif type(args[1]) == "number" then
 		bagelBot.tell(name, "&cPage does not exist.")
 	elseif type(args[1]) == "string" then
-		args[1] = string.sub(args[1], 2)
 		local clist = bagelBot.findCommand(args[1], nil, "command")
 		local pgin = nil
 		if type(clist) == "table" or type(clist) == "function" then
@@ -188,13 +212,11 @@ local help = function() --!help integration
 			local slist = bagelBot.findCommand(args[1], pgin, "suggest")
 			local hlist = bagelBot.findCommand(args[1], pgin, "help")
 			local solist = bagelBot.findCommand(args[1], pgin, "source")
-			if not pgin then
+			if #hlist > 1 then
 				bagelBot.tell(name, "&eMore than one command was found under that name. The command source will be provided if you hover over the command name.")
-				for i = 1, #hlist do
-					bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
-				end
-			else
-				bagelBot.tell(name, "&c&s(!"..solist..":"..args[1].." "..slist..")&h(Click for "..solist.."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist)
+			end
+			for i = 1, #hlist do
+				bagelBot.tell(name, "&c&s(!"..solist[i]..":"..args[1].." "..slist[i]..")&h(Click for "..solist[i].."'s !"..args[1].." autofill)!"..args[1].."&r: "..hlist[i])
 			end
 		else
 			bagelBot.tell(name, "&cCommand does not exist.")
@@ -202,6 +224,29 @@ local help = function() --!help integration
 	else
 		bagelBot.tell(name, "&cCommand does not exist.")
 	end
+end
+local function repeatName(name, message)
+    local prefixes = bagelBot.getPersistence("prefixes")
+    local nicks = bagelBot.getPersistence("nicknames")
+	local rank = betaBot.getLevel(name)+1
+    if not prefixes then
+        prefixes = { 
+			user = {},
+			ranks = {
+				"&r[&amember&r]",
+				"&r[&eVIP&r]",
+				"&r[&cadmin&r]",
+			}
+		}
+		bagelBot.setPersistence("prefixes", prefixes)
+	end
+	if not nicks then
+		nicks = {}
+		bagelBot.setPersistence("nicknames", nicks)
+	end
+	local nick = nicks[name] or name
+	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
+	commands.tellraw("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
 end
 local github = function() --!github integration
 	name, args = bagelBot.out()
@@ -229,9 +274,9 @@ thelp["BagelCore"]["github"] = "Provides the github repo to check out"
 thelp["BagelCore"]["plugins"] = "Lists the name of all plugins installed on the bot"
 thelp["BagelCore"]["help"] = "Provides help for help for help for help for help for help"
 tsuggest["BagelCore"] = {}
-tsuggest["BagelCore"]["github"] = "!github"
-tsuggest["BagelCore"]["plugins"] = "!plugins"
-tsuggest["BagelCore"]["help"] = "!help"
+tsuggest["BagelCore"]["github"] = ""
+tsuggest["BagelCore"]["plugins"] = ""
+tsuggest["BagelCore"]["help"] = ""
 
 for i = 1, #pluginlist do
 	local plugin = pluginlist[i]
@@ -264,8 +309,10 @@ end
 
 local main = function()
 	while true do
-		local _, _, name, message = os.pullEvent("chat_message") --Pull chat messages
-		if string.find(message, "!") == 1 then --are they for BagelBot?
+		local _, message, _, name = os.pullEvent("chat_capture") --Pull chat messages
+		if string.find(message, "!") ~= 1 then --generic messages
+			repeatName(name, message)
+		elseif string.find(message, "!") == 1 then --are they for BagelBot?
 			command = {}
 			for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
 				command[#command+1] = k
@@ -290,7 +337,8 @@ local main = function()
 				end
 			end
 			if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
-				_G.bagelBot.out = function() return name, command, possiblecmds[2] end --bagelBot.out as documented in README
+				_G.bagelBot.out = function() return name, command, possiblecmds[1][2] end --bagelBot.out as documented in README
+				origin = possiblecmds[1][2]
 	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 	    		if stat == false then--it crashed...
 	    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
