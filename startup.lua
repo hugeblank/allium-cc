@@ -12,3 +12,5 @@ else
     error("No valid repo file! Default repo file created!")
 end
 shell.run("core.lua")
+local mod = peripheral.wperipheral.wrap("top")
+mod.uncapture(".")
