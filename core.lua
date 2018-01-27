@@ -3,9 +3,9 @@ os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
 local moduleManip
 for i = 1, #rs.getSides() do 
-	local ptype = peripheral.getType(rs.getSides[i])
+	local ptype = peripheral.getType(rs.getSides()[i])
 	if ptype == "manipulator" then
-		moduleManip = peripheral.wrap(rs.getSides[i])
+		moduleManip = peripheral.wrap(rs.getSides()[i])
 	end
 end
 if moduleManip ~= nil then
@@ -412,8 +412,8 @@ while true do
 		end
 	end
 	for n=1,count do
-		local r = threads[n][1]
-		if r and coroutine.status( r ) == "dead" then
+		local r = threads[n]
+		if r[1] and coroutine.status( r[1] ) == "dead" then
 			threads[n] = nil
 			living = living - 1
 			if living <= 0 then
