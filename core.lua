@@ -150,7 +150,7 @@ for _, plugin in pairs(fs.list(dir.."plugins")) do
 		if fs.isDir(dir.."plugins/"..plugin.."/threads") then --load threads
 			for _, v in pairs(fs.list(dir.."plugins/"..plugin.."/threads")) do
 				if loadfile(dir.."plugins/"..plugin.."/threads/"..v) then
-					threads[#threads+1] = coroutine.create(loadfile(dir.."plugins/"..plugin.."/threads/"..v))
+					threads[#threads+1] = {coroutine.create(loadfile(dir.."plugins/"..plugin.."/threads/"..v)), plugin}
 				else
 					print(v.." Could not load successfully.")
 				end
@@ -225,29 +225,6 @@ local help = function() --!help integration
 		bagelBot.tell(name, "&cCommand does not exist.")
 	end
 end
-local function repeatName(name, message)
-    local prefixes = bagelBot.getPersistence("prefixes")
-    local nicks = bagelBot.getPersistence("nicknames")
-	local rank = betaBot.getLevel(name)+1
-    if not prefixes then
-        prefixes = { 
-			user = {},
-			ranks = {
-				"&r[&amember&r]",
-				"&r[&eVIP&r]",
-				"&r[&cadmin&r]",
-			}
-		}
-		bagelBot.setPersistence("prefixes", prefixes)
-	end
-	if not nicks then
-		nicks = {}
-		bagelBot.setPersistence("nicknames", nicks)
-	end
-	local nick = nicks[name] or name
-	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
-	commands.tellraw("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
-end
 local github = function() --!github integration
 	name, args = bagelBot.out()
 	bagelBot.tell(name, "Contribute to BagelBot here: &9&n&ihttps://github.com/hugeblank/BagelBot")
@@ -307,6 +284,30 @@ for i = 1, #pluginlist do
 	end
 end
 
+local function repeatName(name, message)
+    local prefixes = bagelBot.getPersistence("prefixes")
+    local nicks = bagelBot.getPersistence("nicknames")
+	local rank = betaBot.getLevel(name)+1
+    if not prefixes then
+        prefixes = { 
+			user = {},
+			ranks = {
+				"&r[&amember&r]",
+				"&r[&eVIP&r]",
+				"&r[&cadmin&r]",
+			}
+		}
+		bagelBot.setPersistence("prefixes", prefixes)
+	end
+	if not nicks then
+		nicks = {}
+		bagelBot.setPersistence("nicknames", nicks)
+	end
+	local nick = nicks[name] or name
+	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
+	commands.tellraw("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
+end
+
 local main = function()
 	while true do
 		local _, message, _, name = os.pullEvent("chat_capture") --Pull chat messages
@@ -337,8 +338,8 @@ local main = function()
 				end
 			end
 			if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
-				_G.bagelBot.out = function() return name, command, possiblecmds[1][2] end --bagelBot.out as documented in README
 				origin = possiblecmds[1][2]
+				_G.bagelBot.out = function() return name, command, origin end --bagelBot.out as documented in README
 	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 	    		if stat == false then--it crashed...
 	    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
@@ -360,7 +361,7 @@ local main = function()
 	    end
 	end
 end
-threads[#threads+1] = coroutine.create(main) --Add main to the thread table
+threads[#threads+1] = {coroutine.create(main), "BagelCore"} --Add main to the thread table
 
 if not fs.exists("persistence.json") then --In the situation that this is a first installation, let's add persistence.json
 	local fpers = fs.open("persistence.json", "w")
@@ -368,9 +369,9 @@ if not fs.exists("persistence.json") then --In the situation that this is a firs
 	fpers.close()
 end
 
-print("BagelBot started.")
-bagelBot.tell("@a", "BagelBot loaded.")
---This clump is pulled and adapted for what I need it for, parallel.waitForAll, for a table of coroutines. Its origin is in /rom/apis/parallel.lua in CraftOS.
+print("BagelBot started.") --Insert windows XP starting sound.
+bagelBot.tell("@a", "&a&i(https://www.youtube.com/watch?v=7nQ2oiVqKHw)BagelBot loaded.&r")
+--This clump is pulled and adapted for what I need it for. parallel.waitForAll for a table of coroutines. Its origin is in /rom/apis/parallel.lua in CraftOS.
 local count = #threads
 local living = count
 
@@ -378,7 +379,8 @@ local tFilters = {}
 local eventData = { n = 0 }
 while true do
 	for n=1,count do
-		local r = threads[n]
+		local r = threads[n][1]
+		origin = threads[n][2]
 		if r then
 			if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
     			local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
@@ -398,7 +400,7 @@ while true do
 		end
 	end
 	for n=1,count do
-		local r = threads[n]
+		local r = threads[n][1]
 		if r and coroutine.status( r ) == "dead" then
 			threads[n] = nil
 			living = living - 1
