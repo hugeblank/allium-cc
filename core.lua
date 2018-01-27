@@ -1,9 +1,15 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
-local moduleManip = peripheral.wrap("top")
+local moduleManip
+for i = 1, #rs.getSides() do 
+	local ptype = peripheral.getType(rs.getSides[i])
+	if ptype == "manipulator" then
+		moduleManip = peripheral.wrap(rs.getSides[i])
+	end
+end
 if moduleManip ~= nil then
-	moduleManip.capture(".")
+	moduleManip.capture("^!")
 end
 local mName = "&h(bagel 'n roger wuz here.)&i(https://www.youtube.com/watch?v=ByC8sRdL-Ro)<&r&eBagel&6Bot&r>" --bot title
 local botcmds = {}
@@ -310,7 +316,13 @@ end
 
 local main = function()
 	while true do
-		local _, message, _, name = os.pullEvent("chat_capture") --Pull chat messages
+		local message, name
+		local event = {os.pullEvent()} --Pull chat messages
+		if event[1] == "chat_capture" then
+			message, name = event[2], event[4]
+		elseif event[1] == "chat_message" then
+			message, name = event[3], event[4]
+		end
 		if string.find(message, "!") ~= 1 then --generic messages
 			repeatName(name, message)
 		elseif string.find(message, "!") == 1 then --are they for BagelBot?
