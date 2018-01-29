@@ -119,28 +119,30 @@ _G.bagelBot.getCommands = function(plugin)
 	end
 end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
+	local source = bagelBot.source()
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
-		if not tpersist[bagelBot.source()] then --replace out w/ source
-			tpersist[bagelBot.source()] = {}
+		if not tpersist[source] then 
+			tpersist[source] = {}
 		end
 		if type(name) == "string" then
-			return tpersist[bagelBot.source()][name]
+			return tpersist[source][name]
 		end
 	end
 	return false
 end
 _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as documented in README
 	local tpersist
+	local source = bagelBot.source()
 	if fs.exists("persistence.json") then
 		local fper = fs.open("persistence.json", "r")
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
-	if not tpersist[bagelBot.source()] then
-		tpersist[bagelBot.source()] = {}
+	if not tpersist[source] then
+		tpersist[source] = {}
 	end
 	if type(name) == "string" then
 		tpersist[bagelBot.source()][name] = data
