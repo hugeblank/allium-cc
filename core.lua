@@ -19,7 +19,6 @@ local threads = {}
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
-local origin = ""
 local cmdamt = 8
 local dir = shell.dir()
 print("Integrating API...")
@@ -110,15 +109,14 @@ _G.bagelBot.getCommands = function(plugin)
 end
 _G.bagelBot.getPersistence = function(name) --bagelBot.getPersistence as documented in README 
 	if fs.exists("persistence.json") then
-		_, _, plugin = bagelBot.out()
 		local fper = fs.open("persistence.json", "r")
 		local tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
-		if not tpersist[origin] then
-			tpersist[origin] = {}
+		if not tpersist[bagelBot.source()] then --replace out w/ source
+			tpersist[bagelBot.source()] = {}
 		end
 		if type(name) == "string" then
-			return tpersist[origin][name]
+			return tpersist[bagelBot.source()][name]
 		end
 	end
 	return false
@@ -130,11 +128,11 @@ _G.bagelBot.setPersistence = function(name, data) --bagelBot.setPersistence as d
 		tpersist = textutils.unserialize(fper.readAll())
 		fper.close()
 	end
-	if not tpersist[origin] then
-		tpersist[origin] = {}
+	if not tpersist[bagelBot.source()] then
+		tpersist[bagelBot.source()] = {}
 	end
 	if type(name) == "string" then
-		tpersist[origin][name] = data
+		tpersist[bagelBot.source()][name] = data
 		local fpers = fs.open("persistence.json", "w")
 		fpers.write(textutils.serialise(tpersist))
 		fpers.close()
@@ -323,54 +321,58 @@ local main = function()
 		elseif event[1] == "chat_message" then
 			message, name = event[3], event[4]
 		end
-		if string.find(message, "!") ~= 1 then --generic messages
-			repeatName(name, message)
-		elseif string.find(message, "!") == 1 then --are they for BagelBot?
-			command = {}
-			for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
-				command[#command+1] = k
-			end
-			local cmd = string.sub(command[1], 2)
-			table.remove(command, 1) --remove the first parameter given (!command)
-			local possiblecmds = {}
-			if not string.find(cmd, ":") then --did they not specify the plugin source?
-				for k, v in pairs(botcmds) do --nope... gonna have to find it for them.
-					for l, w in pairs(v) do
-						if l == cmd then --well I found it, but there may be more...
-							possiblecmds[#possiblecmds+1] = {w, k} --split into command function, source
+		if message then
+			if string.find(message, "!") ~= 1 then --generic messages
+				repeatName(name, message)
+			elseif string.find(message, "!") == 1 then --are they for BagelBot?
+				local command = {}
+				for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
+					command[#command+1] = k
+				end
+				local cmd = string.sub(command[1], 2)
+				table.remove(command, 1) --remove the first parameter given (!command)
+				local possiblecmds = {}
+				if not string.find(cmd, ":") then --did they not specify the plugin source?
+					for k, v in pairs(botcmds) do --nope... gonna have to find it for them.
+						for l, w in pairs(v) do
+							if l == cmd then --well I found it, but there may be more...
+								possiblecmds[#possiblecmds+1] = {w, k} --split into command function, source
+							end
+						end
+					end
+				else --hey they did! +1 karma.
+					local splitat = string.find(cmd, ":")
+					if botcmds[string.sub(cmd, 1, splitat-1)] then --check plugin existence
+						if botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)] then --check command existence
+							possiblecmds[#possiblecmds+1] = {botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)], string.sub(cmd, 1, splitat-1)} --split it into the function, and then the source
 						end
 					end
 				end
-			else --hey they did! +1 karma.
-				local splitat = string.find(cmd, ":")
-				if botcmds[string.sub(cmd, 1, splitat-1)] then --check plugin existence
-					if botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)] then --check command existence
-						possiblecmds[#possiblecmds+1] = {botcmds[string.sub(cmd, 1, splitat-1)][string.sub(cmd, splitat+1, -1)], string.sub(cmd, 1, splitat-1)} --split it into the function, and then the source
-					end
-				end
-			end
-			if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
-				origin = possiblecmds[1][2]
-				_G.bagelBot.out = function() return name, command, origin end --bagelBot.out as documented in README
-	    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
-	    		if stat == false then--it crashed...
-	    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
-	    			print(cmd.." errored. Error:\n"..err)
+				if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
+					_G.bagelBot.out = function() return name, command, possiblecmds[1][2] end --bagelBot.out as documented in README
+					_G.bagelBot.source = function() return possiblecmds[1][2] end
+		    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
+		    		if not stat then--it crashed...
+		    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
+		    			print(cmd.." errored. Error:\n"..err)
+		    		else
+		    			os.queueEvent("command_execute", name, message) --if the command executed successfully, send an event out
+		    		end
+		    	elseif #possiblecmds > 1 then --WHAT MORE THAN ONE OUTCOME!?!?
+		    		local colstr = ""
+		    		for i = 1, #possiblecmds do --idiot, I'm going to have to list them out for you...
+		    			if i ~= #possiblecmds then
+		    				colstr = colstr.."&a&g(!"..possiblecmds[i][2]..":"..cmd..")&h(Click to run !"..possiblecmds[i][2]..":"..cmd..")"..possiblecmds[i][2].."&r&e, "
+		    			else
+		    				colstr = colstr.."and &a&g(!"..possiblecmds[i][2]..":"..cmd..")&h(Click to run !"..possiblecmds[i][2]..":"..cmd..")"..possiblecmds[i][2].."&r&e."
+		    			end
+		    		end --how dare you inconvenience me...
+		    		bagelBot.tell(name, "&eCommand collision beween "..colstr.." Click on the plugin that you want to run the command from. Optionally specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. Ex: &c&g(!BagelCore:github)!BagelCore:github&r&e.") --REEEEEEEE
+	    		else --this isn't even a valid command...
+		    		bagelBot.tell(name, "&6Invalid Command, use &c&g(!help)!help&r&6 for assistance.") --bleh!
 	    		end
-	    	elseif #possiblecmds > 1 then --WHAT MORE THAN ONE OUTCOME!?!?
-	    		local colstr = ""
-	    		for i = 1, #possiblecmds do --idiot, I'm going to have to list them out for you...
-	    			if i ~= #possiblecmds then
-	    				colstr = colstr.."&a&g(!"..possiblecmds[i][2]..":"..cmd..")&h(Click to run !"..possiblecmds[i][2]..":"..cmd..")"..possiblecmds[i][2].."&r&e, "
-	    			else
-	    				colstr = colstr.."and &a&g(!"..possiblecmds[i][2]..":"..cmd..")&h(Click to run !"..possiblecmds[i][2]..":"..cmd..")"..possiblecmds[i][2].."&r&e."
-	    			end
-	    		end --how dare you inconvenience me...
-	    		bagelBot.tell(name, "&eCommand collision beween "..colstr.." Click on the plugin that you want to run the command from. Optionally specify the command you want to use by prefixxing the plugin name followed by a colon, and then the command name. Ex: &c&g(!BagelCore:github)!BagelCore:github&r&e.") --REEEEEEEE
-    		else --this isn't even a valid command...
-	    		bagelBot.tell(name, "&6Invalid Command, use &c&g(!help)!help&r&6 for assistance.") --bleh!
-    		end
-	    end
+		    end
+		end
 	end
 end
 threads[#threads+1] = {coroutine.create(main), "BagelCore"} --Add main to the thread table
@@ -391,8 +393,11 @@ local tFilters = {}
 local eventData = { n = 0 }
 while true do
 	for n=1,count do
-		local r = threads[n][1]
-		origin = threads[n][2]
+		local r
+		if threads and threads[n] then
+			r = threads[n][1]
+			_G.bagelBot.source = function() return threads[n][2] end
+		end
 		if r then
 			if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
     			local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
@@ -413,7 +418,7 @@ while true do
 	end
 	for n=1,count do
 		local r = threads[n]
-		if r[1] and coroutine.status( r[1] ) == "dead" then
+		if r and r[1] and coroutine.status( r[1] ) == "dead" then
 			threads[n] = nil
 			living = living - 1
 			if living <= 0 then
