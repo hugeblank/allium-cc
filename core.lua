@@ -288,30 +288,6 @@ for i = 1, #pluginlist do
 	end
 end
 
-local function repeatName(name, message)
-    local prefixes = bagelBot.getPersistence("prefixes")
-    local nicks = bagelBot.getPersistence("nicknames")
-	local rank = betaBot.getLevel(name)+1
-    if not prefixes then
-        prefixes = { 
-			user = {},
-			ranks = {
-				"&r[&amember&r]",
-				"&r[&eVIP&r]",
-				"&r[&cadmin&r]",
-			}
-		}
-		bagelBot.setPersistence("prefixes", prefixes)
-	end
-	if not nicks then
-		nicks = {}
-		bagelBot.setPersistence("nicknames", nicks)
-	end
-	local nick = nicks[name] or name
-	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
-	commands.tellraw("@a", color.format(prefix.."&r<"..nick.."&r> "..message))
-end
-
 local main = function()
 	while true do
 		local message, name
@@ -322,9 +298,7 @@ local main = function()
 			message, name = event[3], event[4]
 		end
 		if message then
-			if string.find(message, "!") ~= 1 then --generic messages
-				repeatName(name, message)
-			elseif string.find(message, "!") == 1 then --are they for BagelBot?
+			if string.find(message, "!") == 1 then --are they for BagelBot?
 				local command = {}
 				for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
 					command[#command+1] = k
