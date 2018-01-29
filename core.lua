@@ -1,11 +1,15 @@
 print("Loading BagelBot")
 os.loadAPI("color.lua") --Sponsored by roger109z
 _G.bagelBot = {}
+local eType
 local moduleManip
 for i = 1, #rs.getSides() do 
 	local ptype = peripheral.getType(rs.getSides()[i])
 	if ptype == "manipulator" then
 		moduleManip = peripheral.wrap(rs.getSides()[i])
+		eType = "chat_capture"
+	else
+		eType = "chat_message"
 	end
 end
 if moduleManip ~= nil then
@@ -22,6 +26,13 @@ local rowtbl = {}
 local cmdamt = 8
 local dir = shell.dir()
 print("Integrating API...")
+_G.bagelBot.queueCommand = function(name, command)
+	if eType == "chat_capture" then
+		os.queueEvent(eType, command, nil, name)
+	elseif eType == "chat_message" then
+		os.queueEvent(eType, nil, name, command)
+	end
+end
 _G.bagelBot.tell = function(name, message, hidetag, botname) --bagelBot.tell as documented in README
     local m
     if type(message) == "string" then
@@ -295,7 +306,7 @@ local main = function()
 		if event[1] == "chat_capture" then
 			message, name = event[2], event[4]
 		elseif event[1] == "chat_message" then
-			message, name = event[3], event[4]
+			name, message = event[3], event[4]
 		end
 		if message then
 			if string.find(message, "!") == 1 then --are they for BagelBot?
