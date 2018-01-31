@@ -302,6 +302,8 @@ for i = 1, #pluginlist do
 end
 
 local main = function()
+	print("BagelBot started.")
+	bagelBot.tell("@a", "&a&i(https://www.youtube.com/watch?v=7nQ2oiVqKHw)BagelBot loaded.&r")
 	while true do
 		local message, name
 		local event = {os.pullEvent()} --Pull chat messages
@@ -337,7 +339,6 @@ local main = function()
 				end
 				if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
 					_G.bagelBot.out = function() return name, command, possiblecmds[1][2] end --bagelBot.out as documented in README
-					_G.bagelBot.source = function() return possiblecmds[1][2] end
 		    		local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 		    		if not stat then--it crashed...
 		    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
@@ -370,8 +371,6 @@ if not fs.exists("persistence.json") then --In the situation that this is a firs
 	fpers.close()
 end
 
-print("BagelBot started.") --Insert windows XP starting sound.
-bagelBot.tell("@a", "&a&i(https://www.youtube.com/watch?v=7nQ2oiVqKHw)BagelBot loaded.&r")
 --This clump is pulled and adapted for what I need it for. parallel.waitForAll for a table of coroutines. Its origin is in /rom/apis/parallel.lua in CraftOS.
 local count = #threads
 local living = count
