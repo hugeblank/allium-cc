@@ -1,6 +1,7 @@
 # BagelBot
-BagelBot is a simple lua plugin interface for minecraft.
-It uses Computercraft's Command Computer, and Computronics's Creative Chatbox to function.
+BagelBot is an advanced lua plugin interface for minecraft.
+It uses ComputerCraft's Command Computer, and a chat listening device to function. Currently the bot supports detection for Plethora Peripheral's Creative Chat Recorder, and Computronic's Creative Chatbox.
+
 ## Install
 To install BagelBot, run this command, it's that simple!
 
