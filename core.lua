@@ -385,39 +385,43 @@ local living = count
 local tFilters = {}
 local eventData = { n = 0 }
 while true do
-	for n=1,count do
-		local r
-		if threads and threads[n] then
-			r = threads[n][1]
-		end
-		if r then
-			if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
-			thorigin = threads[n][2]
-    			local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
-				if not ok then
-					error( param, 0 )
-				else
-					tFilters[r] = param
-				end
-				if coroutine.status( r ) == "dead" then
-					threads[n] = nil
-					living = living - 1
-					if living <= 0 then
-						return n
+	if not cmorigin then
+		for n=1,count do
+			local r
+			if threads and threads[n] then
+				r = threads[n][1]
+			end
+			if r then
+				if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
+				thorigin = threads[n][2]
+    				local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
+					if not ok then
+						error( param, 0 )
+					else
+						tFilters[r] = param
+					end
+					if coroutine.status( r ) == "dead" then
+						threads[n] = nil
+						living = living - 1
+						if living <= 0 then
+							return n
+						end
 					end
 				end
 			end
 		end
-	end
-	for n=1,count do
-		local r = threads[n]
-		if r and r[1] and coroutine.status( r[1] ) == "dead" then
-			threads[n] = nil
-			living = living - 1
-			if living <= 0 then
-				return n
+		for n=1,count do
+			local r = threads[n]
+			if r and r[1] and coroutine.status( r[1] ) == "dead" then
+				threads[n] = nil
+				living = living - 1
+				if living <= 0 then
+					return n
+				end
 			end
 		end
+	else
+		coroutine.resume(threads[#threads][1], table.unpack( eventData, 1, eventData.n ) )
 	end
 	eventData = table.pack( os.pullEventRaw() )
 end
