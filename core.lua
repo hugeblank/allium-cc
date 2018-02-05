@@ -341,9 +341,12 @@ local main = function()
 				end
 			if #possiblecmds == 1 and possiblecmds[1][1] then --is it really a command, and is there only one that is titled this?
 				_G.bagelBot.out = function() return name, command, possiblecmds[1][2] end --bagelBot.out as documented in README		
+				local threadstore = threads
+				threads = {threadstore[#threadstore]}
 				cmorigin = possiblecmds[1][2]
 	    			local stat, err = pcall(possiblecmds[1][1]) --Let's execute the command in a safe environment that won't kill bagelbot
 				cmorigin = nil
+				threads = threadstore
 	    			if not stat then--it crashed...
 		    			bagelBot.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..possiblecmds[1][2].."&4. Error:\n&c"..err)
 		    			print(cmd.." errored. Error:\n"..err)
@@ -390,7 +393,6 @@ while true do
 		if r then
 			if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
 			thorigin = threads[n][2]
-				while cmorigin do sleep() end --potential fix to 6
     			local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
 				if not ok then
 					error( param, 0 )
