@@ -390,6 +390,7 @@ while true do
 		if r then
 			if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
 			thorigin = threads[n][2]
+				while cmorigin do sleep() end --potential fix to 6
     			local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
 				if not ok then
 					error( param, 0 )
