@@ -20,6 +20,7 @@ local botcmds = {}
 local pluginlist = {"BagelCore"}
 local command = {}
 local threads = {}
+local mainThread
 local thelp = {}
 local tsuggest = {}
 local rowtbl = {}
@@ -370,8 +371,8 @@ local main = function()
 		end
 	end
 end
-threads[#threads+1] = {coroutine.create(main), "BagelCore"} --Add main to the thread table
-
+mainThread = {coroutine.create(main), "BagelCore"} --Give the main thread its title
+threads[#threads+1] = mainThread --Add main to the thread table
 if not fs.exists("persistence.json") then --In the situation that this is a first installation, let's add persistence.json
 	local fpers = fs.open("persistence.json", "w")
 	fpers.write("{}")
@@ -381,47 +382,25 @@ end
 --This clump is pulled and adapted for what I need it for. parallel.waitForAll for a table of coroutines. Its origin is in /rom/apis/parallel.lua in CraftOS.
 local count = #threads
 local living = count
-
 local tFilters = {}
-local eventData = { n = 0 }
-while true do
+while living >= 0 do
+	local eventData = {os.pullEventRaw()}
 	if not cmorigin then
-		for n=1,count do
-			local r
-			if threads and threads[n] then
-				r = threads[n][1]
+		for i = 1, living do
+			if tFilters[i] == nil or tFilters[i] == eventData[1] or tFilters[i] == "terminate" then
+				thorigin = threads[i][2]
+				ok, param = coroutine.resume(threads[i][1], unpack(eventData))
+				thorigin = nil
 			end
-			if r then
-				if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
-				thorigin = threads[n][2]
-    				local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
-					if not ok then
-						error( param, 0 )
-					else
-						tFilters[r] = param
-					end
-					if coroutine.status( r ) == "dead" then
-						threads[n] = nil
-						living = living - 1
-						if living <= 0 then
-							return n
-						end
-					end
-				end
-			end
-		end
-		for n=1,count do
-			local r = threads[n]
-			if r and r[1] and coroutine.status( r[1] ) == "dead" then
-				threads[n] = nil
-				living = living - 1
-				if living <= 0 then
-					return n
-				end
+			if not ok then error(param, 0) end
+			tFilters[i] = param
+			if coroutine.status(threads[i][1]) == "dead" then
+				table.remove(threads, i)
+				living = living-1
 			end
 		end
 	else
-		coroutine.resume(threads[#threads][1], table.unpack( eventData, 1, eventData.n ) )
+		ok, param = coroutine.resume(mainThread, unpack(eventData))
+
 	end
-	eventData = table.pack( os.pullEventRaw() )
 end
