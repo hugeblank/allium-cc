@@ -384,23 +384,25 @@ local count = #threads
 local living = count
 local tFilters = {}
 while living >= 0 do
-	local eventData = {os.pullEventRaw()}
+	eventData = { n = 0}
 	if not cmorigin then
-		for i = 1, living do
+		for i = 1, #threads do
 			if tFilters[i] == nil or tFilters[i] == eventData[1] or tFilters[i] == "terminate" then
 				thorigin = threads[i][2]
-				ok, param = coroutine.resume(threads[i][1], unpack(eventData))
+				ok, param = coroutine.resume(threads[i][1], table.unpack(eventData, 1, eventData.n))
 				thorigin = nil
 			end
 			if not ok then error(param, 0) end
 			tFilters[i] = param
-			if coroutine.status(threads[i][1]) == "dead" then
-				table.remove(threads, i)
-				living = living-1
+			if threads[i] then
+				if coroutine.status(threads[i][1]) == "dead" then
+					table.remove(threads, i)
+					living = living-1
+				end
 			end
 		end
 	else
-		ok, param = coroutine.resume(mainThread, unpack(eventData))
-
+		ok, param = coroutine.resume(mainThread[1], unpack(eventData))
 	end
+	eventData = table.pack(os.pullEventRaw())
 end
