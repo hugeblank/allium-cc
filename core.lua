@@ -383,8 +383,8 @@ end
 local count = #threads
 local living = count
 local tFilters = {}
+local eventData = { n = 0 }
 while living >= 0 do
-	eventData = { n = 0}
 	if not cmorigin then
 		for i = 1, #threads do
 			if tFilters[i] == nil or tFilters[i] == eventData[1] or tFilters[i] == "terminate" then
