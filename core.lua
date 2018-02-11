@@ -382,27 +382,29 @@ end
 --This clump is pulled and adapted for what I need it for. parallel.waitForAll for a table of coroutines. Its origin is in /rom/apis/parallel.lua in CraftOS.
 local count = #threads
 local living = count
-local tFilters = {}
-local eventData = { n = 0 }
-while living >= 0 do
+while true do
+	eventData = { n = 0 }
 	if not cmorigin then
 		for i = 1, #threads do
-			if tFilters[i] == nil or tFilters[i] == eventData[1] or tFilters[i] == "terminate" then
-				thorigin = threads[i][2]
-				ok, param = coroutine.resume(threads[i][1], table.unpack(eventData, 1, eventData.n))
-				thorigin = nil
-			end
-			if not ok then error(param, 0) end
-			tFilters[i] = param
 			if threads[i] then
-				if coroutine.status(threads[i][1]) == "dead" then
-					table.remove(threads, i)
-					living = living-1
+				if threads[i][3] == nil or threads[i][3] == eventData[1] or threads[i][3] == "terminate" then
+					thorigin = threads[i][2]
+					ok, param = coroutine.resume(threads[i][1], table.unpack(eventData, 1, eventData.n))
+					thorigin = nil
+				end
+				if not ok then error(param, 0) end
+				if threads[i] then
+					threads[i][3] = param
+					if coroutine.status(threads[i][1]) == "dead" then
+						table.remove(threads, i)
+						living = living-1
+						if living <= 0 then return end
+					end
 				end
 			end
 		end
 	else
-		ok, param = coroutine.resume(mainThread[1], unpack(eventData))
+		ok, param = coroutine.resume(mainThread[1], table.unpack(eventData, 1, eventData.n))
 	end
 	eventData = table.pack(os.pullEventRaw())
 end
