@@ -88,7 +88,7 @@ _G.bagelBot.getPlayers = function()
 		local _, users = commands.testfor("@a")
 		local out = {}
 		for i = 1, #users do
-			out[#out+1] = string.sub(users, 7, -1)
+			out[#out+1] = string.sub(users[i], 7, -1)
 		end
 		return out
 	end
