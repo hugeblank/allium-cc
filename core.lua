@@ -85,7 +85,7 @@ end
 _G.bagelBot.getPlayers = function()
 	local didexec, input = commands.exec("list")
 	if not didexec then 
-		local users = ({commands.testfor("@a")})[2]
+		local users = commands.testfor("@a")[2]
 		local out = {}
 		for i = 1, #users do
 			out[#out+1] = string.sub(users, 7, -1)
