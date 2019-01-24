@@ -1,3 +1,5 @@
+local this = {}
+
 local cTable = {
     ["0"] = "black",
     ["1"] = "dark_blue",
@@ -68,7 +70,7 @@ local function copy(tbl)
 	end
 	return ret
 end
-format = function(sText, bAction)
+this.format = function(sText, bAction)
 	if type(bAction) ~= "boolean" then
 		bAction = true
 	end
@@ -104,7 +106,7 @@ format = function(sText, bAction)
 				current["hoverEvent"] = true
 				local ind = string.find(v[2], ")")
 				if ind ~= nil then
-					current["hoverText"] = format(string.sub(v[2], 2, ind-1), false)
+					current["hoverText"] = this.format(string.sub(v[2], 2, ind-1), false)
 					v[2] = v[2]:sub(ind+1)
 				else
 					current["hoverText"] = v[2]
@@ -133,7 +135,7 @@ format = function(sText, bAction)
     return outText
 end
 
-deformat = function(string)
+this.deformat = function(string)
     local seperated = {}
 	local out = ""
     for k in string.gmatch(sText, "[^&]+") do
@@ -145,3 +147,5 @@ deformat = function(string)
 	end
 	return out
 end
+
+return this
