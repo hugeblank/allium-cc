@@ -13,7 +13,19 @@ To install Allium, run this command, it's that simple!
 
 `pastebin run LGwrkjxm`
 
-The installer installs Apemanzilla's [gitget](http://www.computercraft.info/forums2/index.php?/topic/17387-gitget-version-2-release/), a github repository downloader that is necessary to download Allium, and the plugins that can be installed.
+The installer installs:
+
+- The Allium repo - allium.lua, plugins/allium-stem.lua, colors.lua, readme.md
+
+- The Raisin Repo - raisin/raisin.lua, raisin/readme.md
+
+- Apemanzilla's [gitget](http://www.computercraft.info/forums2/index.php?/topic/17387-gitget-version-2-release/), a github repository downloader that is necessary to download Allium, and the plugins that can be installed. 
+
+- repolist.csh - A _Craftos SHell_ file, where you can gitget various plugins and utilities and keep them up to date.
+
+- startup.lua - startup file that runs the repolist file, then runs Allium. When Allium crashes/exits it will reboot after 3 seconds unless interrupted.
+
+- persistence.ltn - A _Lua Table Notation_ file containing all serialized persistence entries for each plugin.
 
 ## Base Commands
 `!help`: Lists the info entries for the installed plugins
@@ -141,5 +153,5 @@ The following characters are all valid for formatting in `allium.tell` when pref
 ## Cloning this repository
 It's worth noting that there are some places you might want to check out after you fork, and before you start testing your code. 
 
-1. The pastebin [installer](https://www.pastebin.com/LGwrkjxm). You are free to make your own installer to your fork with this code, simply change the `repo` string to "your github username"/"the name of your Allium repository".
+1. The pastebin [installer](https://www.pastebin.com/LGwrkjxm). You are free to make your own installer to your fork with this code, simply change the `repo` string to "[your github username] [the name of your Allium repository] [the branch you want to clone from] [location]".
 2. The startup file of your fork. There is a line that has a comment along with it. Change that repo name from the official Allium repository to your forked repository, similar to the style shown above.
