@@ -122,8 +122,8 @@ allium.register = function(p_name, fullname)
 	end
 
 	funcs.getPersistence = function(name)
-		if fs.exists("persistence.json") then
-			local fper = fs.open("persistence.json", "r")
+		if fs.exists("persistence.ltn") then
+			local fper = fs.open("persistence.ltn", "r")
 			local tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 			if not tpersist[p_name] then
@@ -138,8 +138,8 @@ allium.register = function(p_name, fullname)
 	
 	funcs.setPersistence = function(name, data)
 		local tpersist
-		if fs.exists("persistence.json") then
-			local fper = fs.open("persistence.json", "r")
+		if fs.exists("persistence.ltn") then
+			local fper = fs.open("persistence.ltn", "r")
 			tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 		end
@@ -148,7 +148,7 @@ allium.register = function(p_name, fullname)
 		end
 		if type(name) == "string" then
 			tpersist[p_name][name] = data
-			local fpers = fs.open("persistence.json", "w")
+			local fpers = fs.open("persistence.ltn", "w")
 			fpers.write(textutils.serialise(tpersist))
 			fpers.close()
 			return true
@@ -253,8 +253,8 @@ end
 
 raisin.thread.add(main, 0)
 
-if not fs.exists("persistence.json") then --In the situation that this is a first installation, let's add persistence.json
-	local fpers = fs.open("persistence.json", "w")
+if not fs.exists("persistence.ltn") then --In the situation that this is a first installation, let's add persistence.ltn
+	local fpers = fs.open("persistence.ltn", "w")
 	fpers.write("{}")
 	fpers.close()
 end

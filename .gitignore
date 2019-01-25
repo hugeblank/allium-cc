@@ -1,4 +1,4 @@
 repolist.csh
-persistence.json
+persistence.ltn
 gitget.lua
 json
