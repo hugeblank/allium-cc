@@ -1,9 +1,17 @@
+-- Allium by hugeblank
+paintutils.drawImage(paintutils.loadImage("allium.nfp"), 40, 2) -- Draw the Allium image on the side
+term.setBackgroundColor(colors.black) -- Reset terminal and cursor
+term.setTextColor(colors.white)
+term.setCursorPos(1, 1)
+-- Announce loading has begun
 print("Loading Allium")
 print("Initializing API")
 
 local mName = "<&r&dAll&5&h(Hugeblank was here. Hi.)&i(https://www.youtube.com/watch?v=PomZJao7Raw)i&r&dum&r>" --bot title
+local raisin = require("raisin.raisin")
 local color = require("color") --Sponsored by roger109z
 local allium = {} -- API table
+local group = {thread = raisin.group.add(1), command = raisin.group.add(2)}
 local plugins = {} -- Plugin table
 
 allium.assert = function(condition, message, level)
@@ -18,40 +26,35 @@ allium.sanitize = function(name)
 	end
 end
 
-allium.tell = function(name, message, hidetag, botname) --allium.tell as documented in README
-    local m
-    if type(message) == "string" then
-        m = message
-    else
-        m = ""
+allium.tell = function(name, message, botname) --allium.tell as documented in README
+    if not (type(message) == "string" or type(message) == "table") then
+        return false
     end
-    if type(botname) ~= "string" then
-    	botname = mName
-    end
-    local _, test = commands.tellraw(name, color.format((function(hidetag)if hidetag then return "" else return botname.."&r " end end)(hidetag)..m))
-    if type(message) == "table" then
-        for k, v in pairs(message) do
-            local _, l = commands.tellraw(name, color.format(v))
-        end
+	local test
+	if type(message) == "table" then
+		_, test = commands.tellraw(name, color.format(table.concat(message, "\n")))
+	else
+		_, test = commands.tellraw(name, color.format((function(botname) if botname == true then return "" elseif botname then return botname.."&r " else return mName.."&r " end end)(botname)..message))
     end
     return textutils.serialise(test)
 end
 
 allium.getPlayers = function()
 	local didexec, input = commands.exec("list")
+	local out = {}
 	if not didexec then 
 		local _, users = commands.testfor("@a")
-		local out = {}
 		for i = 1, #users do
 			out[#out+1] = string.sub(users[i], 7, -1)
 		end
-		return out
-	end
-	local out = {}
-	for user in string.gmatch(input[2], "%S+") do
-		local comma = string.find(user, ",")
-		if not comma then comma = -1 else comma=comma-1 end
-		out[#out+1] = string.sub(user, 0, comma)
+	else
+		for user in string.gmatch(input[2], "%S+") do
+			if user:find(",") then
+				out[#out+1] = user:sub(1, -2)
+			else
+				out[#out+1] = user
+			end
+		end
 	end
 	return out
 end
@@ -115,7 +118,7 @@ allium.register = function(p_name, fullname)
 
 	funcs.thread = function(thread)
 		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")", 3)
-		this.threads[#this.threads+1] = thread
+		return raisin.thread.add(thread, 0, group.thread)
 	end
 
 	funcs.getPersistence = function(name)
@@ -233,11 +236,14 @@ local main = function()
 					usage = function(name) allium.tell(name, "&c"..cmd.." "..cmd_exec.command.usage) end,
 					autofill = cmd_exec.command.usage
 				}
-	    		local stat, err = pcall(cmd_exec.command.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
-	    		if stat == false then--it crashed...
-	    			allium.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c"..err)
-	    			printError(cmd.." errored. Error:\n"..err)
-	    		end
+				local function exec_command()
+					local stat, err = pcall(cmd_exec.command.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
+					if stat == false then--it crashed...
+						allium.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c"..err)
+						printError(cmd.." errored. Error:\n"..err)
+					end
+				end
+				raisin.thread.add(exec_command, 0, group.command)
     		else --this isn't even a valid command...
 	    		allium.tell(name, "&6Invalid Command, use &c&g(!allium:help)!help&r&6 for assistance.") --bleh!
     		end
@@ -245,9 +251,7 @@ local main = function()
 	end
 end
 
-local threads = {} -- Temporary
-
-threads[#threads+1] = coroutine.create(main) --Add main to the thread table
+raisin.thread.add(main, 0)
 
 if not fs.exists("persistence.json") then --In the situation that this is a first installation, let's add persistence.json
 	local fpers = fs.open("persistence.json", "w")
@@ -257,42 +261,5 @@ end
 
 print("Allium started.")
 allium.tell("@a", "&eHello World!")
---This clump is pulled and adapted for what I need it for, parallel.waitForAll, for a table of coroutines. Its origin is in /rom/apis/parallel.lua in CraftOS.
-local count = #threads
-local living = count
-
-local tFilters = {}
-local eventData = { n = 0 }
-while true do
-	for n=1,count do
-		local r = threads[n]
-		if r then
-			if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
-    			local ok, param = coroutine.resume( r, table.unpack( eventData, 1, eventData.n ) )
-				if not ok then
-					error( param, 0 )
-				else
-					tFilters[r] = param
-				end
-				if coroutine.status( r ) == "dead" then
-					threads[n] = nil
-					living = living - 1
-					if living <= 0 then
-						return n
-					end
-				end
-			end
-		end
-	end
-	for n=1,count do
-		local r = threads[n]
-		if r and coroutine.status( r ) == "dead" then
-			threads[n] = nil
-			living = living - 1
-			if living <= 0 then
-				return n
-			end
-		end
-	end
-	eventData = table.pack( os.pullEventRaw() )
-end
+sleep()
+raisin.manager.run()

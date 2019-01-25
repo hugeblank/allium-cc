@@ -1,2 +1,4 @@
-.repolist
+repolist.csh
 persistence.json
+gitget.lua
+json
