@@ -13,7 +13,7 @@ To install Allium, run this command, it's that simple!
 
 `pastebin run LGwrkjxm`
 
-The installer installs Apemanzilla's [gitget](http://www.computercraft.info/forums2/index.php?/topic/17387-gitget-version-2-release/), a github repository downloader that is necessary to download the bot, and the plugins that can be installed.
+The installer installs Apemanzilla's [gitget](http://www.computercraft.info/forums2/index.php?/topic/17387-gitget-version-2-release/), a github repository downloader that is necessary to download Allium, and the plugins that can be installed.
 
 ## Base Commands
 `!help`: Lists the info entries for the installed plugins
@@ -136,6 +136,7 @@ l - bold
 m - strikethrough
 n - italic
 o - underline
+
 ---
 ## Cloning this repository
 It's worth noting that there are some places you might want to check out after you fork, and before you start testing your code. 
