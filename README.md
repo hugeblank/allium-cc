@@ -6,7 +6,7 @@ The command computer can already do many things, being a programmable command bl
 
 Allium uses **[Raisin](https://github.com/hugeblank/raisin/)**, a next generation thread manager made by me, hugeblank. If you're a prospective Allium plugin developer, you may want to skim the documentation, found in the Readme.
 
-Allium also uses a chat text formatting API provided by [roger109z](https://github.com/roger109z/). I (hugeblank) personally haven't touched it (even though it is in my repo) since he's created it as it works flawlessly. 
+Allium also uses a chat text formatting API provided by [roger109z](https://github.com/roger109z/). I (hugeblank) personally haven't touched it (even though it is in my repo) since he's created it as it works flawlessly.
 
 ## Install
 To install Allium, run this command, it's that simple!
@@ -18,7 +18,7 @@ The installer installs Apemanzilla's [gitget](http://www.computercraft.info/foru
 ## Base Commands
 `!help`: Lists the info entries for the installed plugins
 
-`!plugins`: Lists the plugins that are installed.
+`!plugins`: Lists the plugins that are installed, based on the name of the directory that they're found in.
 
 `!credits`: Links to the github repo for [Allium](https://github.com/hugeblank/Allium), and to the people that made Allium.
 
