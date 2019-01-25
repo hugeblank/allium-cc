@@ -10,7 +10,7 @@ if fs.exists("repolist.csh") then
 else
     -- Generate a repolist file
     local file = fs.open("repolist.csh", "w")
-    file.write("gitget hugeblank/Allium /") --Forkers change this to their repository.
+    file.write("gitget hugeblank/Allium") --Forkers change this to their repository.
     file.close()
     printError("No valid repo file, default file created")
 end
