@@ -1,5 +1,10 @@
 -- Allium by hugeblank
-paintutils.drawImage(paintutils.loadImage("allium.nfp"), 40, 2) -- Draw the Allium image on the side
+do -- Allium image setup <3
+	local x, y = term.getSize()
+	paintutils.drawImage(paintutils.loadImage("allium.nfp"), x-7, 2) -- Draw the Allium image on the side
+	local win = window.create(term.current(), 1, 1, x-9, y, true)
+	term.redirect(win)
+end
 term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 term.setTextColor(colors.white)
 term.setCursorPos(1, 1)
@@ -7,34 +12,31 @@ term.setCursorPos(1, 1)
 print("Loading Allium")
 print("Initializing API")
 
-local mName = "<&r&dAll&5&h(Hugeblank was here. Hi.)&i(https://www.youtube.com/watch?v=PomZJao7Raw)i&r&dum&r>" --bot title
-local raisin = require("raisin.raisin")
-local color = require("color") --Sponsored by roger109z
+local label = "<&r&dAll&5&h(Hugeblank was here. Hi.)&i(https://www.youtube.com/watch?v=PomZJao7Raw)i&r&dum&r>" --bot title
+local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
 local allium = {} -- API table
-local group = {thread = raisin.group.add(1), command = raisin.group.add(2)}
+local group = {thread = raisin.group.add(1) , command = raisin.group.add(2)} -- threads first, commands second, plugin groups third
 local plugins = {} -- Plugin table
 
 allium.assert = function(condition, message, level)
-	if not condition then error(message, level) end
+	if not condition then error(message, level or 3) end
 end
 
 local assert = allium.assert
 
 allium.sanitize = function(name)
-	if name then
-		return name:lower():gsub(" ", "-")
-	end
+	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
+	return name:lower():gsub(" ", "-")
 end
 
-allium.tell = function(name, message, botname) --allium.tell as documented in README
-    if not (type(message) == "string" or type(message) == "table") then
-        return false
-    end
+allium.tell = function(name, message, alt_name)
+	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
+    assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
 	local test
 	if type(message) == "table" then
 		_, test = commands.tellraw(name, color.format(table.concat(message, "\n")))
 	else
-		_, test = commands.tellraw(name, color.format((function(botname) if botname == true then return "" elseif botname then return botname.."&r " else return mName.."&r " end end)(botname)..message))
+		_, test = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
     end
     return textutils.serialise(test)
 end
@@ -43,7 +45,7 @@ allium.getPlayers = function()
 	local didexec, input = commands.exec("list")
 	local out = {}
 	if not didexec then 
-		local _, users = commands.testfor("@a")
+		local _, users = commands.exec("testfor @a")
 		for i = 1, #users do
 			out[#out+1] = string.sub(users[i], 7, -1)
 		end
@@ -93,61 +95,63 @@ allium.getInfo = function(plugin) -- Get the information of all plugins, or a si
 end
 
 allium.getName = function(plugin)
-	assert(type(plugin) == "string", "Invalid argument #1 (string expected, got "..type(plugin)..")", 3)
+	assert(type(plugin) == "string", "Invalid argument #1 (string expected, got "..type(plugin)..")")
 	if plugins[plugin] then
 		return plugins[plugin].name
 	end
 end
 
 allium.register = function(p_name, fullname)
-	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")", 3)
+	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 	local real_name = allium.sanitize(p_name)
-	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")", 3)
+	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
 	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name}
 	local funcs = {}
 	local this = plugins[real_name]
 	
 	funcs.command = function(c_name, command, info, usage) -- name: name | command: executing function | info: help information | usage: string for improper inputs
-		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")", 3)
+		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
 		local real_name = allium.sanitize(c_name)
-		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")", 3)
-		assert(this.commands[real_name] == nil, "Invalid argument #2 (command exists under name "..real_name.." for plugin "..this.name..")", 3)
-		assert(type(info) == "string", "Invalid argument #3 (string expected, got "..type(info)..")", 3)
+		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")")
+		assert(this.commands[real_name] == nil, "Invalid argument #2 (command exists under name "..real_name.." for plugin "..this.name..")")
+		assert(type(info) == "string", "Invalid argument #3 (string expected, got "..type(info)..")")
 		this.commands[real_name] = {command = command, info = info, usage = usage}
 	end
 
 	funcs.thread = function(thread)
-		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")", 3)
-		return raisin.thread.add(thread, 0, group.thread)
+		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")")
+		raisin.thread.add(thread, 0, group.thread)
 	end
 
 	funcs.getPersistence = function(name)
+		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		if fs.exists("persistence.ltn") then
 			local fper = fs.open("persistence.ltn", "r")
 			local tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
-			if not tpersist[p_name] then
-				tpersist[p_name] = {}
+			if not tpersist[real_name] then
+				tpersist[real_name] = {}
 			end
 			if type(name) == "string" then
-				return tpersist[p_name][name]
+				return tpersist[real_name][name]
 			end
 		end
 		return false
 	end
 	
 	funcs.setPersistence = function(name, data)
+		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		local tpersist
 		if fs.exists("persistence.ltn") then
 			local fper = fs.open("persistence.ltn", "r")
 			tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 		end
-		if not tpersist[p_name] then
-			tpersist[p_name] = {}
+		if not tpersist[real_name] then
+			tpersist[real_name] = {}
 		end
 		if type(name) == "string" then
-			tpersist[p_name][name] = data
+			tpersist[real_name][name] = data
 			local fpers = fs.open("persistence.ltn", "w")
 			fpers.write(textutils.serialise(tpersist))
 			fpers.close()
@@ -159,8 +163,7 @@ allium.register = function(p_name, fullname)
 	return funcs
 end
 
--- Finding the chat module
-for _, side in pairs(peripheral.getNames()) do
+for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if peripheral.getMethods(side) then
 		for _, method in pairs(peripheral.getMethods(side)) do
 			if method == "capture" then
@@ -172,11 +175,7 @@ for _, side in pairs(peripheral.getNames()) do
 	end
 	if allium.side then break end
 end
-
-if not allium.side then
-	printError("Cannot find chat module")
-	return
-end
+assert(allium.side, "Allium requires a creative chat module in order to operate")
 
 _G.allium = allium -- Globalizing Allium API
 
@@ -214,9 +213,9 @@ local main = function()
 			local cmd_exec
 			if not string.find(cmd, ":") then --did they not specify the plugin source?
 				for p_name, plugin in pairs(plugins) do --nope... gonna have to find it for them.
-					for c_name, command in pairs(plugin.commands) do
+					for c_name, data in pairs(plugin.commands) do
 						if c_name == cmd then --well I found it, but there may be more...
-							cmd_exec = {command = command, plugin = p_name} --split into command function, source
+							cmd_exec = {data = data, plugin = p_name, command = c_name} --split into command function, source
 							break
 						end
 					end
@@ -227,19 +226,21 @@ local main = function()
 				local p_name, c_name = string.sub(cmd, 1, splitat-1), string.sub(cmd, splitat+1, -1)
 				if plugins[p_name] then --check plugin existence
 					if plugins[p_name].commands[c_name] then --check command existence
-						cmd_exec = {command = plugins[p_name].commands[c_name], plugin = p_name} --split it into the function, and then the source
+						cmd_exec = {data = plugins[p_name].commands[c_name], plugin = p_name, command = c_name} --split it into the function, and then the source
 					end
 				end
 			end
 			if cmd_exec then --is there really a command?
 				local data = { -- Infrequently used data to pass onto the command being executed
-					usage = function(name) allium.tell(name, "&c"..cmd.." "..cmd_exec.command.usage) end,
-					autofill = cmd_exec.command.usage
+					error = function(text) 
+						allium.tell(name, "&c"..(text or "!"..cmd.." "..cmd_exec.data.usage))
+					end,
+					usage = cmd_exec.data.usage
 				}
 				local function exec_command()
-					local stat, err = pcall(cmd_exec.command.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
+					local stat, err = pcall(cmd_exec.data.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
 					if stat == false then--it crashed...
-						allium.tell(name, "&4"..cmd.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c"..err)
+						allium.tell(name, "&4"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h(Click here to place error into chat prompt, so you may copy it if needed for an issue report)&s("..err:gsub("[(]", "["):gsub("[)]", "]")..")"..err.."&r")
 						printError(cmd.." errored. Error:\n"..err)
 					end
 				end

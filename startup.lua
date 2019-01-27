@@ -36,6 +36,6 @@ for _, side in pairs(peripheral.getNames()) do
     if exit then break end
 end
 -- Rebooting or exiting
-print("Rebooting in 3 seconds")
+print("Rebooting in 5 seconds")
 print("Press any key to cancel")
-parallel.waitForAny(function() repeat until os.pullEvent("char") end, function() sleep(3) os.reboot() end)
+parallel.waitForAny(function() repeat until os.pullEvent("char") end, function() sleep(5) os.reboot() end)

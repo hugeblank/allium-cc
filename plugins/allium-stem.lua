@@ -20,7 +20,7 @@ local help = function(name, args, data)
 				info[#info+1] = "&c&s(!"..args[1]..":"..cmd_name..")&h(!"..args[1]..":"..cmd_name..entry.usage..")!"..cmd_name.."&r: "..entry.info
 			end
 		else
-			allium.tell(name, "&cPlugin "..args[1].." does not exist")
+			data.error("Plugin "..args[1].." does not exist")
 			return
 		end
 		next_command = next_command..args[1].." "
@@ -54,7 +54,7 @@ local help = function(name, args, data)
 	end
 
 	if out_str == "" or page <= 0 then
-		allium.tell(name, "&cPage does not exist.")
+		data.error("Page does not exist.")
 		return
 	end
 
@@ -66,30 +66,6 @@ local help = function(name, args, data)
 	out_str = out_str.."&2"..string.rep("=", sides).."&r &6&l&h(Previous Page)&g("..next_command..(page-1)..")<<&r&c&l "..page.."/"..math.ceil(#info/cmds_per).." &r&6&l&h(Next Page)&g("..next_command..(page+1)..")>>&r &2"..string.rep("=", sides).."&r"
 	allium.tell(name, out_str, true)
 end
-
---[[local function repeatName(name, message) -- Put this in BagelBot!
-    local prefixes = allium.getPersistence("prefixes")
-    local nicks = allium.getPersistence("nicknames")
-	local rank = betaBot.getLevel(name)+1
-    if not prefixes then
-        prefixes = { 
-			user = {},
-			ranks = {
-				"&r[&amember&r]",
-				"&r[&eVIP&r]",
-				"&r[&cadmin&r]",
-			}
-		}
-		allium.setPersistence("prefixes", prefixes)
-	end
-	if not nicks then
-		nicks = {}
-		allium.setPersistence("nicknames", nicks)
-	end
-	local nick = nicks[name] or name
-	local prefix = prefixes.user[name] or prefixes.ranks[rank] or ""
-	commands.tellraw("@a", color.format(prefix.." &r<"..nick.."&r> "..message))
-end]]
 
 local credits = function(name)
 	allium.tell(name, "This project was cultivated with love by &a&h(Check out his repo!)&i(https://github.com/hugeblank)hugeblank&r.\nCommand formatting API provided graciously by &1&h(Check out his repo!)&i(https://github.com/roger109z)roger109z&r.\nContribute and report issues to allium here: &9&n&h(Check out where allium is grown!)&ihttps://github.com/hugeblank/allium")

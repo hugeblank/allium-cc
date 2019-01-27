@@ -15,7 +15,7 @@ To install Allium, run this command, it's that simple!
 
 The installer installs:
 
-- The Allium repo - allium.lua, plugins/allium-stem.lua, colors.lua, readme.md
+- The Allium Repo - allium.lua, plugins/allium-stem.lua, colors.lua, readme.md
 
 - The Raisin Repo - raisin/raisin.lua, raisin/readme.md
 
@@ -27,7 +27,9 @@ The installer installs:
 
 - persistence.ltn - A _Lua Table Notation_ file containing all serialized persistence entries for each plugin.
 
-## Base Commands
+## Stem Commands
+These are the commands that make up the backbone of Allium, the stem per se.
+
 `!help`: Lists the info entries for the installed plugins
 
 `!plugins`: Lists the plugins that are installed, based on the name of the directory that they're found in.
@@ -37,7 +39,8 @@ The installer installs:
 ## API
 Quick reference for plugin developers:
 
-### `allium`: 
+### `allium`
+#### Methods:
 `assert`: Lua's generic assert, with the ability to set the error level
 - **Parameters**
   - _boolean_: condition to test
@@ -84,8 +87,11 @@ Quick reference for plugin developers:
   - _[string]_: optional manually set human readable plugin name
 - **Returns**
   - _table_: list of functions to register commands/threads/persistent data (see below)
+#### Other:
+_string_ `side`: The location of the chat recorder that allium is using
 
-### `register`: 
+### `allium.register`
+#### Methods:
 `command`: Register a command within this plugin
 - **Parameters**
   - _string_: command name
@@ -114,8 +120,20 @@ Quick reference for plugin developers:
 - **Returns**
   - _any_: data that was assigned to that value
 ---
+## Command Data
+  Information on what is given to a command on invocation:
+  - _string_: name of the user that invoked the command
+  - _table_: arguments provided after the invocation (Eg: `!help allium 2` args: `{"allium", "2"}`)
+  - _table_: list of infrequently used, but useful utilities
+    - `error` _function_ | Quick and easy way to return command usage, or other information to the executor
+      - **Parameters**
+         - _[string]_: error message, if left nil uses the command usage string
+      - **Returns**
+        - _none_
+    - `usage` _string_ | Provides raw access to the usage string for the command
+---
 ## Formatting Codes
-The following characters are all valid for formatting in `allium.tell` when prefixxed with an `&`.
+The following characters are all valid for formatting in `allium.tell` when prefixxed with an `&`:
 
 ### Colors
 - r - reset formatting
@@ -150,7 +168,7 @@ The following characters are all valid for formatting in `allium.tell` when pref
 - o - underline
 
 ---
-## Cloning this repository
+## Forking this repository
 It's worth noting that there are some places you might want to check out after you fork, and before you start testing your code. 
 
 1. The pastebin [installer](https://www.pastebin.com/LGwrkjxm). You are free to make your own installer to your fork with this code, simply change the `repo` string to "[your github username] [the name of your Allium repository] [the branch you want to clone from] [location]".
