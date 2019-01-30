@@ -105,7 +105,7 @@ _string_ `side`: The location of the chat recorder that allium is using
 - **Parameters**
   - _function_: function to turn into a thread
 - **Returns**
-  - _none_
+  - _table_: table containing a wrapped instance of this thread (see Raisin's thread API [documentation](https://github.com/hugeblank/raisin/wiki))
 
 `setPersistence`: Sets data that will remain persistent across a reboot of Allium.
 - **Parameters**

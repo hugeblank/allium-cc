@@ -12,7 +12,7 @@ term.setCursorPos(1, 1)
 print("Loading Allium")
 print("Initializing API")
 
-local label = "<&r&dAll&5&h(Hugeblank was here. Hi.)&i(https://www.youtube.com/watch?v=PomZJao7Raw)i&r&dum&r>" --bot title
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=PomZJao7Raw]]i&r&dum&r>" --bot title
 local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
 local allium = {} -- API table
 local group = {thread = raisin.group.add(1) , command = raisin.group.add(2)} -- threads first, commands second, plugin groups third
@@ -61,20 +61,54 @@ allium.getPlayers = function()
 	return out
 end
 
+allium.forEachPlayer = function(func)
+	assert(type(func) == "function", "Invalid argument #1 (function expected, got "..type(func)..")")
+	local threads = {}
+	local players = allium.getPlayers()
+	local mentioned, error = false
+	for i = 1, #players do 
+		threads[#threads+1] = function()
+			local suc, err = pcall(func, players[i])
+			if not suc and not mentioned then
+				error = err
+				mentioned = true
+			end
+		end
+	end
+	parallel.waitForAll(unpack(threads))
+	if not mentioned then
+		return true
+	else
+		return false, error
+	end
+end
+
+allium.getPosition = function(name) 
+	assert(type(name) == "nil" or type(name) == "string", "Invalid argument #1 (expected string or nil, got "..type(name)..")")
+	local position = {} -- Player position values
+	local suc, tbl
+	parallel.waitForAll(function() -- Execute tp to player, and value check simultaneously for minimum latency
+		suc = commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] "..name)
+	end, function()
+		_, tbl = commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] ~ ~ ~")
+	end)
+	commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] "..table.concat({commands.getBlockPosition()}, " "))
+	if suc then
+		local pos_str = tbl[1]:gsub("Teleported Armor Stand to ", ""):gsub("[,]", "")
+		for value in pos_str:gmatch("%S+") do
+			position[#position+1] = value
+		end
+	else
+		return false
+	end
+	return unpack(position)
+end
+
 allium.getInfo = function(plugin) -- Get the information of all plugins, or a single plugin
-	assert(plugin == nil or type(plugin) == "string", "Invalid argument #1 (string expected, got"..type(plugin)..")", 3)
+	assert(plugin == nil or type(plugin) == "string", "Invalid argument #1 (nil or string expected, got"..type(plugin)..")")
 	if plugin then
 		plugin = allium.sanitize(plugin)
-	end
-	assert(command == nil or type(command) == "string", "Invalid argument #2 (string expected, got"..type(command)..")", 3)
-	if command then
-		assert(plugin, "Invalid argument #1 (string expected, got"..type(plugin)..")", 3)
-	end
-	if plugin then
-		assert(plugins[plugin], "Invalid argument #1 (plugin "..plugin.." does not exist)", 3)
-		if command then
-			assert(plugins[plugin].commands[command], "Invalid argument #2 (command "..command.." does not exist in plugin "..plugin..")", 3)
-		end
+		assert(plugins[plugin], "Invalid argument #1 (plugin "..plugin.." does not exist)")
 	end
 	if plugin then
 		local res = {[plugin] = {}}
@@ -109,18 +143,20 @@ allium.register = function(p_name, fullname)
 	local funcs = {}
 	local this = plugins[real_name]
 	
-	funcs.command = function(c_name, command, info, usage) -- name: name | command: executing function | info: help information | usage: string for improper inputs
+	funcs.command = function(c_name, command, info, usage) -- name: name | command: executing function | info: help information | usage: table of strings for improper inputs
 		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
 		local real_name = allium.sanitize(c_name)
 		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")")
 		assert(this.commands[real_name] == nil, "Invalid argument #2 (command exists under name "..real_name.." for plugin "..this.name..")")
-		assert(type(info) == "string", "Invalid argument #3 (string expected, got "..type(info)..")")
+		assert(type(info) == "string" or type(info) == "table" or not info, "Invalid argument #3 (string, table, or nil expected, got "..type(info)..")")
+		if type(info) == "string" then info = {generic = info} end
+		assert(info.generic, "Invalid argument #3 ('generic' info expected, none found)")
 		this.commands[real_name] = {command = command, info = info, usage = usage}
 	end
 
 	funcs.thread = function(thread)
 		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")")
-		raisin.thread.add(thread, 0, group.thread)
+		return raisin.thread.wrap(raisin.thread.add(thread, 0, group.thread), group.thread)
 	end
 
 	funcs.getPersistence = function(name)
@@ -200,7 +236,7 @@ do -- Plugin loading process
 	end
 end
 
-local main = function()
+local interpreter = function() -- Main command interpretation thread
 	while true do
 		local _, message, _, name = os.pullEvent("chat_capture") --Pull chat messages
 		if string.find(message, "!") == 1 then --are they for allium?
@@ -240,27 +276,58 @@ local main = function()
 				local function exec_command()
 					local stat, err = pcall(cmd_exec.data.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
 					if stat == false then--it crashed...
-						allium.tell(name, "&4"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h(Click here to place error into chat prompt, so you may copy it if needed for an issue report)&s("..err:gsub("[(]", "["):gsub("[)]", "]")..")"..err.."&r")
+						allium.tell(name, "&4"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r")
 						printError(cmd.." errored. Error:\n"..err)
 					end
 				end
 				raisin.thread.add(exec_command, 0, group.command)
     		else --this isn't even a valid command...
-	    		allium.tell(name, "&6Invalid Command, use &c&g(!allium:help)!help&r&6 for assistance.") --bleh!
+	    		allium.tell(name, "&6Invalid Command, use &c&g[[!allium:help]]!help&r&6 for assistance.") --bleh!
     		end
 	    end
 	end
 end
 
-raisin.thread.add(main, 0)
+local scanner = function() -- Login/out scanner thread
+    local online = {}
+    while true do
+        local cur_players = allium.getPlayers()
+        local organized = {}
+        for i = 1, #cur_players do -- Sort players in a way that's useful
+            organized[cur_players[i]] = cur_players[i]
+        end
+        for _, name in pairs(organized) do
+            if online[name] == nil then
+				online[name] = name
+                os.queueEvent("player_join", name)
+            end
+		end
+		for _, name in pairs(online) do
+			if organized[name] == nil then
+				online[name] = nil
+				os.queueEvent("player_quit", name)
+			end
+		end
+        sleep()
+    end
+end
 
-if not fs.exists("persistence.ltn") then --In the situation that this is a first installation, let's add persistence.ltn
+raisin.thread.add(interpreter, 0)
+raisin.thread.add(scanner, 1)
+
+if not fs.exists("persistence.ltn") then --In the situation that this is a first installation, let's do some setup
 	local fpers = fs.open("persistence.ltn", "w")
 	fpers.write("{}")
 	fpers.close()
 end
 
+if not commands.exec("testfor @e[r=1,type=minecraft:armor_stand,team=allium_trackers]") then
+	commands.execAsync("kill @e[type=minecraft:armor_stand,team=allium_trackers]")
+	commands.execAsync("scoreboard teams add allium_trackers")
+	commands.execAsync("summon minecraft:armor_stand ~ ~ ~ {Marker:1,NoGravity:1,Invisible:1}")
+	commands.execAsync("scoreboard teams join allium_trackers @e[r=1,type=minecraft:armor_stand]")
+end
+
 print("Allium started.")
 allium.tell("@a", "&eHello World!")
-sleep()
 raisin.manager.run()
