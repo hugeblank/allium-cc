@@ -218,11 +218,10 @@ _G.allium = allium -- Globalizing Allium API
 
 do -- Plugin loading process
 	print("Loading plugins...")
-	local dir = shell.dir()
-	if fs.exists(dir.."plugins") then
-		for _, plugin in pairs(fs.list(dir.."plugins")) do
-			if not fs.isDir(dir.."plugins/"..plugin) then
-				local file, err = loadfile(dir.."plugins/"..plugin)
+	local function scopeDown(dir)
+		for _, plugin in pairs(fs.list(dir)) do
+			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
+				local file, err = loadfile(dir.."/"..plugin)
 				if not file then
 					printError(err)
 				else
@@ -231,8 +230,16 @@ do -- Plugin loading process
 						printError(err)
 					end
 				end
+			elseif fs.isDir(dir.."/"..plugin) then
+				scopeDown(dir.."/"..plugin)
 			end
 		end
+	end
+	local dir = shell.dir()
+	if fs.exists(dir.."/plugins") then
+		scopeDown(dir.."/plugins")
+	else
+		fs.makeDir(dir.."/plugins")
 	end
 end
 
