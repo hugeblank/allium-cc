@@ -25,7 +25,16 @@ term.setCursorPos(1, 1)
 -- Running Allium
 shell.run("allium.lua")
 -- Removing all captures
-peripheral.call(allium.side, "uncapture", ".")
+for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
+	if peripheral.getMethods(side) then
+		for _, method in pairs(peripheral.getMethods(side)) do
+			if method == "uncapture" then
+                peripheral.call(allium.side, "uncapture", ".")
+				break
+			end
+		end
+    end
+end
 
 -- Rebooting or exiting
 print("Rebooting in 5 seconds")

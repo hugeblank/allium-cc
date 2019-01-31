@@ -55,9 +55,9 @@ local help = function(name, args, data)
 					next_command = next_command..args[1].." "
 					local function addDetails(i_table, label, pre_str, sug_cmd, include)
 						if not include then
-							if i_table.noclick then
+							if i_table.noclick then -- If the parameter is not intended to be clicked (Eg: a username)
 								info[#info+1] = pre_str.."<&a"..label.."&r>: "..i_table.generic
-							elseif i_table.optional then
+							elseif i_table.optional then -- If the parameter is not required
 								info[#info+1] = pre_str.."[&a"..label.."&r]: "..i_table.generic
 							elseif not (i_table.noclick or i_table.optional) then
 								info[#info+1] = pre_str.."<&a&h[[Add this parameter]]&s[["..sug_cmd.." ]]"..label.."&r>: "..i_table.generic
@@ -69,6 +69,7 @@ local help = function(name, args, data)
 							end
 						end
 					end
+					if not c_info.usage then c_info.usage = "" end
 					info[#info+1] = "&c&s[[!"..p_name..":"..c_name.."]]&h[[!"..c_name..c_info.usage.."]]!"..c_name.."&r: "..c_info.info.generic
 					addDetails(c_info.info, c_name, "&6-&r ", "!"..p_name..":"..c_name, true)
 					return run()
@@ -131,6 +132,6 @@ local info = {
 	}
 }
 
-stem.command("help", help, info.help, "[page/plugin name], [page]")
+stem.command("help", help, info.help, "[page | plugin name], [page]")
 stem.command("plugins", plugins, info.plugins)
 stem.command("credits", credits, info.credits)

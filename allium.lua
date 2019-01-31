@@ -238,38 +238,42 @@ end
 
 local interpreter = function() -- Main command interpretation thread
 	while true do
-		local _, message, _, name = os.pullEvent("chat_capture") --Pull chat messages
-		if string.find(message, "!") == 1 then --are they for allium?
+		local _, message, _, name = os.pullEvent("chat_capture") -- Pull chat messages
+		if string.find(message, "!") == 1 then -- Are they for allium?
 			args = {}
-			for k in string.gmatch(message, "%S+") do --put all arguments spaced out into a table
+			for k in string.gmatch(message, "%S+") do -- Put all arguments spaced out into a table
 				args[#args+1] = k
 			end
 			local cmd = args[1]:sub(2, -1) -- Strip the !
-			table.remove(args, 1) --remove the first parameter given (!command)
+			table.remove(args, 1) -- Remove the first parameter given (!command)
 			local cmd_exec
-			if not string.find(cmd, ":") then --did they not specify the plugin source?
-				for p_name, plugin in pairs(plugins) do --nope... gonna have to find it for them.
+			if not string.find(cmd, ":") then -- Did they not specify the plugin source?
+				for p_name, plugin in pairs(plugins) do -- Nope... gonna have to find it for them.
 					for c_name, data in pairs(plugin.commands) do
 						if c_name == cmd then --well I found it, but there may be more...
-							cmd_exec = {data = data, plugin = p_name, command = c_name} --split into command function, source
+							cmd_exec = {data = data, plugin = p_name, command = c_name} -- Split into command function, plugin name, and command name
 							break
 						end
 					end
 					if cmd_exec then break end -- Exit this loop, we've found the command we're looking for
 				end
-			else --hey they did! +1 karma.
+			else -- Hey they did! +1 karma.
 				local splitat = string.find(cmd, ":")
 				local p_name, c_name = string.sub(cmd, 1, splitat-1), string.sub(cmd, splitat+1, -1)
 				if plugins[p_name] then --check plugin existence
 					if plugins[p_name].commands[c_name] then --check command existence
-						cmd_exec = {data = plugins[p_name].commands[c_name], plugin = p_name, command = c_name} --split it into the function, and then the source
+						cmd_exec = {data = plugins[p_name].commands[c_name], plugin = p_name, command = c_name} -- Split it into the function, and then the source
 					end
 				end
 			end
-			if cmd_exec then --is there really a command?
+			if cmd_exec then -- Is there really a command?
 				local data = { -- Infrequently used data to pass onto the command being executed
 					error = function(text) 
-						allium.tell(name, "&c"..(text or "!"..cmd.." "..cmd_exec.data.usage))
+						local str = "Invalid or missing parameter(s)"
+						if cmd_exec.data.usage then
+							str = "!"..cmd.." "..cmd_exec.data.usage
+						end
+						allium.tell(name, "&c"..(text or str))
 					end,
 					usage = cmd_exec.data.usage
 				}
@@ -331,3 +335,4 @@ end
 print("Allium started.")
 allium.tell("@a", "&eHello World!")
 raisin.manager.run()
+_G.allium = nil
