@@ -4,7 +4,7 @@ It uses Computercraft's Command Computer, and Plethora Peripherals' Creative Cha
 
 The command computer can already do many things, being a programmable command block. Allium takes that power to the next level and expands functionality to allow for plugins to be registered. From there you can add commands that get triggered by players, threads that can do command based things without the need of a command to execute them, and data that can be stored in a persistent file so that things you want to hang onto don't get lost in the event of a crash or restart.
 
-Allium uses **[Raisin](https://github.com/hugeblank/raisin/)**, a next generation thread manager made by me, hugeblank. If you're a prospective Allium plugin developer, you may want to skim the documentation, found in the Readme.
+Allium uses **[Raisin](https://github.com/hugeblank/raisin/)**, a next generation thread manager made by me, hugeblank. If you're a prospective Allium plugin developer, you may want to skim the documentation, found on Raisin's [wiki](https://github.com/hugeblank/raisin/wiki/).
 
 Allium also uses a chat text formatting API provided by [roger109z](https://github.com/roger109z/). I (hugeblank) personally haven't touched it (even though it is in my repo) since he's created it as it works flawlessly.
 

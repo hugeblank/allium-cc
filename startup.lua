@@ -4,9 +4,8 @@ local debug = false -- for use when debugging, auto-update script doesn't get tr
 if not debug then
     if fs.exists("repolist.csh") then
         -- Update all plugins and programs on the repolist
-        local file = fs.open("repolist.csh", "r")
-        for k in file.readLine() do
-            shell.run(k)
+        for line in io.lines("repolist.csh") do
+            shell.run(line)
         end
         file.close()
     else
