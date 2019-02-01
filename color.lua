@@ -51,8 +51,8 @@ local dCurrent = {
 local function escape(tbl)
 	for k, v in pairs(tbl) do
 		if v[2]:find("\\") == v[2]:len() then
-			tbl[k] = {v[1], v[2]:sub(1, -1).."&"..tbl[tonumber(k)+1][1]..tbl[tonumber(k)+1][2]}
-			table.remove(tbl, tonumer(k)+1)
+			tbl[k] = {v[1], v[2]:sub(1, -2).."&"..tbl[tonumber(k)+1][1]..tbl[tonumber(k)+1][2]}
+			table.remove(tbl, tonumber(k)+1)
 			local ret = escape(tbl)
 			return ret
 		end
@@ -78,46 +78,46 @@ this.format = function(sText, bAction)
     local seperated = {}
     sText = "&r"..sText
     for k in string.gmatch(sText, "[^&]+") do
-        seperated[#seperated+1] = {string.sub(k, 1, 1), string.sub(k, 2)}
+        seperated[#seperated+1] = {k:sub(1, 1), k:sub(2)}
     end
     local outText = '["",'
     local prev
 	seperated = escape(seperated)
-    for k, v in pairs(seperated) do
-        if cTable[v[1]] ~= nil then
-            current["color"] = cTable[v[1]]
-        elseif formats[v[1]] ~= nil then 
-			if current["format"][formats[v[1]]] == false then
-				current["format"][formats[v[1]]] = true
+    for _, toParse in pairs(seperated) do
+        if cTable[toParse[1]] ~= nil then
+            current["color"] = cTable[toParse[1]]
+        elseif formats[toParse[1]] ~= nil then 
+			if current["format"][formats[toParse[1]]] == false then
+				current["format"][formats[toParse[1]]] = true
 		    else
-				current["format"][formats[v[1]]] = false
+				current["format"][formats[toParse[1]]] = false
 			end
-		elseif actions[v[1]] ~= nil then
-			current["action"] = actions[v[1]]
-			local ind = string.find(v[2], ")")
+		elseif actions[toParse[1]] ~= nil then
+			current["action"] = actions[toParse[1]]
+			local ind, bck = string.find(toParse[2], "%[%[.*%]%]")
 			if ind ~= nil then
-            	current["actionText"] = string.sub(v[2], 2, ind-1)
-				v[2] = v[2]:sub(ind+1)
+            	current["actionText"] = toParse[2]:sub(ind+2, bck-2)
+				toParse[2] = toParse[2]:sub(bck+1)
 			else
-				current["actionText"] = v[2]
+				current["actionText"] = toParse[2]
 			end
-		elseif other[v[1]] ~= nil then
-			if other[v[1]] == "hoverEvent" then
+		elseif other[toParse[1]] ~= nil then
+			if other[toParse[1]] == "hoverEvent" then
 				current["hoverEvent"] = true
-				local ind = string.find(v[2], ")")
+				local ind, bck = string.find(toParse[2], "%[%[.*%]%]")
 				if ind ~= nil then
-					current["hoverText"] = this.format(string.sub(v[2], 2, ind-1), false)
-					v[2] = v[2]:sub(ind+1)
+					current["hoverText"] = this.format(toParse[2]:sub(ind+2, bck-2), false)
+					toParse[2] = toParse[2]:sub(bck+1)
 				else
-					current["hoverText"] = v[2]
+					current["hoverText"] = toParse[2]
 				end
-			elseif other[v[1]] == "reset" then
+			elseif other[toParse[1]] == "reset" then
 				current = copy(dCurrent)
 			end
 		else
-			v[2] = "&"..v[1]..v[2]
+			toParse[2] = "&"..toParse[1]..toParse[2]
 		end
-        outText = outText..'{"text":"'..v[2]..'","color":"'..current["color"]..'"'
+        outText = outText..'{"text":"'..toParse[2]..'","color":"'..current["color"]..'"'
 		for k, v in pairs(current["format"]) do
 			if v then
 				outText = outText..",\""..k.."\":true"
