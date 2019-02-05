@@ -12,7 +12,7 @@ term.setCursorPos(1, 1)
 print("Loading Allium")
 print("Initializing API")
 
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=PomZJao7Raw]]i&r&dum&r>" --bot title
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
 local allium = {} -- API table
 local group = {thread = raisin.group.add(1) , command = raisin.group.add(2)} -- threads first, commands second, plugin groups third
@@ -135,15 +135,34 @@ allium.getName = function(plugin)
 	end
 end
 
-allium.register = function(p_name, fullname)
+allium.require = function(p_name)
+	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
+	local p_name = allium.sanitize(p_name)
+	assert(plugins[p_name], "Invalid argument #1 (plugin "..p_name.." does not exist)")
+	local function recurse(table)
+		out = {}
+		for name, func in pairs(table) do
+			if type(func) == "table" then
+				out[name] = recurse(func)
+			else
+				out[name] = func
+			end
+		end
+		return out
+	end
+	return recurse(plugins[p_name].module)
+end
+
+allium.register = function(p_name, fullname, module)
 	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 	local real_name = allium.sanitize(p_name)
 	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
-	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name}
+	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, module = module or {}}
 	local funcs = {}
 	local this = plugins[real_name]
 	
 	funcs.command = function(c_name, command, info, usage) -- name: name | command: executing function | info: help information | usage: table of strings for improper inputs
+		-- Add a command for the user to execute
 		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
 		local real_name = allium.sanitize(c_name)
 		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")")
@@ -155,8 +174,15 @@ allium.register = function(p_name, fullname)
 	end
 
 	funcs.thread = function(thread)
+		-- Add a thread that repeatedly iterates
 		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")")
 		return raisin.thread.wrap(raisin.thread.add(thread, 0, group.thread), group.thread)
+	end
+
+	funcs.module = function(container)
+		-- A container for all external functionality that other programs can utilize
+		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
+		this.module = container
 	end
 
 	funcs.getPersistence = function(name)
