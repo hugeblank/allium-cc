@@ -14,12 +14,33 @@ print("Initializing API")
 
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
-local allium = {} -- API table
-local group = {thread = raisin.group.add(1) , command = raisin.group.add(2)} -- threads first, commands second, plugin groups third
-local plugins = {} -- Plugin table
+local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)}
+
+local function deep_copy(table, list) -- Recursively copy a module
+	out = {}
+	if not list then
+		list = {table}
+	end
+	for name, func in pairs(table) do
+		local matched, i = false, 1
+		while not matched do
+			if i == #list or list[i] == func then
+				matched = true
+			end
+			i = i+1
+		end
+		if type(func) == "table" and not matched then
+			list[#list+1] = func
+			out[name] = deep_copy(func, list)
+		else
+			out[name] = func
+		end
+	end
+	return out
+end
 
 allium.assert = function(condition, message, level)
-	if not condition then error(message, level or 3) end
+	if not condition then error(message, level+3 or 3) end
 end
 
 local assert = allium.assert
@@ -135,29 +156,11 @@ allium.getName = function(plugin)
 	end
 end
 
-allium.require = function(p_name)
-	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
-	local p_name = allium.sanitize(p_name)
-	assert(plugins[p_name], "Invalid argument #1 (plugin "..p_name.." does not exist)")
-	local function recurse(table)
-		out = {}
-		for name, func in pairs(table) do
-			if type(func) == "table" then
-				out[name] = recurse(func)
-			else
-				out[name] = func
-			end
-		end
-		return out
-	end
-	return recurse(plugins[p_name].module)
-end
-
-allium.register = function(p_name, fullname, module)
+allium.register = function(p_name, fullname)
 	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 	local real_name = allium.sanitize(p_name)
 	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
-	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, module = module or {}}
+	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, module = {}}
 	local funcs = {}
 	local this = plugins[real_name]
 	
@@ -182,7 +185,8 @@ allium.register = function(p_name, fullname, module)
 	funcs.module = function(container)
 		-- A container for all external functionality that other programs can utilize
 		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
-		this.module = container
+		this.module = deep_copy(container)
+		funcs.module = container
 	end
 
 	funcs.getPersistence = function(name)
@@ -243,18 +247,38 @@ _G.allium = allium -- Globalizing Allium API
 
 
 do -- Plugin loading process
+	local loader_group = raisin.group.add(1)
 	print("Loading plugins...")
+
+	allium.loader = function(p_name) -- Add allium package loader to list of loaders
+		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
+		p_name = allium.sanitize(p_name)
+		local timer = os.startTimer(5)
+		repeat
+			local e = {os.pullEvent()}
+		until plugins[p_name] or (e[1] == "timer" and e[2] == timer)
+		if not plugins[p_name] then 
+			return false, "plugin "..p_name.." does not exist or failed to load"
+		end
+		return function() return deep_copy(plugins[p_name].module) end
+	end
+
+	table.insert(package.loaders, 1, allium.loader)
+
 	local function scopeDown(dir)
 		for _, plugin in pairs(fs.list(dir)) do
 			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
-				local file, err = loadfile(dir.."/"..plugin)
+				local file, err = loadfile(dir.."/"..plugin, _ENV)
 				if not file then
 					printError(err)
 				else
-					local suc, err = pcall(file)
-					if not suc then
-						printError(err)
+					local thread = function()
+						local suc, err = pcall(file)
+						if not suc then
+							printError(err)
+						end
 					end
+					raisin.thread.add(thread, 0, loader_group)
 				end
 			elseif fs.isDir(dir.."/"..plugin) then
 				scopeDown(dir.."/"..plugin)
@@ -267,6 +291,7 @@ do -- Plugin loading process
 	else
 		fs.makeDir(dir.."/plugins")
 	end
+	raisin.manager.runGroup(loader_group)
 end
 
 local interpreter = function() -- Main command interpretation thread
