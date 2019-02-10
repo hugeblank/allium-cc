@@ -14,7 +14,7 @@ print("Initializing API")
 
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
-local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)}
+local allium, plugins, loaded, group = {}, {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2), module = raisin.group.add(3)}
 
 local function deep_copy(table, list) -- Recursively copy a module
 	out = {}
@@ -160,7 +160,7 @@ allium.register = function(p_name, fullname)
 	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 	local real_name = allium.sanitize(p_name)
 	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
-	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, module = {}}
+	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name}
 	local funcs = {}
 	local this = plugins[real_name]
 	
@@ -185,7 +185,7 @@ allium.register = function(p_name, fullname)
 	funcs.module = function(container)
 		-- A container for all external functionality that other programs can utilize
 		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
-		this.module = deep_copy(container)
+		this.module = container
 		funcs.module = container
 	end
 
@@ -226,6 +226,34 @@ allium.register = function(p_name, fullname)
 		return false
 	end
 
+	funcs.require = function(p_name) -- request the API from a specific plugin
+		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
+		p_name = allium.sanitize(p_name)
+		local timer = os.startTimer(5)
+		repeat
+			local e = {os.pullEvent()}
+		until (e[1] == "timer" and e[2] == timer) or (plugins[p_name] and plugins[p_name].module)
+		if not plugins[p_name] and plugins[p_name].module then
+			return false
+		end
+		for being_loaded, loaded_plugins in pairs(loaded) do -- Plugin being loaded, plugins that the plugin being loaded has loaded
+			if being_loaded == p_name then
+				for i = 1, #loaded_plugins do
+					if loaded_plugins[i] == real_name then
+						return false
+					end
+				end
+				break
+			end
+		end
+		if loaded[real_name] then
+			loaded[real_name][#loaded[real_name]+1] = p_name
+		else
+			loaded[real_name] = {p_name}
+		end
+		return deep_copy(plugins[p_name].module)
+	end
+
 	return funcs
 end
 
@@ -245,25 +273,9 @@ assert(allium.side, "Allium requires a creative chat module in order to operate"
 
 _G.allium = allium -- Globalizing Allium API
 
-
 do -- Plugin loading process
-	local loader_group = raisin.group.add(1)
+	local total = 0
 	print("Loading plugins...")
-
-	allium.loader = function(p_name) -- Add allium package loader to list of loaders
-		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
-		p_name = allium.sanitize(p_name)
-		local timer = os.startTimer(5)
-		repeat
-			local e = {os.pullEvent()}
-		until plugins[p_name] or (e[1] == "timer" and e[2] == timer)
-		if not plugins[p_name] then 
-			return false, "plugin "..p_name.." does not exist or failed to load"
-		end
-		return function() return deep_copy(plugins[p_name].module) end
-	end
-
-	table.insert(package.loaders, 1, allium.loader)
 
 	local function scopeDown(dir)
 		for _, plugin in pairs(fs.list(dir)) do
@@ -278,7 +290,8 @@ do -- Plugin loading process
 							printError(err)
 						end
 					end
-					raisin.thread.add(thread, 0, loader_group)
+					raisin.thread.add(thread, 0, group.module)
+					total = total+1
 				end
 			elseif fs.isDir(dir.."/"..plugin) then
 				scopeDown(dir.."/"..plugin)
@@ -291,7 +304,7 @@ do -- Plugin loading process
 	else
 		fs.makeDir(dir.."/plugins")
 	end
-	raisin.manager.runGroup(loader_group)
+	raisin.manager.runGroup(group.module, total)
 end
 
 local interpreter = function() -- Main command interpretation thread
