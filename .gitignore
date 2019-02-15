@@ -1,4 +1,5 @@
 repolist.csh
 persistence.ltn
 gitget.lua
+debug.cfg
 json

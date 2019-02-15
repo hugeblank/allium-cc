@@ -1,8 +1,12 @@
-shell.openTab("shell")
-local debug = false -- for use when debugging, auto-update script doesn't get triggered
--- Checking for a repolist shell executable
+multishell.setTitle(shell.openTab("shell"), "CraftOS")
+local debug = false
+if fs.exists("debug.cfg") then
+    file = fs.open("debug.cfg", "r")
+    debug = load("return "..file.readAll())() -- for use when debugging, so auto-update script doesn't get triggered
+    file.close()
+end
 if not debug then
-    if fs.exists("repolist.csh") then
+    if fs.exists("repolist.csh") then -- Checking for a repolist shell executable
         -- Update all plugins and programs on the repolist
         for line in io.lines("repolist.csh") do
             shell.run(line)
@@ -28,7 +32,7 @@ for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if peripheral.getMethods(side) then
 		for _, method in pairs(peripheral.getMethods(side)) do
 			if method == "uncapture" then
-                peripheral.call(allium.side, "uncapture", ".")
+                peripheral.call(side, "uncapture", ".")
 				break
 			end
 		end
