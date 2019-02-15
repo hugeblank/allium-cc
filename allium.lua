@@ -47,6 +47,32 @@ term.setTextColor(colors.white)
 print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
 print(cli.info, "Initializing API")
 
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
+local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
+
+local function deep_copy(table, list) -- Recursively copy a module
+	out = {}
+	if not list then
+		list = {table}
+	end
+	for name, func in pairs(table) do
+		local matched, i = false, 1
+		while not matched do
+			if i == #list or list[i] == func then
+				matched = true
+			end
+			i = i+1
+		end
+		if type(func) == "table" and not matched then
+			list[#list+1] = func
+			out[name] = deep_copy(func, list)
+		else
+			out[name] = func
+		end
+	end
+	return out
+end
+
 allium.assert = function(condition, message, level)
 	if not condition then error(message, level+3 or 3) end
 end
@@ -190,6 +216,13 @@ allium.register = function(p_name, fullname)
 		return raisin.thread.wrap(raisin.thread.add(thread, 0, group.thread), group.thread)
 	end
 
+	funcs.module = function(container)
+		-- A container for all external functionality that other programs can utilize
+		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
+		this.module = container
+		funcs.module = container
+	end
+
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		if fs.exists("persistence.ltn") then
@@ -227,6 +260,34 @@ allium.register = function(p_name, fullname)
 		return false
 	end
 
+	funcs.require = function(p_name) -- request the API from a specific plugin
+		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
+		p_name = allium.sanitize(p_name)
+		local timer = os.startTimer(5)
+		repeat
+			local e = {os.pullEvent()}
+		until (e[1] == "timer" and e[2] == timer) or (plugins[p_name] and plugins[p_name].module)
+		if not plugins[p_name] and plugins[p_name].module then
+			return false
+		end
+		for being_loaded, loaded_plugins in pairs(loaded) do -- Plugin being loaded, plugins that the plugin being loaded has loaded
+			if being_loaded == p_name then
+				for i = 1, #loaded_plugins do
+					if loaded_plugins[i] == real_name then
+						return false
+					end
+				end
+				break
+			end
+		end
+		if loaded[real_name] then
+			loaded[real_name][#loaded[real_name]+1] = p_name
+		else
+			loaded[real_name] = {p_name}
+		end
+		return deep_copy(plugins[p_name].module)
+	end
+
 	return funcs
 end
 
@@ -247,7 +308,6 @@ if not allium.side then
 end
 
 _G.allium = allium -- Globalizing Allium API
-
 
 do -- Plugin loading process
 	print(cli.info, "Loading plugins")

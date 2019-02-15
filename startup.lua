@@ -11,7 +11,6 @@ if not debug then
         for line in io.lines("repolist.csh") do
             shell.run(line)
         end
-        file.close()
     else
         -- Generate a repolist file
         local file = fs.open("repolist.csh", "w")
