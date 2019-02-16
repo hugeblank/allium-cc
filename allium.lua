@@ -1,25 +1,80 @@
 -- Allium by hugeblank
+
+local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
+	local words = {...}
+	if type(noline) ~= "boolean" then
+		table.insert(words, 1, noline)
+		noline = false
+	end
+	local text_color = term.getTextColor()
+	for i = 1, #words do
+		if type(words[i]) == "number" then
+			term.setTextColor(words[i])
+		elseif type(words[i]) == "table" then
+			print(unpack(words[i]))
+		else
+			write(words[i])
+		end
+	end
+	if not noline then
+		write("\n")
+	end
+	term.setTextColor(text_color)
+end
+
 do -- Allium image setup <3
+	multishell.setTitle(multishell.getFocus(), "Allium")
+	term.clear()
 	local x, y = term.getSize()
 	paintutils.drawImage(paintutils.loadImage("allium.nfp"), x-7, 2) -- Draw the Allium image on the side
-	local win = window.create(term.current(), 1, 1, x-9, y, true)
-	term.redirect(win)
+	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
+	term.redirect(win) -- Redirect the terminal
 end
+
+local cli = {
+	info = {true, "[", colors.lime, "I", colors.white, "] "}, 
+	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
+	error = {true, "[", colors.red, "E", colors.white, "] "}
+}
+
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
+local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
+local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
+
+term.setCursorPos(1, 1)
 term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 term.setTextColor(colors.white)
-term.setCursorPos(1, 1)
--- Announce loading has begun
-print("Loading Allium")
-print("Initializing API")
+print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
+print(cli.info, "Initializing API")
 
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=PomZJao7Raw]]i&r&dum&r>" --bot title
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
-local allium = {} -- API table
-local group = {thread = raisin.group.add(1) , command = raisin.group.add(2)} -- threads first, commands second, plugin groups third
-local plugins = {} -- Plugin table
+
+local function deep_copy(table, list) -- Recursively copy a module
+	out = {}
+	if not list then
+		list = {table}
+	end
+	for name, func in pairs(table) do
+		local matched, i = false, 1
+		while not matched do
+			if i == #list or list[i] == func then
+				matched = true
+			end
+			i = i+1
+		end
+		if type(func) == "table" and not matched then
+			list[#list+1] = func
+			out[name] = deep_copy(func, list)
+		else
+			out[name] = func
+		end
+	end
+	return out
+end
 
 allium.assert = function(condition, message, level)
-	if not condition then error(message, level or 3) end
+	if not condition then error(message, level+3 or 3) end
 end
 
 local assert = allium.assert
@@ -144,6 +199,7 @@ allium.register = function(p_name, fullname)
 	local this = plugins[real_name]
 	
 	funcs.command = function(c_name, command, info, usage) -- name: name | command: executing function | info: help information | usage: table of strings for improper inputs
+		-- Add a command for the user to execute
 		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
 		local real_name = allium.sanitize(c_name)
 		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")")
@@ -155,8 +211,16 @@ allium.register = function(p_name, fullname)
 	end
 
 	funcs.thread = function(thread)
+		-- Add a thread that repeatedly iterates
 		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")")
 		return raisin.thread.wrap(raisin.thread.add(thread, 0, group.thread), group.thread)
+	end
+
+	funcs.module = function(container)
+		-- A container for all external functionality that other programs can utilize
+		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
+		this.module = container
+		funcs.module = container
 	end
 
 	funcs.getPersistence = function(name)
@@ -196,6 +260,34 @@ allium.register = function(p_name, fullname)
 		return false
 	end
 
+	funcs.require = function(p_name) -- request the API from a specific plugin
+		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
+		p_name = allium.sanitize(p_name)
+		local timer = os.startTimer(5)
+		repeat
+			local e = {os.pullEvent()}
+		until (e[1] == "timer" and e[2] == timer) or (plugins[p_name] and plugins[p_name].module)
+		if not plugins[p_name] and plugins[p_name].module then
+			return false
+		end
+		for being_loaded, loaded_plugins in pairs(loaded) do -- Plugin being loaded, plugins that the plugin being loaded has loaded
+			if being_loaded == p_name then
+				for i = 1, #loaded_plugins do
+					if loaded_plugins[i] == real_name then
+						return false
+					end
+				end
+				break
+			end
+		end
+		if loaded[real_name] then
+			loaded[real_name][#loaded[real_name]+1] = p_name
+		else
+			loaded[real_name] = {p_name}
+		end
+		return deep_copy(plugins[p_name].module)
+	end
+
 	return funcs
 end
 
@@ -211,24 +303,29 @@ for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	end
 	if allium.side then break end
 end
-assert(allium.side, "Allium requires a creative chat module in order to operate")
+if not allium.side then
+	print(cli.warn, "Allium could not find chat module")
+end
 
 _G.allium = allium -- Globalizing Allium API
 
-
 do -- Plugin loading process
-	print("Loading plugins...")
+	print(cli.info, "Loading plugins")
+	local loader_group = raisin.group.add(1)
 	local function scopeDown(dir)
 		for _, plugin in pairs(fs.list(dir)) do
 			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
-				local file, err = loadfile(dir.."/"..plugin)
+				local file, err = loadfile(dir.."/"..plugin, _ENV)
 				if not file then
-					printError(err)
+					print(cli.error, err)
 				else
-					local suc, err = pcall(file)
-					if not suc then
-						printError(err)
+					local thread = function()
+						local suc, err = pcall(file)
+						if not suc then
+							print(cli.error, err)
+						end
 					end
+					raisin.thread.add(thread, 0, loader_group)
 				end
 			elseif fs.isDir(dir.."/"..plugin) then
 				scopeDown(dir.."/"..plugin)
@@ -241,6 +338,7 @@ do -- Plugin loading process
 	else
 		fs.makeDir(dir.."/plugins")
 	end
+	raisin.manager.runGroup(loader_group)
 end
 
 local interpreter = function() -- Main command interpretation thread
@@ -339,7 +437,7 @@ if not commands.exec("testfor @e[r=1,type=minecraft:armor_stand,team=allium_trac
 	commands.execAsync("scoreboard teams join allium_trackers @e[r=1,type=minecraft:armor_stand]")
 end
 
-print("Allium started.")
+print(cli.info, "Allium started.")
 allium.tell("@a", "&eHello World!")
 raisin.manager.run()
 _G.allium = nil
