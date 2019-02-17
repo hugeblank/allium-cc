@@ -27,7 +27,7 @@ The installer installs:
 
 - persistence.ltn - A _Lua Table Notation_ file containing all serialized persistence entries for each plugin.
 
-**Want More?** Check out the [wiki](https://github.com/hugeblank/Allium/wiki/)!
+**Want More?** Check out the [wiki](https://hugeblank.github.io/Allium-wiki/)!
 
 ## Forking this repository
 It's worth noting that there are some places you might want to check out after you fork, and before you start testing your code. 
