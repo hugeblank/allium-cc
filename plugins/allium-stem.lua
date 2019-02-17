@@ -33,7 +33,7 @@ local help = function(name, args, data)
 				else
 					entry.usage = ""
 				end
-				info[#info+1] = "&c&s[[!"..p_name..":"..cmd_name.."]]&h[[!"..p_name..":"..cmd_name..entry.usage.."]]!"..p_name..":"..cmd_name.."&r: "..entry.info.generic
+				info[#info+1] = "&c&s[[!"..p_name..":"..cmd_name.."]]&h[[!"..p_name..":"..cmd_name..entry.usage.."]]!"..p_name..":"..cmd_name.."&r: "..entry.info[1]
 			end
 		end
 		if tonumber(args[1]) then
@@ -52,25 +52,24 @@ local help = function(name, args, data)
 			if allium.getName(p_name) then
 				local c_info = allium.getInfo(p_name)[p_name][c_name]
 				if c_info then
-					next_command = next_command..args[1].." "
 					local function addDetails(i_table, label, pre_str, sug_cmd, include)
 						if not include then
 							if i_table.noclick then -- If the parameter is not intended to be clicked (Eg: a username)
-								info[#info+1] = pre_str.."<&a"..label.."&r>: "..i_table.generic
+								info[#info+1] = pre_str.."<&a"..label.."&r>: "..i_table[1]
 							elseif i_table.optional then -- If the parameter is not required
-								info[#info+1] = pre_str.."[&a"..label.."&r]: "..i_table.generic
+								info[#info+1] = pre_str.."[&a"..label.."&r]: "..i_table[1]
 							elseif not (i_table.noclick or i_table.optional) then
-								info[#info+1] = pre_str.."<&a&h[[Add this parameter]]&s[["..sug_cmd.." ]]"..label.."&r>: "..i_table.generic
+								info[#info+1] = pre_str.."<&a&h[[Add this parameter]]&s[["..sug_cmd.." ]]"..label.."&r>: "..i_table[1]
 							end
 						end
 						for param, param_info in pairs(i_table) do
-							if param ~= "generic" and param ~= "optional" and param ~= "noclick" then
+							if param ~= 1 and param ~= "optional" and param ~= "noclick" then
 								addDetails(param_info, param, "  "..pre_str, sug_cmd.." "..param)
 							end
 						end
 					end
 					if not c_info.usage then c_info.usage = "" end
-					info[#info+1] = "&c&s[[!"..p_name..":"..c_name.."]]&h[[!"..c_name..c_info.usage.."]]!"..c_name.."&r: "..c_info.info.generic
+					info[#info+1] = "&c&s[[!"..p_name..":"..c_name.."]]&h[[!"..c_name..c_info.usage.."]]!"..c_name.."&r: "..c_info.info[1]
 					addDetails(c_info.info, c_name, "&6-&r ", "!"..p_name..":"..c_name, true)
 					return run()
 				else
@@ -89,7 +88,7 @@ local help = function(name, args, data)
 					else
 						entry.usage = ""
 					end
-					info[#info+1] = "&c&s[[!"..args[1]..":"..cmd_name.."]]&g[[!help "..args[1]..":"..cmd_name.."]]&h[[!"..args[1]..":"..cmd_name..entry.usage.."]]!"..cmd_name.."&r: "..entry.info.generic
+					info[#info+1] = "&c&s[[!"..args[1]..":"..cmd_name.."]]&g[[!help "..args[1]..":"..cmd_name.."]]&h[[!"..args[1]..":"..cmd_name..entry.usage.."]]!"..cmd_name.."&r: "..entry.info[1]
 				end
 				return run()
 			else
@@ -122,13 +121,13 @@ end
 
 local info = {
 	help = {
-		generic = "This command! Helpful."
+		"This command! Helpful."
 	},
 	plugins = {
-		generic = "Lists the name of all plugins installed on allium"
+		"Lists the name of all plugins installed on allium"
 	},
 	credits = {
-		generic = "Provides credits where they are due"
+		"Provides credits where they are due"
 	}
 }
 

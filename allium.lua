@@ -22,6 +22,29 @@ local function print(noline, ...) -- Magical function that takes in a table and 
 	term.setTextColor(text_color)
 end
 
+local function deep_copy(table, list) -- Recursively copy a module
+	out = {}
+	if not list then
+		list = {table}
+	end
+	for name, func in pairs(table) do
+		local matched, i = false, 1
+		while not matched do
+			if i == #list or list[i] == func then
+				matched = true
+			end
+			i = i+1
+		end
+		if type(func) == "table" and not matched then
+			list[#list+1] = func
+			out[name] = deep_copy(func, list)
+		else
+			out[name] = func
+		end
+	end
+	return out
+end
+
 do -- Allium image setup <3
 	multishell.setTitle(multishell.getFocus(), "Allium")
 	term.clear()
@@ -50,31 +73,11 @@ print(cli.info, "Initializing API")
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
 
-local function deep_copy(table, list) -- Recursively copy a module
-	out = {}
-	if not list then
-		list = {table}
-	end
-	for name, func in pairs(table) do
-		local matched, i = false, 1
-		while not matched do
-			if i == #list or list[i] == func then
-				matched = true
-			end
-			i = i+1
-		end
-		if type(func) == "table" and not matched then
-			list[#list+1] = func
-			out[name] = deep_copy(func, list)
-		else
-			out[name] = func
-		end
-	end
-	return out
-end
-
 allium.assert = function(condition, message, level)
-	if not condition then error(message, level+3 or 3) end
+	if not level then 
+		level = 0
+	end
+	if not condition then error(message, level+3) end
 end
 
 local assert = allium.assert
@@ -205,8 +208,8 @@ allium.register = function(p_name, fullname)
 		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")")
 		assert(this.commands[real_name] == nil, "Invalid argument #2 (command exists under name "..real_name.." for plugin "..this.name..")")
 		assert(type(info) == "string" or type(info) == "table" or not info, "Invalid argument #3 (string, table, or nil expected, got "..type(info)..")")
-		if type(info) == "string" then info = {generic = info} end
-		assert(info.generic, "Invalid argument #3 ('generic' info expected, none found)")
+		if type(info) == "string" then info = {info} end
+		assert(info[1], "Invalid argument #3 (info formatted table expected)")
 		this.commands[real_name] = {command = command, info = info, usage = usage}
 	end
 
@@ -385,8 +388,8 @@ local interpreter = function() -- Main command interpretation thread
 				local function exec_command()
 					local stat, err = pcall(cmd_exec.data.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
 					if stat == false then--it crashed...
-						allium.tell(name, "&4"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r")
-						printError(cmd.." errored. Error:\n"..err)
+						allium.tell(name, "&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r")
+						print(cli.warn, cmd.." | "..err)
 					end
 				end
 				raisin.thread.add(exec_command, 0, group.command)
