@@ -81,7 +81,7 @@ local assert = allium.assert
 
 allium.sanitize = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
-	return name:lower():gsub(" ", "-"):gsub("[^a-z-_]", "")
+	return name:lower():gsub(" ", "_"):gsub("[^a-z0-9_]", "")
 end
 
 allium.tell = function(name, message, alt_name)
@@ -348,7 +348,7 @@ end
 
 local interpreter = function() -- Main command interpretation thread
 	while true do
-		local _, message, _, name = os.pullEvent("chat_capture") -- Pull chat messages
+		local _, message, _, name, uuid = os.pullEvent("chat_capture") -- Pull chat messages
 		if message:find("!") == 1 then -- Are they for allium?
 			args = {}
 			for k in message:gmatch("%S+") do -- Put all arguments spaced out into a table
@@ -386,7 +386,7 @@ local interpreter = function() -- Main command interpretation thread
 			local cmd = args[1]:sub(2, -1) -- Strip the !
 			table.remove(args, 1) -- Remove the first parameter given (!command)
 			local cmd_exec
-			if not string.find(cmd, ":") then -- Did they not specify the plugin source?
+			if not cmd:find(":") then -- Did they not specify the plugin source?
 				for p_name, plugin in pairs(plugins) do -- Nope... gonna have to find it for them.
 					for c_name, data in pairs(plugin.commands) do
 						if c_name == cmd then --well I found it, but there may be more...
@@ -397,8 +397,8 @@ local interpreter = function() -- Main command interpretation thread
 					if cmd_exec then break end -- Exit this loop, we've found the command we're looking for
 				end
 			else -- Hey they did! +1 karma.
-				local splitat = string.find(cmd, ":")
-				local p_name, c_name = string.sub(cmd, 1, splitat-1), string.sub(cmd, splitat+1, -1)
+				local splitat = cmd:find(":")
+				local p_name, c_name = cmd:sub(1, splitat-1), cmd:sub(splitat+1, -1)
 				if plugins[p_name] then --check plugin existence
 					if plugins[p_name].commands[c_name] then --check command existence
 						cmd_exec = {data = plugins[p_name].commands[c_name], plugin = p_name, command = c_name} -- Split it into the function, and then the source
@@ -414,7 +414,8 @@ local interpreter = function() -- Main command interpretation thread
 						end
 						allium.tell(name, "&c"..(text or str))
 					end,
-					usage = cmd_exec.data.usage
+					usage = cmd_exec.data.usage,
+					uuid = uuid
 				}
 				local function exec_command()
 					local stat, err = pcall(cmd_exec.data.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
