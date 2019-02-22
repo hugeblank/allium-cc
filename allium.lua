@@ -70,9 +70,6 @@ term.setTextColor(colors.white)
 print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
 print(cli.info, "Initializing API")
 
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
-
 allium.assert = function(condition, message, level)
 	if not level then 
 		level = 0
@@ -84,19 +81,24 @@ local assert = allium.assert
 
 allium.sanitize = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
-	return name:lower():gsub(" ", "-")
+	return name:lower():gsub(" ", "-"):gsub("[^a-z-_]", "")
 end
 
 allium.tell = function(name, message, alt_name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
     assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
 	local test
+	message = message:gsub("\"", "\\\"")
 	if type(message) == "table" then
 		_, test = commands.tellraw(name, color.format(table.concat(message, "\n")))
 	else
 		_, test = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
     end
     return textutils.serialise(test)
+end
+
+allium.execute = function(name, command)
+	os.queueEvent("chat_capture", command, "", name)
 end
 
 allium.getPlayers = function()
@@ -263,7 +265,7 @@ allium.register = function(p_name, fullname)
 		return false
 	end
 
-	funcs.require = function(p_name) -- request the API from a specific plugin
+	funcs.import = function(p_name) -- request the API from a specific plugin
 		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 		p_name = allium.sanitize(p_name)
 		local timer = os.startTimer(5)
@@ -347,10 +349,39 @@ end
 local interpreter = function() -- Main command interpretation thread
 	while true do
 		local _, message, _, name = os.pullEvent("chat_capture") -- Pull chat messages
-		if string.find(message, "!") == 1 then -- Are they for allium?
+		if message:find("!") == 1 then -- Are they for allium?
 			args = {}
-			for k in string.gmatch(message, "%S+") do -- Put all arguments spaced out into a table
+			for k in message:gmatch("%S+") do -- Put all arguments spaced out into a table
 				args[#args+1] = k
+			end
+			for i = 1, #args do
+				if args[i] then
+					local quote = args[i]:find("\"") -- Find quotes within arguments
+					if quote then
+						local j, end_quote = i
+						if args[i]:sub(-1, -1) ~= "\"" and #args[i] ~= 1 then -- If the quote isn't found in the same argument
+							while not (end_quote or j == #args) do -- Find the quote that matches with this one
+								j = j+1
+								end_quote = args[j]:sub(-1, -1):find("\"")
+							end
+						end
+						if end_quote then -- If there was an end quote
+							local message, size = "", 0
+							local function merge(str)
+								if #message+#str > size then
+									message = message..str.." "
+									size = #message
+								end
+							end
+							merge(args[i]:sub(1, quote-1)..args[i]:sub(quote+1, -1))
+							merge(table.concat(args, " ", i+1, j-1))
+							args[i] = message..args[j]:sub(1, -2) -- Overwrite the first argument
+							for k = j, i+1, -1 do -- Then remove everything that was used
+								table.remove(args, k)
+							end
+						end
+					end
+				end
 			end
 			local cmd = args[1]:sub(2, -1) -- Strip the !
 			table.remove(args, 1) -- Remove the first parameter given (!command)
