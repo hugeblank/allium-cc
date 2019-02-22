@@ -356,7 +356,7 @@ local interpreter = function() -- Main command interpretation thread
 			end
 			for i = 1, #args do
 				if args[i] then
-					local quote = args[i]:find("\"") -- Find quotes within arguments
+					local quote = args[i]:sub(1, 1):find("\"") -- Find quotes within arguments
 					if quote then
 						local j, end_quote = i
 						if args[i]:sub(-1, -1) ~= "\"" and #args[i] ~= 1 then -- If the quote isn't found in the same argument
@@ -373,7 +373,7 @@ local interpreter = function() -- Main command interpretation thread
 									size = #message
 								end
 							end
-							merge(args[i]:sub(1, quote-1)..args[i]:sub(quote+1, -1))
+							merge(args[i]:sub(2, -1))
 							merge(table.concat(args, " ", i+1, j-1))
 							args[i] = message..args[j]:sub(1, -2) -- Overwrite the first argument
 							for k = j, i+1, -1 do -- Then remove everything that was used

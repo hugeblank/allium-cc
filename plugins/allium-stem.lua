@@ -52,11 +52,11 @@ do -- Just a block for organization of command parsing stuffs
 		if data.clickable == true or data.clickable == nil then
 			hover, execution = "Click to add this parameter", execute..label
 			if type(data.infill) == "string" then
-				execution = execution.."="
+				execution = execution.."= "
 			end
 		end
 		if data.default and tostring(data.default) then -- Overrides infill. default and infill shouldn't even be used in the same place anyways.
-			execution = execute..label.."=\"\""..data.default.."\"\"" -- Quoting a quote so it gets placed in chat properly
+			execution = execute..label.."= \"\""..data.default.."\"\"" -- Quoting a quote so it gets placed in chat properly
 		end
 		local meta = ""
 		if #execution ~= 0 then
@@ -85,25 +85,22 @@ do -- Just a block for organization of command parsing stuffs
 				return out, command
 		else -- Otherwise things are going totally as planned and we should just recurse onwards
 			local param_data = {}
-			do
-				local is_tag = args[1]:find("=")
-				if is_tag then
-					param_data.param = args[1]:sub(1, is_tag-1)
-					param_data.tag = args[1]:sub(is_tag+1, -1)
-				else
-					param_data.param = args[1]
-				end
-				table.remove(args, 1)
+			local is_tag = args[1]:sub(-1, -1):find("=")
+			print(is_tag, args[1], args[2])
+			if is_tag then
+				param_data.param = table.remove(args, 1):sub(1, -2)
+				param_data.tag = table.remove(args, 1)
+			else
+				param_data.param = table.remove(args, 1)
 			end
-			if param_data.tag and #param_data.tag == 0 then
+			if is_tag and not param_data.tag then
 				-- If the parameter is an infill thing, and doesn't have a value attached to it:
 				if not (info[param_data.param] and info[param_data.param].infill) then
 					return "Missing infill information"
 				end
-				return infill(info[param_data.param].infill, execute..param_data.param.."="), command
-			end
-			if param_data.tag then
-				execute = execute..param_data.param.."="..param_data.tag.." "
+				return infill(info[param_data.param].infill, execute..param_data.param.."= "), command
+			elseif param_data.tag then
+				execute = execute..param_data.param.."= "..param_data.tag.." "
 				command = command..param_data.tag.." "
 			else
 				execute = execute..param_data.param.." "
