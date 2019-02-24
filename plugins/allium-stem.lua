@@ -86,7 +86,6 @@ do -- Just a block for organization of command parsing stuffs
 		else -- Otherwise things are going totally as planned and we should just recurse onwards
 			local param_data = {}
 			local is_tag = args[1]:sub(-1, -1):find("=")
-			print(is_tag, args[1], args[2])
 			if is_tag then
 				param_data.param = table.remove(args, 1):sub(1, -2)
 				param_data.tag = table.remove(args, 1)

@@ -1,5 +1,9 @@
 -- Allium by hugeblank
 
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
+local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
+local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
+
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
 	local words = {...}
 	if type(noline) ~= "boolean" then
@@ -45,6 +49,12 @@ local function deep_copy(table, list) -- Recursively copy a module
 	return out
 end
 
+local cli = {
+	info = {true, "[", colors.lime, "I", colors.white, "] "}, 
+	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
+	error = {true, "[", colors.red, "E", colors.white, "] "}
+}
+
 do -- Allium image setup <3
 	multishell.setTitle(multishell.getFocus(), "Allium")
 	term.clear()
@@ -52,23 +62,12 @@ do -- Allium image setup <3
 	paintutils.drawImage(paintutils.loadImage("allium.nfp"), x-7, 2) -- Draw the Allium image on the side
 	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
 	term.redirect(win) -- Redirect the terminal
+	term.setCursorPos(1, 1)
+	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
+	term.setTextColor(colors.white)
+	print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
+	print(cli.info, "Initializing API")
 end
-
-local cli = {
-	info = {true, "[", colors.lime, "I", colors.white, "] "}, 
-	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
-	error = {true, "[", colors.red, "E", colors.white, "] "}
-}
-
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
-local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
-
-term.setCursorPos(1, 1)
-term.setBackgroundColor(colors.black) -- Reset terminal and cursor
-term.setTextColor(colors.white)
-print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
-print(cli.info, "Initializing API")
 
 allium.assert = function(condition, message, level)
 	if not level then 
@@ -141,27 +140,6 @@ allium.forEachPlayer = function(func)
 	else
 		return false, error
 	end
-end
-
-allium.getPosition = function(name) 
-	assert(type(name) == "nil" or type(name) == "string", "Invalid argument #1 (expected string or nil, got "..type(name)..")")
-	local position = {} -- Player position values
-	local suc, tbl
-	parallel.waitForAll(function() -- Execute tp to player, and value check simultaneously for minimum latency
-		suc = commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] "..name)
-	end, function()
-		_, tbl = commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] ~ ~ ~")
-	end)
-	commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] "..table.concat({commands.getBlockPosition()}, " "))
-	if suc then
-		local pos_str = tbl[1]:gsub("Teleported Armor Stand to ", ""):gsub("[,]", "")
-		for value in pos_str:gmatch("%S+") do
-			position[#position+1] = value
-		end
-	else
-		return false
-	end
-	return unpack(position)
 end
 
 allium.getInfo = function(plugin) -- Get the information of all plugins, or a single plugin
@@ -463,13 +441,6 @@ if not fs.exists("persistence.ltn") then --In the situation that this is a first
 	local fpers = fs.open("persistence.ltn", "w")
 	fpers.write("{}")
 	fpers.close()
-end
-
-if not commands.exec("testfor @e[r=1,type=minecraft:armor_stand,team=allium_trackers]") then
-	commands.execAsync("kill @e[type=minecraft:armor_stand,team=allium_trackers]")
-	commands.execAsync("scoreboard teams add allium_trackers")
-	commands.execAsync("summon minecraft:armor_stand ~ ~ ~ {Marker:1,NoGravity:1,Invisible:1}")
-	commands.execAsync("scoreboard teams join allium_trackers @e[r=1,type=minecraft:armor_stand]")
 end
 
 print(cli.info, "Allium started.")
