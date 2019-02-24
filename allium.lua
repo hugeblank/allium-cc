@@ -1,5 +1,9 @@
 -- Allium by hugeblank
 
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
+local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
+local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
+
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
 	local words = {...}
 	if type(noline) ~= "boolean" then
@@ -21,34 +25,6 @@ local function print(noline, ...) -- Magical function that takes in a table and 
 	end
 	term.setTextColor(text_color)
 end
-
-do -- Allium image setup <3
-	multishell.setTitle(multishell.getFocus(), "Allium")
-	term.clear()
-	local x, y = term.getSize()
-	paintutils.drawImage(paintutils.loadImage("allium.nfp"), x-7, 2) -- Draw the Allium image on the side
-	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
-	term.redirect(win) -- Redirect the terminal
-end
-
-local cli = {
-	info = {true, "[", colors.lime, "I", colors.white, "] "}, 
-	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
-	error = {true, "[", colors.red, "E", colors.white, "] "}
-}
-
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
-local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
-
-term.setCursorPos(1, 1)
-term.setBackgroundColor(colors.black) -- Reset terminal and cursor
-term.setTextColor(colors.white)
-print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
-print(cli.info, "Initializing API")
-
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
 
 local function deep_copy(table, list) -- Recursively copy a module
 	out = {}
@@ -73,27 +49,55 @@ local function deep_copy(table, list) -- Recursively copy a module
 	return out
 end
 
+local cli = {
+	info = {true, "[", colors.lime, "I", colors.white, "] "}, 
+	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
+	error = {true, "[", colors.red, "E", colors.white, "] "}
+}
+
+do -- Allium image setup <3
+	multishell.setTitle(multishell.getFocus(), "Allium")
+	term.clear()
+	local x, y = term.getSize()
+	paintutils.drawImage(paintutils.loadImage("allium.nfp"), x-7, 2) -- Draw the Allium image on the side
+	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
+	term.redirect(win) -- Redirect the terminal
+	term.setCursorPos(1, 1)
+	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
+	term.setTextColor(colors.white)
+	print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
+	print(cli.info, "Initializing API")
+end
+
 allium.assert = function(condition, message, level)
-	if not condition then error(message, level+3 or 3) end
+	if not level then 
+		level = 0
+	end
+	if not condition then error(message, level+3) end
 end
 
 local assert = allium.assert
 
 allium.sanitize = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
-	return name:lower():gsub(" ", "-")
+	return name:lower():gsub(" ", "_"):gsub("[^a-z0-9_]", "")
 end
 
 allium.tell = function(name, message, alt_name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
     assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
 	local test
+	message = message:gsub("\"", "\\\"")
 	if type(message) == "table" then
 		_, test = commands.tellraw(name, color.format(table.concat(message, "\n")))
 	else
 		_, test = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
     end
     return textutils.serialise(test)
+end
+
+allium.execute = function(name, command)
+	os.queueEvent("chat_capture", command, "", name)
 end
 
 allium.getPlayers = function()
@@ -136,27 +140,6 @@ allium.forEachPlayer = function(func)
 	else
 		return false, error
 	end
-end
-
-allium.getPosition = function(name) 
-	assert(type(name) == "nil" or type(name) == "string", "Invalid argument #1 (expected string or nil, got "..type(name)..")")
-	local position = {} -- Player position values
-	local suc, tbl
-	parallel.waitForAll(function() -- Execute tp to player, and value check simultaneously for minimum latency
-		suc = commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] "..name)
-	end, function()
-		_, tbl = commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] ~ ~ ~")
-	end)
-	commands.exec("tp @e[type=minecraft:armor_stand,team=allium_trackers] "..table.concat({commands.getBlockPosition()}, " "))
-	if suc then
-		local pos_str = tbl[1]:gsub("Teleported Armor Stand to ", ""):gsub("[,]", "")
-		for value in pos_str:gmatch("%S+") do
-			position[#position+1] = value
-		end
-	else
-		return false
-	end
-	return unpack(position)
 end
 
 allium.getInfo = function(plugin) -- Get the information of all plugins, or a single plugin
@@ -205,8 +188,8 @@ allium.register = function(p_name, fullname)
 		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")")
 		assert(this.commands[real_name] == nil, "Invalid argument #2 (command exists under name "..real_name.." for plugin "..this.name..")")
 		assert(type(info) == "string" or type(info) == "table" or not info, "Invalid argument #3 (string, table, or nil expected, got "..type(info)..")")
-		if type(info) == "string" then info = {generic = info} end
-		assert(info.generic, "Invalid argument #3 ('generic' info expected, none found)")
+		if type(info) == "string" then info = {info} end
+		assert(info[1], "Invalid argument #3 (info formatted table expected)")
 		this.commands[real_name] = {command = command, info = info, usage = usage}
 	end
 
@@ -260,7 +243,7 @@ allium.register = function(p_name, fullname)
 		return false
 	end
 
-	funcs.require = function(p_name) -- request the API from a specific plugin
+	funcs.import = function(p_name) -- request the API from a specific plugin
 		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 		p_name = allium.sanitize(p_name)
 		local timer = os.startTimer(5)
@@ -343,16 +326,45 @@ end
 
 local interpreter = function() -- Main command interpretation thread
 	while true do
-		local _, message, _, name = os.pullEvent("chat_capture") -- Pull chat messages
-		if string.find(message, "!") == 1 then -- Are they for allium?
+		local _, message, _, name, uuid = os.pullEvent("chat_capture") -- Pull chat messages
+		if message:find("!") == 1 then -- Are they for allium?
 			args = {}
-			for k in string.gmatch(message, "%S+") do -- Put all arguments spaced out into a table
+			for k in message:gmatch("%S+") do -- Put all arguments spaced out into a table
 				args[#args+1] = k
+			end
+			for i = 1, #args do
+				if args[i] then
+					local quote = args[i]:sub(1, 1):find("\"") -- Find quotes within arguments
+					if quote then
+						local j, end_quote = i
+						if args[i]:sub(-1, -1) ~= "\"" and #args[i] ~= 1 then -- If the quote isn't found in the same argument
+							while not (end_quote or j == #args) do -- Find the quote that matches with this one
+								j = j+1
+								end_quote = args[j]:sub(-1, -1):find("\"")
+							end
+						end
+						if end_quote then -- If there was an end quote
+							local message, size = "", 0
+							local function merge(str)
+								if #message+#str > size then
+									message = message..str.." "
+									size = #message
+								end
+							end
+							merge(args[i]:sub(2, -1))
+							merge(table.concat(args, " ", i+1, j-1))
+							args[i] = message..args[j]:sub(1, -2) -- Overwrite the first argument
+							for k = j, i+1, -1 do -- Then remove everything that was used
+								table.remove(args, k)
+							end
+						end
+					end
+				end
 			end
 			local cmd = args[1]:sub(2, -1) -- Strip the !
 			table.remove(args, 1) -- Remove the first parameter given (!command)
 			local cmd_exec
-			if not string.find(cmd, ":") then -- Did they not specify the plugin source?
+			if not cmd:find(":") then -- Did they not specify the plugin source?
 				for p_name, plugin in pairs(plugins) do -- Nope... gonna have to find it for them.
 					for c_name, data in pairs(plugin.commands) do
 						if c_name == cmd then --well I found it, but there may be more...
@@ -363,8 +375,8 @@ local interpreter = function() -- Main command interpretation thread
 					if cmd_exec then break end -- Exit this loop, we've found the command we're looking for
 				end
 			else -- Hey they did! +1 karma.
-				local splitat = string.find(cmd, ":")
-				local p_name, c_name = string.sub(cmd, 1, splitat-1), string.sub(cmd, splitat+1, -1)
+				local splitat = cmd:find(":")
+				local p_name, c_name = cmd:sub(1, splitat-1), cmd:sub(splitat+1, -1)
 				if plugins[p_name] then --check plugin existence
 					if plugins[p_name].commands[c_name] then --check command existence
 						cmd_exec = {data = plugins[p_name].commands[c_name], plugin = p_name, command = c_name} -- Split it into the function, and then the source
@@ -380,13 +392,14 @@ local interpreter = function() -- Main command interpretation thread
 						end
 						allium.tell(name, "&c"..(text or str))
 					end,
-					usage = cmd_exec.data.usage
+					usage = cmd_exec.data.usage,
+					uuid = uuid
 				}
 				local function exec_command()
 					local stat, err = pcall(cmd_exec.data.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
 					if stat == false then--it crashed...
-						allium.tell(name, "&4"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r")
-						printError(cmd.." errored. Error:\n"..err)
+						allium.tell(name, "&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r")
+						print(cli.warn, cmd.." | "..err)
 					end
 				end
 				raisin.thread.add(exec_command, 0, group.command)
@@ -428,13 +441,6 @@ if not fs.exists("persistence.ltn") then --In the situation that this is a first
 	local fpers = fs.open("persistence.ltn", "w")
 	fpers.write("{}")
 	fpers.close()
-end
-
-if not commands.exec("testfor @e[r=1,type=minecraft:armor_stand,team=allium_trackers]") then
-	commands.execAsync("kill @e[type=minecraft:armor_stand,team=allium_trackers]")
-	commands.execAsync("scoreboard teams add allium_trackers")
-	commands.execAsync("summon minecraft:armor_stand ~ ~ ~ {Marker:1,NoGravity:1,Invisible:1}")
-	commands.execAsync("scoreboard teams join allium_trackers @e[r=1,type=minecraft:armor_stand]")
 end
 
 print(cli.info, "Allium started.")
