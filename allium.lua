@@ -1,7 +1,7 @@
 -- Allium by hugeblank
 local version = "0.6.0"
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color, semver = require("lib.raisin"), require("lib.color"), require("lib.semver") -- color.lua sponsored by roger109z
+local raisin, color, semver = require("lib.raisin.raisin"), require("lib.color"), require("lib.semver") -- color.lua sponsored by roger109z
 local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
@@ -185,7 +185,8 @@ allium.register = function(p_name, version, fullname)
 	local real_name = allium.sanitize(p_name)
 	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
 	local version, rule = semver.parse(version)
-	assert(version, "Invalid argument #2 (malformed SemVer, breaks rule "..rule..")")
+	if not rule then rule = "" end
+	assert(type(version) == "table", "Invalid argument #2 (malformed SemVer, breaks rule "..rule..")")
 	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, version = version}
 	local funcs = {}
 	local this = plugins[real_name]
@@ -283,8 +284,21 @@ allium.register = function(p_name, version, fullname)
 	return funcs
 end
 
-allium.parse = semver.parse
-allium.version = allium.parse(version)
+allium.version = semver.parse(version)
+
+allium.verify = function(min, max)
+	local smin, smax = min, max
+	local min, max = semver.parse(min), semver.parse(max)
+	if smin and not min then return false end
+	if smax and not max then return false end
+	if min and allium.version < min then
+		return false
+	end
+	if max and allium.version > max then
+		return false
+	end
+	return true
+end
 
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if peripheral.getMethods(side) then

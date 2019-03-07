@@ -1,4 +1,4 @@
-multishell.setTitle(shell.openTab("shell"), "CraftOS")
+shell.openTab("shell")
 local debug = false
 if fs.exists("cfg/debug.cfg") then
     file = fs.open("cfg/debug.cfg", "r")
