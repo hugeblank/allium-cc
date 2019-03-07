@@ -1,5 +1,6 @@
 repolist.csh
 persistence.ltn
-gitget.lua
+gget.lua
+json.lua
 debug.cfg
-json
+/lib/semver.lua

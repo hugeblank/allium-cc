@@ -1,7 +1,7 @@
 -- Allium by hugeblank
 
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color = require("raisin.raisin"), require("color") --Sponsored by roger109z
+local raisin, color, semver = require("lib.raisin"), require("lib.color"), require("lib.semver") -- color.lua sponsored by roger109z
 local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
@@ -59,7 +59,7 @@ do -- Allium image setup <3
 	multishell.setTitle(multishell.getFocus(), "Allium")
 	term.clear()
 	local x, y = term.getSize()
-	paintutils.drawImage(paintutils.loadImage("allium.nfp"), x-7, 2) -- Draw the Allium image on the side
+	paintutils.drawImage(paintutils.loadImage("cfg/allium.nfp"), x-7, 2) -- Draw the Allium image on the side
 	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
 	term.redirect(win) -- Redirect the terminal
 	term.setCursorPos(1, 1)
@@ -208,8 +208,8 @@ allium.register = function(p_name, fullname)
 
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		if fs.exists("persistence.ltn") then
-			local fper = fs.open("persistence.ltn", "r")
+		if fs.exists("cfg/persistence.ltn") then
+			local fper = fs.open("cfg/persistence.ltn", "r")
 			local tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 			if not tpersist[real_name] then
@@ -225,8 +225,8 @@ allium.register = function(p_name, fullname)
 	funcs.setPersistence = function(name, data)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		local tpersist
-		if fs.exists("persistence.ltn") then
-			local fper = fs.open("persistence.ltn", "r")
+		if fs.exists("cfg/persistence.ltn") then
+			local fper = fs.open("cfg/persistence.ltn", "r")
 			tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 		end
@@ -235,7 +235,7 @@ allium.register = function(p_name, fullname)
 		end
 		if type(name) == "string" then
 			tpersist[real_name][name] = data
-			local fpers = fs.open("persistence.ltn", "w")
+			local fpers = fs.open("cfg/persistence.ltn", "w")
 			fpers.write(textutils.serialise(tpersist))
 			fpers.close()
 			return true
@@ -437,8 +437,8 @@ end
 raisin.thread.add(interpreter, 0)
 raisin.thread.add(scanner, 1)
 
-if not fs.exists("persistence.ltn") then --In the situation that this is a first installation, let's do some setup
-	local fpers = fs.open("persistence.ltn", "w")
+if not fs.exists("cfg/persistence.ltn") then --In the situation that this is a first installation, let's do some setup
+	local fpers = fs.open("cfg/persistence.ltn", "w")
 	fpers.write("{}")
 	fpers.close()
 end
