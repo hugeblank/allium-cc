@@ -1,5 +1,5 @@
 -- Allium by hugeblank
-
+local version = "0.6.0"
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 local raisin, color, semver = require("lib.raisin"), require("lib.color"), require("lib.semver") -- color.lua sponsored by roger109z
 local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
@@ -173,11 +173,20 @@ allium.getName = function(plugin)
 	end
 end
 
-allium.register = function(p_name, fullname)
+allium.getVersion = function(plugin)
+	assert(type(plugin) == "string", "Invalid argument #1 (string expected, got "..type(plugin)..")")
+	if plugins[plugin] then
+		return plugins[plugin].version
+	end
+end
+
+allium.register = function(p_name, version, fullname)
 	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 	local real_name = allium.sanitize(p_name)
 	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
-	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name}
+	local version, rule = semver.parse(version)
+	assert(version, "Invalid argument #2 (malformed SemVer, breaks rule "..rule..")")
+	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, version = version}
 	local funcs = {}
 	local this = plugins[real_name]
 	
@@ -273,6 +282,9 @@ allium.register = function(p_name, fullname)
 
 	return funcs
 end
+
+allium.parse = semver.parse
+allium.version = allium.parse(version)
 
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if peripheral.getMethods(side) then

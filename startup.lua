@@ -15,6 +15,18 @@ if not debug then
         printError("No valid repo file found")
     end
 end
+-- Installing some critical libraries if they aren't already
+local libs = {
+    semver = "hugeblank/semparse/master/semver.lua",
+    gget = "hugeblank/qs-cc/master/src/gget.lua",
+    json = "rxi/json.lua/master/json.lua",
+    nap = "hugeblank/qs-cc/master/src/nap.lua"
+}
+for k, v in pairs(libs) do
+    if not fs.exists("/lib/"..k..".lua") then
+        shell.run("wget https://raw.github.com/"..v, "/lib/"..k..".lua")
+    end
+end
 -- Clearing the screen
 term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
