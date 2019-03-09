@@ -1,22 +1,30 @@
-multishell.setTitle(shell.openTab("shell"), "CraftOS")
+shell.openTab("shell")
 local debug = false
-if fs.exists("debug.cfg") then
-    file = fs.open("debug.cfg", "r")
+if fs.exists("cfg/debug.cfg") then
+    file = fs.open("cfg/debug.cfg", "r")
     debug = load("return "..file.readAll())() -- for use when debugging, so auto-update script doesn't get triggered
     file.close()
 end
 if not debug then
-    if fs.exists("repolist.csh") then -- Checking for a repolist shell executable
+    if fs.exists("cfg/repolist.csh") then -- Checking for a repolist shell executable
         -- Update all plugins and programs on the repolist
-        for line in io.lines("repolist.csh") do
+        for line in io.lines("cfg/repolist.csh") do
             shell.run(line)
         end
     else
-        -- Generate a repolist file
-        local file = fs.open("repolist.csh", "w")
-        file.write("gitget hugeblank Allium master /") --Forkers change this to their repository.
-        file.close()
-        printError("No valid repo file, default file created")
+        printError("No valid repo file found")
+    end
+end
+-- Installing some critical libraries if they aren't already
+local libs = {
+    semver = "hugeblank/semparse/master/semver.lua",
+    gget = "hugeblank/qs-cc/master/src/gget.lua",
+    json = "rxi/json.lua/master/json.lua",
+    nap = "hugeblank/qs-cc/master/src/nap.lua"
+}
+for k, v in pairs(libs) do
+    if not fs.exists("/lib/"..k..".lua") then
+        shell.run("wget https://raw.github.com/"..v.." /lib/"..k..".lua")
     end
 end
 -- Clearing the screen

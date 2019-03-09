@@ -1,5 +1,5 @@
-local stem = allium.register("allium", "Allium Stem (Core)")
-
+assert(allium.verify("0.6.0", "0.6.0"), "This stem is for Allium version 0.6.0.")
+local stem = allium.register("allium", "0.3.0", "Allium Stem")
 local addDetails
 do -- Just a block for organization of command parsing stuffs
 	local function infill(variant, execute)
@@ -210,7 +210,7 @@ local plugins = function(name)
     local str = ""
     local plugins = allium.getInfo()
 	for p_name in pairs(plugins) do
-		local p_str = "&h[[Tag: "..p_name.."]]"
+		local p_str = "&h[["..p_name.." v"..tostring(allium.getVersion(p_name)).."]]"
 		if plugins[p_name]["credits"] then
 			p_str = p_str.."&g[[!"..p_name..":credits]]"
 		end
