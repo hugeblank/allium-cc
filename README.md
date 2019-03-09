@@ -15,11 +15,11 @@ To install Allium, run this command, it's that simple!
 
 The installer installs:
 
-- The Allium Repo - allium.lua, plugins/allium-stem.lua, colors.lua, readme.md
+- The latest Allium Repo - allium.lua, plugins/allium-stem.lua, colors.lua, readme.md
 
 - The Raisin Repo - raisin/raisin.lua, raisin/readme.md
 
-- Apemanzilla's [gitget](http://www.computercraft.info/forums2/index.php?/topic/17387-gitget-version-2-release/), a github repository downloader that is necessary to download Allium, and the plugins that can be installed. 
+- My [gget](https://github.com/hugeblank/qs-cc/tree/master/src/gget.lua), a github repository downloader that is necessary to download Allium, and the plugins that can be installed. 
 
 - repolist.csh - A _Craftos SHell_ file, where you can gitget various plugins and utilities and keep them up to date.
 
@@ -33,4 +33,4 @@ The installer installs:
 It's worth noting that there are some places you might want to check out after you fork, and before you start testing your code. 
 
 1. The pastebin [installer](https://www.pastebin.com/LGwrkjxm). You are free to make your own installer to your fork with this code, simply change the `repo` string to "[your github username] [the name of your Allium repository] [the branch you want to clone from] [location]".
-2. The startup file of your fork. Change the debug variable, and make sure to replace the marked line with your repo, like above.
+2. The startup file of your fork. Set debug.cfg to true, and make sure to replace the marked line with your repo, like above.

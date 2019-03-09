@@ -173,13 +173,6 @@ allium.getName = function(plugin)
 	end
 end
 
-allium.getVersion = function(plugin)
-	assert(type(plugin) == "string", "Invalid argument #1 (string expected, got "..type(plugin)..")")
-	if plugins[plugin] then
-		return plugins[plugin].version
-	end
-end
-
 allium.register = function(p_name, version, fullname)
 	assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 	local real_name = allium.sanitize(p_name)
@@ -298,6 +291,13 @@ allium.verify = function(min, max)
 		return false
 	end
 	return true
+end
+
+allium.getVersion = function(plugin)
+	assert(type(plugin) == "string", "Invalid argument #1 (string expected, got "..type(plugin)..")")
+	if plugins[plugin] then
+		return plugins[plugin].version
+	end
 end
 
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module

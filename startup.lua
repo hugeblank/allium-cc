@@ -24,7 +24,7 @@ local libs = {
 }
 for k, v in pairs(libs) do
     if not fs.exists("/lib/"..k..".lua") then
-        shell.run("wget https://raw.github.com/"..v, "/lib/"..k..".lua")
+        shell.run("wget https://raw.github.com/"..v.." /lib/"..k..".lua")
     end
 end
 -- Clearing the screen
