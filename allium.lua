@@ -1,7 +1,7 @@
 -- Allium by hugeblank
-local version = "0.6.0"
+local version = "0.7.0-pr0"
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color, semver = require("lib.raisin.raisin"), require("lib.color"), require("lib.semver") -- color.lua sponsored by roger109z
+local raisin, color, semver, json = require("lib.raisin.raisin"), require("lib.color"), require("lib.semver"), require("lib.json") -- color.lua sponsored by roger109z
 local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
@@ -87,10 +87,10 @@ allium.tell = function(name, message, alt_name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
     assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
 	local test
-	message = message:gsub("\"", "\\\"")
 	if type(message) == "table" then
-		_, test = commands.tellraw(name, color.format(table.concat(message, "\n")))
+		_, test = commands.tellraw(name, color.format(table.concat(message, "\\n")))
 	else
+		-- message = message:gsub("\"", "\\\"") why was this necessary again?
 		_, test = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
     end
     return textutils.serialise(test)
@@ -104,12 +104,10 @@ allium.getPlayers = function()
 	local didexec, input = commands.exec("list")
 	local out = {}
 	if not didexec then 
-		local _, users = commands.exec("testfor @a")
-		for i = 1, #users do
-			out[#out+1] = string.sub(users[i], 7, -1)
-		end
+		return false
 	else
-		for user in string.gmatch(input[2], "%S+") do
+		input = input[1]:sub(input[1]:find(":")+1, -1)
+		for user in string.gmatch(input, "%S+") do
 			if user:find(",") then
 				out[#out+1] = user:sub(1, -2)
 			else
@@ -280,10 +278,11 @@ end
 allium.version = semver.parse(version)
 
 allium.verify = function(min, max)
-	local smin, smax = min, max
-	local min, max = semver.parse(min), semver.parse(max)
-	if smin and not min then return false end
-	if smax and not max then return false end
+	min = semver.parse(min)
+	max = semver.parse(max)
+	if min == allium.version and not max then
+		return true
+	end
 	if min and allium.version < min then
 		return false
 	end
@@ -316,7 +315,15 @@ if not allium.side then
 	print(cli.warn, "Allium could not find chat module")
 end
 
-_G.allium = allium -- Globalizing Allium API
+-- Packaging the Allium API
+if not package.preload["allium"] then
+	package.preload["allium"] = function() 
+		return allium 
+	end
+else
+	print(cli.error, "Another instance of Allium is already running")
+	return
+end
 
 do -- Plugin loading process
 	print(cli.info, "Loading plugins")
@@ -472,4 +479,4 @@ end
 print(cli.info, "Allium started.")
 allium.tell("@a", "&eHello World!")
 raisin.manager.run()
-_G.allium = nil
+package.preload["allium"] = nil
