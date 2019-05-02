@@ -1,7 +1,4 @@
-cfg/repolist.csh
+lib/*
+cfg/deps.ltn
 cfg/persistence.ltn
-cfg/debug.cfg
-lib/semver.lua
-lib/nap.lua
-lib/json.lua
-lib/gget.lua
+cfg/repolist.csh

@@ -1,7 +1,11 @@
 -- Allium by hugeblank
-local version = "0.7.0-pr0"
+local version = ...
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color, semver, json = require("lib.raisin.raisin"), require("lib.color"), require("lib.semver"), require("lib.json") -- color.lua sponsored by roger109z
+
+-- Dependency Loading
+local raisin, color, semver, json, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.json"), require("lib.mojson")
+
+-- Internal API/Utility definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
@@ -59,7 +63,7 @@ do -- Allium image setup <3
 	multishell.setTitle(multishell.getFocus(), "Allium")
 	term.clear()
 	local x, y = term.getSize()
-	paintutils.drawImage(paintutils.loadImage("cfg/allium.nfp"), x-7, 2) -- Draw the Allium image on the side
+	paintutils.drawImage(paintutils.loadImage("cfg/logo.nfp"), x-7, 2) -- Draw the Allium image on the side
 	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
 	term.redirect(win) -- Redirect the terminal
 	term.setCursorPos(1, 1)
@@ -479,4 +483,5 @@ end
 print(cli.info, "Allium started.")
 allium.tell("@a", "&eHello World!")
 raisin.manager.run()
+
 package.preload["allium"] = nil
