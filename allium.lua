@@ -60,7 +60,6 @@ local cli = {
 }
 
 do -- Allium image setup <3
-	multishell.setTitle(multishell.getFocus(), "Allium")
 	term.clear()
 	local x, y = term.getSize()
 	paintutils.drawImage(paintutils.loadImage("cfg/logo.nfp"), x-7, 2) -- Draw the Allium image on the side
@@ -94,7 +93,7 @@ allium.tell = function(name, message, alt_name)
 	if type(message) == "table" then
 		_, test = commands.tellraw(name, color.format(table.concat(message, "\\n")))
 	else
-		-- message = message:gsub("\"", "\\\"") why was this necessary again?
+		message = message:gsub("\n", "\\n")
 		_, test = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
     end
     return textutils.serialise(test)
@@ -120,6 +119,18 @@ allium.getPlayers = function()
 		end
 	end
 	return out
+end
+
+allium.getPosition = function(name)
+	local suc, data = commands.exec("data get entity "..name)
+	if not suc then return false, data end
+	data = data[1]:sub(data[1]:find("{"), -1)
+	local data = mojson.parseList(data)
+	return {
+		position = data.Pos,
+		rotation = data.Rotation,
+		dimension = data.Dimension
+	}
 end
 
 allium.forEachPlayer = function(func)
@@ -467,15 +478,14 @@ local scanner = function() -- Login/out scanner thread
 				os.queueEvent("player_quit", name)
 			end
 		end
-        sleep()
     end
 end
 
 raisin.thread.add(interpreter, 0)
 raisin.thread.add(scanner, 1)
 
-if not fs.exists("cfg/persistence.ltn") then --In the situation that this is a first installation, let's do some setup
-	local fpers = fs.open("cfg/persistence.ltn", "w")
+if not fs.exists("cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
+	local fpers = fs.open("cfg/persistence.lson", "w")
 	fpers.write("{}")
 	fpers.close()
 end

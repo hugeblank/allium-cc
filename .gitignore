@@ -1,4 +1,4 @@
 lib/*
-cfg/deps.ltn
-cfg/persistence.ltn
+cfg/deps.lson
+cfg/persistence.lson
 cfg/repolist.csh

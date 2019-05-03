@@ -1,4 +1,10 @@
 shell.openTab("shell")
+
+if not commands then -- Attempt to prevent user from running this on non-command comps
+	printError("Allium must be run on a command computer")
+	return
+end
+
 local config = {}
 do
     local default = {    
@@ -9,7 +15,7 @@ do
         version = ""
     }
     local temp
-    local file = fs.open("cfg/allium.ltn", "r")
+    local file = fs.open("cfg/allium.lson", "r")
     temp = textutils.unserialize(file.readAll()) -- for use when debugging
     file.close()
     if not temp then
@@ -53,7 +59,20 @@ term.setCursorPos(1, 1)
 
 -- Filling Dependencies
 if config.update.deps then
-    shell.run("depman.lua upgrade https://gist.githubusercontent.com/hugeblank/7887b55ea62c55f4a1239966bcaa725c/raw/ /cfg/deps.ltn /lib "..config.version)
+    -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
+    print("Updating Dependencies...")
+    local ot, didrun = term.redirect(window.create(term.current(), 1, 1, 1, 1, false)), false
+    parallel.waitForAll(function()
+        didrun = shell.run("pastebin run nRgBd3b6 upgrade https://pastebin.com/raw/fisfxn76 /cfg/deps.lson /lib "..config.version)
+    end, 
+    function()
+        multishell.setTitle(multishell.getCurrent(), "depman")
+    end)
+    term.redirect(ot)
+    if not didrun then
+        printError("Could not update dependencies")
+        return
+    end
 end
 -- Running Allium
 shell.run("allium.lua "..config.version)

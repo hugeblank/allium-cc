@@ -1,4 +1,4 @@
-local allium, a_ver = require("allium"), "0.7.0-pr1"
+local allium, a_ver = require("allium"), "0.7.0-pr2"
 assert(allium.verify(a_ver), "This stem is for Allium version "..a_ver..".")
 local stem = allium.register("allium", "0.4.0-pr0", "Allium Stem")
 local addDetails
