@@ -1,30 +1,54 @@
 shell.openTab("shell")
-local debug = false
-if fs.exists("cfg/debug.cfg") then
-    file = fs.open("cfg/debug.cfg", "r")
-    debug = load("return "..file.readAll())() -- for use when debugging, so auto-update script doesn't get triggered
-    file.close()
+
+if not commands then -- Attempt to prevent user from running this on non-command comps
+	printError("Allium must be run on a command computer")
+	return
 end
-if not debug then
+
+local config = {}
+do
+    local default = {    
+        update = {
+            allium = true, 
+            deps = true
+        },
+        version = ""
+    }
+    local temp
+    local file = fs.open("cfg/allium.lson", "r")
+    temp = textutils.unserialize(file.readAll()) -- for use when debugging
+    file.close()
+    if not temp then
+        printError("Could not parse configuration file")
+        return
+    elseif not temp.version then 
+        printError("Could not get Allium version")
+        return
+    end
+    local function fill(t, def)
+        local out = {}
+        for k, v in pairs(def) do
+            if type(v) == "table" then
+                out[k] = fill(t[k], v)
+            else
+                if t[k] ~= nil then
+                    out[k] = t[k]
+                else
+                    out[k] = v
+                end
+            end
+        end
+        return out
+    end
+    config = fill(temp, default)
+end
+
+if config.update.allium then
     if fs.exists("cfg/repolist.csh") then -- Checking for a repolist shell executable
         -- Update all plugins and programs on the repolist
         for line in io.lines("cfg/repolist.csh") do
             shell.run(line)
         end
-    else
-        printError("No valid repo file found")
-    end
-end
--- Installing some critical libraries if they aren't already
-local libs = {
-    semver = "hugeblank/semparse/master/semver.lua",
-    gget = "hugeblank/qs-cc/master/src/gget.lua",
-    json = "rxi/json.lua/master/json.lua",
-    nap = "hugeblank/qs-cc/master/src/nap.lua"
-}
-for k, v in pairs(libs) do
-    if not fs.exists("/lib/"..k..".lua") then
-        shell.run("wget https://raw.github.com/"..v.." /lib/"..k..".lua")
     end
 end
 -- Clearing the screen
@@ -32,8 +56,27 @@ term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
 term.clear()
 term.setCursorPos(1, 1)
+
+-- Filling Dependencies
+if config.update.deps then
+    -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
+    print("Updating Dependencies...")
+    local ot, didrun = term.redirect(window.create(term.current(), 1, 1, 1, 1, false)), false
+    parallel.waitForAll(function()
+        didrun = shell.run("pastebin run nRgBd3b6 upgrade https://pastebin.com/raw/fisfxn76 /cfg/deps.lson /lib "..config.version)
+    end, 
+    function()
+        multishell.setTitle(multishell.getCurrent(), "depman")
+    end)
+    term.redirect(ot)
+    if not didrun then
+        printError("Could not update dependencies")
+        return
+    end
+end
 -- Running Allium
-shell.run("allium.lua")
+shell.run("allium.lua "..config.version)
+
 -- Removing all captures
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if peripheral.getMethods(side) then

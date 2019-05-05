@@ -1,7 +1,11 @@
 -- Allium by hugeblank
-local version = "0.6.0"
+local version = ...
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
-local raisin, color, semver = require("lib.raisin.raisin"), require("lib.color"), require("lib.semver") -- color.lua sponsored by roger109z
+
+-- Dependency Loading
+local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
+
+-- Internal API/Utility definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
@@ -56,10 +60,9 @@ local cli = {
 }
 
 do -- Allium image setup <3
-	multishell.setTitle(multishell.getFocus(), "Allium")
 	term.clear()
 	local x, y = term.getSize()
-	paintutils.drawImage(paintutils.loadImage("cfg/allium.nfp"), x-7, 2) -- Draw the Allium image on the side
+	paintutils.drawImage(paintutils.loadImage("cfg/logo.nfp"), x-7, 2) -- Draw the Allium image on the side
 	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
 	term.redirect(win) -- Redirect the terminal
 	term.setCursorPos(1, 1)
@@ -87,10 +90,10 @@ allium.tell = function(name, message, alt_name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
     assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
 	local test
-	message = message:gsub("\"", "\\\"")
 	if type(message) == "table" then
-		_, test = commands.tellraw(name, color.format(table.concat(message, "\n")))
+		_, test = commands.tellraw(name, color.format(table.concat(message, "\\n")))
 	else
+		message = message:gsub("\n", "\\n")
 		_, test = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
     end
     return textutils.serialise(test)
@@ -103,21 +106,30 @@ end
 allium.getPlayers = function()
 	local didexec, input = commands.exec("list")
 	local out = {}
-	if not didexec then 
-		local _, users = commands.exec("testfor @a")
-		for i = 1, #users do
-			out[#out+1] = string.sub(users[i], 7, -1)
-		end
-	else
-		for user in string.gmatch(input[2], "%S+") do
-			if user:find(",") then
-				out[#out+1] = user:sub(1, -2)
-			else
-				out[#out+1] = user
-			end
+	if not input[1]:find(":") then
+		return false, input
+	end
+	input = input[1]:sub(input[1]:find(":")+1, -1)
+	for user in string.gmatch(input, "%S+") do
+		if user:find(",") then
+			out[#out+1] = user:sub(1, -2)
+		else
+			out[#out+1] = user
 		end
 	end
 	return out
+end
+
+allium.getPosition = function(name)
+	local suc, data = commands.exec("data get entity "..name)
+	if not suc then return false, data end
+	data = data[1]:sub(data[1]:find("{"), -1)
+	local data = mojson.parseList(data)
+	return {
+		position = data.Pos,
+		rotation = data.Rotation,
+		dimension = data.Dimension
+	}
 end
 
 allium.forEachPlayer = function(func)
@@ -280,10 +292,11 @@ end
 allium.version = semver.parse(version)
 
 allium.verify = function(min, max)
-	local smin, smax = min, max
-	local min, max = semver.parse(min), semver.parse(max)
-	if smin and not min then return false end
-	if smax and not max then return false end
+	min = semver.parse(min)
+	max = semver.parse(max)
+	if min == allium.version and not max then
+		return true
+	end
 	if min and allium.version < min then
 		return false
 	end
@@ -316,7 +329,15 @@ if not allium.side then
 	print(cli.warn, "Allium could not find chat module")
 end
 
-_G.allium = allium -- Globalizing Allium API
+-- Packaging the Allium API
+if not package.preload["allium"] then
+	package.preload["allium"] = function() 
+		return allium 
+	end
+else
+	print(cli.error, "Another instance of Allium is already running")
+	return
+end
 
 do -- Plugin loading process
 	print(cli.info, "Loading plugins")
@@ -440,31 +461,34 @@ local scanner = function() -- Login/out scanner thread
     local online = {}
     while true do
         local cur_players = allium.getPlayers()
-        local organized = {}
-        for i = 1, #cur_players do -- Sort players in a way that's useful
-            organized[cur_players[i]] = cur_players[i]
-        end
-        for _, name in pairs(organized) do
-            if online[name] == nil then
-				online[name] = name
-                os.queueEvent("player_join", name)
-            end
-		end
-		for _, name in pairs(online) do
-			if organized[name] == nil then
-				online[name] = nil
-				os.queueEvent("player_quit", name)
+		local organized = {}
+		if cur_players then
+			for i = 1, #cur_players do -- Sort players in a way that's useful
+				organized[cur_players[i]] = cur_players[i]
 			end
+			for _, name in pairs(organized) do
+				if online[name] == nil then
+					online[name] = name
+					os.queueEvent("player_join", name)
+				end
+			end
+			for _, name in pairs(online) do
+				if organized[name] == nil then
+					online[name] = nil
+					os.queueEvent("player_quit", name)
+				end
+			end
+		else
+			print(cli.warn, "Could not list online players, skipping tick.")
 		end
-        sleep()
     end
 end
 
 raisin.thread.add(interpreter, 0)
 raisin.thread.add(scanner, 1)
 
-if not fs.exists("cfg/persistence.ltn") then --In the situation that this is a first installation, let's do some setup
-	local fpers = fs.open("cfg/persistence.ltn", "w")
+if not fs.exists("cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
+	local fpers = fs.open("cfg/persistence.lson", "w")
 	fpers.write("{}")
 	fpers.close()
 end
@@ -472,4 +496,5 @@ end
 print(cli.info, "Allium started.")
 allium.tell("@a", "&eHello World!")
 raisin.manager.run()
-_G.allium = nil
+
+package.preload["allium"] = nil

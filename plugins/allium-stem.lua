@@ -1,5 +1,6 @@
-assert(allium.verify("0.6.0", "0.6.0"), "This stem is for Allium version 0.6.0.")
-local stem = allium.register("allium", "0.3.0", "Allium Stem")
+local allium, a_ver = require("allium"), "0.7.0-pr2"
+assert(allium.verify(a_ver), "This stem is for Allium version "..a_ver..".")
+local stem = allium.register("allium", "0.4.0-pr0", "Allium Stem")
 local addDetails
 do -- Just a block for organization of command parsing stuffs
 	local function infill(variant, execute)
@@ -31,7 +32,7 @@ do -- Just a block for organization of command parsing stuffs
 				result = variant
 			end
 			for i = 1, #result do
-				if type(result[i]) == "string" and not result[i]:find("[ =]") then
+				if type(result[i]) == "string" and not result[i]:find("=") then
 					out[#out+1] = " &6-&r &g[["..execute..result[i].." ]]&h[[Click to add "..result[i].."]]&a"..result[i]
 				end
 			end
@@ -52,11 +53,11 @@ do -- Just a block for organization of command parsing stuffs
 		if data.clickable == true or data.clickable == nil then
 			hover, execution = "Click to add this parameter", execute..label
 			if type(data.infill) == "string" then
-				execution = execution.."= "
+				execution = execution.."="
 			end
 		end
 		if data.default and tostring(data.default) then -- Overrides infill. default and infill shouldn't even be used in the same place anyways.
-			execution = execute..label.."= \"\""..data.default.."\"\"" -- Quoting a quote so it gets placed in chat properly
+			execution = execute..label.."=\"\""..data.default.."\"\"" -- Quoting a quote so it gets placed in chat properly
 		end
 		local meta = ""
 		if #execution ~= 0 then
@@ -85,21 +86,22 @@ do -- Just a block for organization of command parsing stuffs
 				return out, command
 		else -- Otherwise things are going totally as planned and we should just recurse onwards
 			local param_data = {}
-			local is_tag = args[1]:sub(-1, -1):find("=")
+			local is_tag = args[1]:find("=")
 			if is_tag then
-				param_data.param = table.remove(args, 1):sub(1, -2)
-				param_data.tag = table.remove(args, 1)
+				param_data.param = args[1]:sub(1, is_tag-1)
+				param_data.tag = args[1]:sub(is_tag+1, -1)
+				table.remove(args, 1)
 			else
 				param_data.param = table.remove(args, 1)
 			end
-			if is_tag and not param_data.tag then
+			if is_tag and #param_data.tag == 0 then
 				-- If the parameter is an infill thing, and doesn't have a value attached to it:
 				if not (info[param_data.param] and info[param_data.param].infill) then
 					return "Missing infill information"
 				end
-				return infill(info[param_data.param].infill, execute..param_data.param.."= "), command
+				return infill(info[param_data.param].infill, execute..param_data.param.."="), command
 			elseif param_data.tag then
-				execute = execute..param_data.param.."= "..param_data.tag.." "
+				execute = execute..param_data.param.."="..param_data.tag.." "
 				command = command..param_data.tag.." "
 			else
 				execute = execute..param_data.param.." "
@@ -119,14 +121,14 @@ local help = function(name, args, data)
 	local function run()
 		for i = (cmds_per*(page-1))+1, (cmds_per*page) do
 			if info[i] then
-				out_str = out_str..info[i].."\n"
+				out_str = out_str..info[i].."\\n"
 			end
 		end
 		if out_str == "" or page <= 0 then
 			data.error("Page does not exist.")
 			return
 		end
-		out_str = "&2===================&r &dAll&5i&r&dum&e Help Menu&r &2===================&r\n"..out_str
+		out_str = "&2===================&r &dAll&5i&r&dum&e Help Menu&r &2===================&r\\n"..out_str
 		local template = #(" << "..page.."/"..math.ceil(#info/cmds_per).." >> ")
 		local sides = 32-template
 		out_str = out_str.."&2"..string.rep("=", sides).."&r &6&l&h[[Previous Page]]&g[["..next_command..(page-1).."]]<<&r&c&l "..page.."/"..math.ceil(#info/cmds_per).." &r&6&l&h[[Next Page]]&g[["..next_command..(page+1).."]]>>&r &2"..string.rep("=", sides).."&r"
@@ -202,7 +204,14 @@ local help = function(name, args, data)
 end
 
 local credits = function(name)
-	allium.tell(name, "This project was cultivated with love by &a&h[[Check out his repo!]]&i[[https://github.com/hugeblank]]hugeblank&r.\nCommand formatting API provided graciously by &1&h[[Check out his repo!]]&i[[https://github.com/roger109z]]roger109z&r.\nContribute and report issues to allium here: &9&n&h[[Check out where allium is grown!]]&ihttps://github.com/hugeblank/allium")
+	allium.tell(name, {
+		"&dAll&5i&dum &av"..tostring(allium.version).."&r was cultivated with love by &a&h[[Check out his repo!]]&i[[https://github.com/hugeblank]]hugeblank&r.",
+		"Documentation on Allium can be found here: &9&h[[Read up on Allium!]]&ihttps://github.com/hugeblank/allium-wiki&r.",
+		"Contribute and report issues to Allium here: &9&h[[Check out where Allium is grown!]]&ihttps://github.com/hugeblank/allium&r.",
+		"&6Other Contributors:",
+		"&a - &rCommand formatting API by &1&h[[Check out his profile!]]&i[[https://github.com/roger109z]]roger109z&r.",
+		"&a - &rJSON parsing library by &d&h[[Check out their profile!]]&i[[https://github.com/rxi]]rxi&r."
+	}, true)
 end
 
 local plugins = function(name)
