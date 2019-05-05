@@ -3,7 +3,7 @@ local version = ...
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 
 -- Dependency Loading
-local raisin, color, semver, json, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.json"), require("lib.mojson")
+local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
 
 -- Internal API/Utility definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
@@ -106,16 +106,15 @@ end
 allium.getPlayers = function()
 	local didexec, input = commands.exec("list")
 	local out = {}
-	if not didexec then 
-		return false
-	else
-		input = input[1]:sub(input[1]:find(":")+1, -1)
-		for user in string.gmatch(input, "%S+") do
-			if user:find(",") then
-				out[#out+1] = user:sub(1, -2)
-			else
-				out[#out+1] = user
-			end
+	if not input[1]:find(":") then
+		return false, input
+	end
+	input = input[1]:sub(input[1]:find(":")+1, -1)
+	for user in string.gmatch(input, "%S+") do
+		if user:find(",") then
+			out[#out+1] = user:sub(1, -2)
+		else
+			out[#out+1] = user
 		end
 	end
 	return out
@@ -462,21 +461,25 @@ local scanner = function() -- Login/out scanner thread
     local online = {}
     while true do
         local cur_players = allium.getPlayers()
-        local organized = {}
-        for i = 1, #cur_players do -- Sort players in a way that's useful
-            organized[cur_players[i]] = cur_players[i]
-        end
-        for _, name in pairs(organized) do
-            if online[name] == nil then
-				online[name] = name
-                os.queueEvent("player_join", name)
-            end
-		end
-		for _, name in pairs(online) do
-			if organized[name] == nil then
-				online[name] = nil
-				os.queueEvent("player_quit", name)
+		local organized = {}
+		if cur_players then
+			for i = 1, #cur_players do -- Sort players in a way that's useful
+				organized[cur_players[i]] = cur_players[i]
 			end
+			for _, name in pairs(organized) do
+				if online[name] == nil then
+					online[name] = name
+					os.queueEvent("player_join", name)
+				end
+			end
+			for _, name in pairs(online) do
+				if organized[name] == nil then
+					online[name] = nil
+					os.queueEvent("player_quit", name)
+				end
+			end
+		else
+			print(cli.warn, "Could not list online players, skipping tick.")
 		end
     end
 end

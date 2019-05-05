@@ -1,5 +1,5 @@
 {
-    version = "0.7.0-pr2",
+    version = "0.7.0",
     update = {
         allium = false,
         deps = false,
