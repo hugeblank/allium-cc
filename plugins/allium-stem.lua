@@ -1,6 +1,5 @@
-local allium, a_ver = require("allium"), "0.7.0-pr2"
-assert(allium.verify(a_ver), "This stem is for Allium version "..a_ver..".")
-local stem = allium.register("allium", "0.4.0-pr0", "Allium Stem")
+local allium = require("allium")
+local stem = allium.register("allium", "0.4.1", "Allium Stem")
 local addDetails
 do -- Just a block for organization of command parsing stuffs
 	local function infill(variant, execute)
