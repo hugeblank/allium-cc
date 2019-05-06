@@ -1,7 +1,7 @@
 {
-    version = "0.7.0",
+    version = "0.7.1",
     update = {
-        allium = false,
-        deps = false,
+        allium = true,
+        deps = true,
     },
 }

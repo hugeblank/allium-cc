@@ -43,6 +43,7 @@ do
     config = fill(temp, default)
 end
 
+-- Checking user defined updates
 if config.update.allium then
     if fs.exists("cfg/repolist.csh") then -- Checking for a repolist shell executable
         -- Update all plugins and programs on the repolist
@@ -51,29 +52,30 @@ if config.update.allium then
         end
     end
 end
--- Clearing the screen
-term.setBackgroundColor(colors.black)
-term.setTextColor(colors.white)
-term.clear()
-term.setCursorPos(1, 1)
 
 -- Filling Dependencies
 if config.update.deps then
     -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
     print("Updating Dependencies...")
-    local ot, didrun = term.redirect(window.create(term.current(), 1, 1, 1, 1, false)), false
+    local didrun = false
     parallel.waitForAll(function()
         didrun = shell.run("pastebin run nRgBd3b6 upgrade https://pastebin.com/raw/fisfxn76 /cfg/deps.lson /lib "..config.version)
     end, 
     function()
         multishell.setTitle(multishell.getCurrent(), "depman")
     end)
-    term.redirect(ot)
     if not didrun then
         printError("Could not update dependencies")
         return
     end
 end
+
+-- Clearing the screen
+term.setBackgroundColor(colors.black)
+term.setTextColor(colors.white)
+term.clear()
+term.setCursorPos(1, 1)
+
 -- Running Allium
 shell.run("allium.lua "..config.version)
 
