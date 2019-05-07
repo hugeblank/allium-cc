@@ -6,7 +6,7 @@ local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.co
 local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
 
 -- Internal API/Utility definitions
-local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
+local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
 	local words = {...}
@@ -211,7 +211,7 @@ allium.register = function(p_name, version, fullname)
 	funcs.thread = function(thread)
 		-- Add a thread that repeatedly iterates
 		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")")
-		return raisin.thread.wrap(raisin.thread.add(thread, 0, group.thread), group.thread)
+		return raisin.thread(thread, 0, group.thread)
 	end
 
 	funcs.module = function(container)
@@ -341,7 +341,7 @@ end
 
 do -- Plugin loading process
 	print(cli.info, "Loading plugins")
-	local loader_group = raisin.group.add(1)
+	local loader_group = raisin.group(1)
 	local function scopeDown(dir)
 		for _, plugin in pairs(fs.list(dir)) do
 			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
@@ -355,7 +355,7 @@ do -- Plugin loading process
 							print(cli.error, err)
 						end
 					end
-					raisin.thread.add(thread, 0, loader_group)
+					raisin.thread(thread, 0, loader_group)
 				end
 			elseif fs.isDir(dir.."/"..plugin) then
 				scopeDown(dir.."/"..plugin)
@@ -449,7 +449,7 @@ local interpreter = function() -- Main command interpretation thread
 						print(cli.warn, cmd.." | "..err)
 					end
 				end
-				raisin.thread.add(exec_command, 0, group.command)
+				raisin.thread(exec_command, 0, group.command)
     		else --this isn't even a valid command...
 	    		allium.tell(name, "&6Invalid Command, use &c&g[[!allium:help]]!help&r&6 for assistance.") --bleh!
     		end
@@ -484,8 +484,8 @@ local scanner = function() -- Login/out scanner thread
     end
 end
 
-raisin.thread.add(interpreter, 0)
-raisin.thread.add(scanner, 1)
+raisin.thread(interpreter, 0)
+raisin.thread(scanner, 1)
 
 if not fs.exists("cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
 	local fpers = fs.open("cfg/persistence.lson", "w")
