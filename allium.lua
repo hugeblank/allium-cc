@@ -1,9 +1,27 @@
 -- Allium by hugeblank
-local version = ...
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
+local version
+local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" -- manager title
 
 -- Dependency Loading
 local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
+
+do -- Version parsing
+	local file = fs.open("cfg/allium.lson", "r")
+	if not file then
+		printError("Could not read version")
+		return
+	end
+	local output = textutils.unserialise(file.readAll())
+	if not output then
+		printError("Could not parse version")
+		return
+	end
+	version, rule = semver.parse(output.version)
+	if not version then 
+		printError("Could not parse version, breaks semver rule "..rule)
+		return
+	end
+end
 
 -- Internal API/Utility definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
@@ -192,7 +210,7 @@ allium.register = function(p_name, version, fullname)
 	local version, rule = semver.parse(version)
 	if not rule then rule = "" end
 	assert(type(version) == "table", "Invalid argument #2 (malformed SemVer, breaks rule "..rule..")")
-	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, version = version}
+	plugins[real_name] = {commands = {}, name = fullname or p_name, version = version}
 	local funcs = {}
 	local this = plugins[real_name]
 	
@@ -223,8 +241,8 @@ allium.register = function(p_name, version, fullname)
 
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		if fs.exists("cfg/persistence.ltn") then
-			local fper = fs.open("cfg/persistence.ltn", "r")
+		if fs.exists("cfg/persistence.lson") then
+			local fper = fs.open("cfg/persistence.lson", "r")
 			local tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 			if not tpersist[real_name] then
@@ -240,17 +258,25 @@ allium.register = function(p_name, version, fullname)
 	funcs.setPersistence = function(name, data)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		local tpersist
-		if fs.exists("cfg/persistence.ltn") then
-			local fper = fs.open("cfg/persistence.ltn", "r")
-			tpersist = textutils.unserialize(fper.readAll())
+		if fs.exists("cfg/persistence.lson") then
+			local fper = fs.open("cfg/persistence.lson", "r")
+			local temp = textutils.unserialize(fper.readAll())
 			fper.close()
+			if not temp then 
+				return false
+			else
+				tpersist = temp
+			end
 		end
 		if not tpersist[real_name] then
 			tpersist[real_name] = {}
 		end
 		if type(name) == "string" then
 			tpersist[real_name][name] = data
-			local fpers = fs.open("cfg/persistence.ltn", "w")
+			local fpers = fs.open("cfg/persistence.lson", "w")
+			if not fpers then 
+				return false 
+			end
 			fpers.write(textutils.serialise(tpersist))
 			fpers.close()
 			return true
@@ -291,19 +317,46 @@ end
 
 allium.version = semver.parse(version)
 
-allium.verify = function(min, max)
-	min = semver.parse(min)
-	max = semver.parse(max)
-	if min == allium.version and not max then
+allium.verify = function(param)
+	local function convert(str) -- Use the semver API to convert. Provide a detailled error if conversion fails
+		if type(str) ~= "string" then
+			error("Could not convert "..tostring(str))
+		end
+		local ver, rule = semver.parse(str:gsub("%s", ""))
+		if not ver then
+			error("Could not parse "..str:gsub("%s", "")..", breaks semver spec rule "..rule)
+		end
+		return ver
+	end
+	local function compare(in_str) -- compare version provided in string to input versions, using the operator provided
+		local _, split = in_str:find("[><][=]*")
+		local lim, op, res = convert(in_str:sub(split+1)), in_str:sub(1, split), nil -- Split operator and version string
+		if op == ">" then
+			res = allium.version > lim
+		elseif op == "<" then
+			res =  allium.version < lim
+		elseif op == ">=" then
+			res = allium.version >= lim
+		elseif op == "<=" then
+			res = allium.version <= lim
+		end
+		return res
+	end
+	local range = param:find("&&") -- Matched a range definition
+	local comp, c_e = param:find("[><][=]*") -- I do love me some pattern matching
+	if range then -- If there's a range beginning definition
+		local a, b = compare(param:sub(1, range-1)), compare(param:sub(range+3, -1))
+		if a and b then
+			return true
+		end
+	elseif comp then -- Otherwise if there's a comparison operator
+		if compare(param) then
+			return true
+		end
+	elseif convert(param) == allium.version then -- Otherwise this is a simple list element
 		return true
 	end
-	if min and allium.version < min then
-		return false
-	end
-	if max and allium.version > max then
-		return false
-	end
-	return true
+	return false
 end
 
 allium.getVersion = function(plugin)

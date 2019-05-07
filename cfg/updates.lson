@@ -1,0 +1,4 @@
+{
+    allium = true,
+    deps = true,
+}

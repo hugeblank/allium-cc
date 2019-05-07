@@ -7,25 +7,38 @@ end
 
 local config = {}
 do
-    local default = {    
-        update = {
-            allium = true, 
-            deps = true
-        },
-        version = ""
+    config.updates = {
+        allium = true, 
+        deps = true
     }
     local temp
-    local file = fs.open("cfg/allium.lson", "r")
-    temp = textutils.unserialize(file.readAll()) -- for use when debugging
-    file.close()
-    if not temp then
-        printError("Could not parse configuration file")
-        return
-    elseif not temp.version then 
-        printError("Could not get Allium version")
-        return
+    do -- Handle update configuration
+        local file = fs.open("cfg/updates.lson", "r")
+        if not file then
+            temp = {}
+        else
+            local output = textutils.unserialise(file.readAll())
+            if not output then
+                temp = {}
+            else
+                temp = output
+            end
+        end
     end
-    local function fill(t, def)
+    do -- Handle version configuration
+        local file = fs.open("cfg/allium.lson", "r")
+        if not file then
+            printError("Could not read version")
+            return
+        end
+        local output = textutils.unserialise(file.readAll())
+        if not output then
+            printError("Could not parse version")
+            return
+        end
+        config.version = output.version
+    end
+    local function fill(t, def) -- 
         local out = {}
         for k, v in pairs(def) do
             if type(v) == "table" then
@@ -40,11 +53,11 @@ do
         end
         return out
     end
-    config = fill(temp, default)
+    config.updates = fill(temp, config.updates)
 end
 
 -- Checking user defined updates
-if config.update.allium then
+if config.updates.allium then
     if fs.exists("cfg/repolist.csh") then -- Checking for a repolist shell executable
         -- Update all plugins and programs on the repolist
         for line in io.lines("cfg/repolist.csh") do
@@ -54,7 +67,7 @@ if config.update.allium then
 end
 
 -- Filling Dependencies
-if config.update.deps then
+if config.updates.deps then
     -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
     print("Updating Dependencies...")
     local didrun = false
