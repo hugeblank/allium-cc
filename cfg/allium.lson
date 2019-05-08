@@ -1,4 +1,3 @@
 {
-    version = "0.8.0-pr4",
-    import_timeout = 5,
+    version = "0.8.0-pr5",
 }

@@ -1,10 +1,9 @@
 -- Allium by hugeblank
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" -- manager title
 
 -- Dependency Loading
 local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
 
--- Internal API/Utility definitions
+-- Internal definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
@@ -41,6 +40,10 @@ local function deep_copy(table, list) -- Recursively copy a module
 	return out
 end
 
+local function assert(condition, message, level)
+	if not condition then error(message, (level or 0)+3) end
+end
+
 local cli = {
 	info = {true, "[", colors.lime, "I", colors.white, "] "}, 
 	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
@@ -49,8 +52,7 @@ local cli = {
 
 local config
 do -- Configuration parsing
-	local file, options = fs.open("cfg/allium.lson", "r"), {import_timeout = "number"}
-	local rule
+	local file, options, rule = fs.open("cfg/allium.lson", "r"), {import_timeout = 5, label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>"}
 	local function verify_cfg(input, default, index)
 		for f_k, f_v in pairs(input) do -- input key, value
 			for t_k, t_v in pairs(default) do -- standard key, value
@@ -58,7 +60,7 @@ do -- Configuration parsing
 					if not verify_cfg(f_v, t_v, f_k..".") then
 						return false
 					end
-				elseif f_k == t_k and type(f_v) ~= t_v then
+				elseif f_k == t_k and type(f_v) ~= type(t_v) then
 					printError("Invalid config option "..(index or "")..f_k.." (expected "..type(t_v)..", got "..type(f_v)..")")
 					return false
 				end
@@ -83,8 +85,12 @@ do -- Configuration parsing
 	output.version = nil
 	if not verify_cfg(output, options) then -- Invalid configuration option (skips missing ones)
 		return
+	else
+		for key, val in pairs(options) do
+			output[key] = output[key] or val
+		end
+		config = output
 	end
-	config = output
 end
 
 do -- Allium image setup <3
@@ -121,11 +127,7 @@ do -- Allium image setup <3
 	print(cli.info, "Initializing API")
 end
 
-allium.assert = function(condition, message, level)
-	if not condition then error(message, (level or 0)+3) end
-end
-
-local assert = allium.assert
+allium.assert = assert
 
 allium.sanitize = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
@@ -140,7 +142,7 @@ allium.tell = function(name, message, alt_name)
 		_, out = commands.tellraw(name, color.format(table.concat(message, "\\n")))
 	else
 		message = message:gsub("\n", "\\n")
-		_, out = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
+		_, out = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return config.label.."&r " end end)(alt_name)..message))
     end
     return textutils.serialise(out)
 end
@@ -237,7 +239,7 @@ allium.register = function(p_name, version, fullname)
 	plugins[real_name] = {commands = {}, name = fullname or p_name, version = version}
 	local funcs, this = {}, plugins[real_name]
 	
-	funcs.command = function(c_name, command, info, usage) -- name: name | command: executing function | info: help information | usage: table of strings for improper inputs
+	funcs.command = function(c_name, command, info) -- name: name | command: executing function | info: help information
 		-- Add a command for the user to execute
 		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
 		local real_name = allium.sanitize(c_name)
@@ -246,7 +248,7 @@ allium.register = function(p_name, version, fullname)
 		assert(type(info) == "string" or type(info) == "table" or not info, "Invalid argument #3 (string, or table expected, got "..type(info)..")")
 		if type(info) == "string" then info = {info} end
 		assert(info[1], "Invalid argument #3 (info formatted table expected)")
-		this.commands[real_name] = {command = command, info = info, usage = usage}
+		this.commands[real_name] = {command = command, info = info}
 	end
 
 	funcs.thread = function(thread)
@@ -434,6 +436,25 @@ do -- Plugin loading process
 end
 
 local interpreter = function() -- Main command interpretation thread
+	-- Definitions that don't need to be repeated every command
+	local function getUsage(fields, info, index)
+		index = index or 1
+		fields[index] = {}
+		for key, info in pairs(info) do
+			if type(info) == "table" then
+				local match = false
+				for i = 1, #fields[index] do
+					if key == fields[index][i] then
+						match = true
+					end
+				end
+				if not match then
+					fields[index][#fields[index]+1] = key
+				end
+				getUsage(fields, info, index+1)
+			end
+		end
+	end
 	while true do
 		local _, message, _, name, uuid = os.pullEvent("chat_capture") -- Pull chat messages
 		if message:find("!") == 1 then -- Are they for allium?
@@ -494,13 +515,20 @@ local interpreter = function() -- Main command interpretation thread
 			if cmd_exec then -- Is there really a command?
 				local data = { -- Infrequently used data to pass onto the command being executed
 					error = function(text) 
-						local str = "Invalid or missing parameter(s)"
-						if cmd_exec.data.usage then
-							str = "!"..cmd.." "..cmd_exec.data.usage
+						local str, fields = "", {}
+						getUsage(fields, cmd_exec.data.info)
+						if #fields == 0 then
+							str = "Invalid or missing parameter(s)"
+						else
+							str = "!"..cmd_exec.plugin..":"..cmd_exec.command.." "
+							for i = 1, #fields do
+								if #fields[i] ~= 0 then
+									str = str.."< "..table.concat(fields[i], " | ").." > "
+								end
+							end
 						end
 						allium.tell(name, "&c"..(text or str))
 					end,
-					usage = cmd_exec.data.usage,
 					uuid = uuid
 				}
 				local function exec_command()
@@ -512,6 +540,7 @@ local interpreter = function() -- Main command interpretation thread
 						})
 						print(cli.warn, cmd.." | "..err)
 					end
+					cmd_exec, cmd = nil, nil
 				end
 				raisin.thread(exec_command, 0, group.command)
     		else --this isn't even a valid command...
