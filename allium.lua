@@ -1,27 +1,8 @@
 -- Allium by hugeblank
-local version
 local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" -- manager title
 
 -- Dependency Loading
 local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
-
-do -- Version parsing
-	local file = fs.open("cfg/allium.lson", "r")
-	if not file then
-		printError("Could not read version")
-		return
-	end
-	local output = textutils.unserialise(file.readAll())
-	if not output then
-		printError("Could not parse version")
-		return
-	end
-	version, rule = semver.parse(output.version)
-	if not version then 
-		printError("Could not parse version, breaks semver rule "..rule)
-		return
-	end
-end
 
 -- Internal API/Utility definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
@@ -76,6 +57,46 @@ local cli = {
 	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
 	error = {true, "[", colors.red, "E", colors.white, "] "}
 }
+
+local config
+do -- Configuration parsing
+	local file, options = fs.open("cfg/allium.lson", "r"), {import_timeout = "number"}
+	local rule
+	local function verify_cfg(input, default, index)
+		for f_k, f_v in pairs(input) do -- input key, value
+			for t_k, t_v in pairs(default) do -- standard key, value
+				if type(f_v) == "table" and type(t_v) == "table" then
+					if not verify_cfg(f_v, t_v, f_k..".") then
+						return false
+					end
+				elseif f_k == t_k and type(f_v) ~= t_v then
+					printError("Invalid config option "..(index or "")..f_k.." (expected "..type(t_v)..", got "..type(f_v)..")")
+					return false
+				end
+			end
+		end
+		return true
+	end
+	if not file then -- Could not read file
+		printError("Could not read config")
+		return
+	end
+	local output = textutils.unserialise(file.readAll())
+	if not output then -- Config file in invalid format
+		printError("Could not parse config")
+		return
+	end
+	allium.version, rule = semver.parse(output.version)
+	if not allium.version then -- Invalid Allium version
+		printError("Could not parse Allium's version (breaks SemVer rule #"..rule..")")
+		return
+	end
+	output.version = nil
+	if not verify_cfg(output, options) then -- Invalid configuration option (skips missing ones)
+		return
+	end
+	config = output
+end
 
 do -- Allium image setup <3
 	term.clear()
@@ -287,7 +308,7 @@ allium.register = function(p_name, version, fullname)
 	funcs.import = function(p_name) -- request the API from a specific plugin
 		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 		p_name = allium.sanitize(p_name)
-		local timer = os.startTimer(5)
+		local timer = os.startTimer(config.import_timeout or 5)
 		repeat
 			local e = {os.pullEvent()}
 		until (e[1] == "timer" and e[2] == timer) or (plugins[p_name] and plugins[p_name].module)
@@ -314,8 +335,6 @@ allium.register = function(p_name, version, fullname)
 
 	return funcs
 end
-
-allium.version = semver.parse(version)
 
 allium.verify = function(param)
 	local function convert(str) -- Use the semver API to convert. Provide a detailled error if conversion fails
