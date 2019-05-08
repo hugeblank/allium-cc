@@ -99,9 +99,31 @@ do -- Configuration parsing
 end
 
 do -- Allium image setup <3
+	local image = {
+		"  2a2",
+		" 2aa6a",
+		"26a6aaa",
+		"aa66a2a",
+		" 6aa62",
+		"  ad26",
+		"   d",
+		"   5",
+		"   d",
+		"   d",
+		"   d",
+		"   5",
+		"   5",
+		"   d",
+		"   d"
+	}
 	term.clear()
 	local x, y = term.getSize()
-	paintutils.drawImage(paintutils.loadImage("cfg/logo.nfp"), x-7, 2) -- Draw the Allium image on the side
+	term.setCursorPos(x-7, 2)
+	for i = 1, #image do -- Draw the Allium image on the side
+		term.blit(string.rep(" ", #image[i]), string.rep("0", #image[i]), image[i])
+		local _, cy = term.getCursorPos()
+		term.setCursorPos(x-7, cy+1)
+	end
 	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
 	term.redirect(win) -- Redirect the terminal
 	term.setCursorPos(1, 1)
