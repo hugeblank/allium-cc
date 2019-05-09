@@ -52,7 +52,7 @@ local cli = {
 
 local config
 do -- Configuration parsing
-	local file, default, rule = fs.open("cfg/allium.lson", "r"), {import_timeout = 5, label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>"}
+	local file, default, rule = fs.open("cfg/allium.lson", "r"), {import_timeout = 5, label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r> "}
 	local function verify_cfg(input, default, index)
 		for f_k, f_v in pairs(input) do -- input key, value
 			for t_k, t_v in pairs(default) do -- standard key, value
