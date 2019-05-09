@@ -28,7 +28,7 @@ local function print(noline, ...) -- Magical function that takes in a table and 
 	term.setTextColor(text_color)
 end
 
-local function deep_copy(table, list) -- Recursively copy a module
+local function deep_copy(table) -- Recursively copy a module
 	out = {}
 	for name, func in pairs(table) do
 		if type(func) == "table" then
@@ -52,7 +52,7 @@ local cli = {
 
 local config
 do -- Configuration parsing
-	local file, options, rule = fs.open("cfg/allium.lson", "r"), {import_timeout = 5, label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>"}
+	local file, default, rule = fs.open("cfg/allium.lson", "r"), {import_timeout = 5, label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>"}
 	local function verify_cfg(input, default, index)
 		for f_k, f_v in pairs(input) do -- input key, value
 			for t_k, t_v in pairs(default) do -- standard key, value
@@ -67,6 +67,21 @@ do -- Configuration parsing
 			end
 		end
 		return true
+	end
+	local function fill_missing(file, default)
+		local out = {}
+		for k, v in pairs(default) do
+			if type(v) == "table" then
+				out[k] = fill_missing(file[k], v)
+			else
+				if file[k] == nil then
+					out[k] = v
+				else
+					out[k] = file[k]
+				end
+			end
+		end
+		return out
 	end
 	if not file then -- Could not read file
 		printError("Could not read config")
@@ -83,13 +98,10 @@ do -- Configuration parsing
 		return
 	end
 	output.version = nil
-	if not verify_cfg(output, options) then -- Invalid configuration option (skips missing ones)
-		return
+	if verify_cfg(output, default) then -- Invalid configuration option (skips missing ones)
+		config = fill_missing(output, default)
 	else
-		for key, val in pairs(options) do
-			output[key] = output[key] or val
-		end
-		config = output
+		return
 	end
 end
 
@@ -142,7 +154,7 @@ allium.tell = function(name, message, alt_name)
 		_, out = commands.tellraw(name, color.format(table.concat(message, "\\n")))
 	else
 		message = message:gsub("\n", "\\n")
-		_, out = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return config.label.."&r " end end)(alt_name)..message))
+		_, out = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r" else return config.label.."&r" end end)(alt_name)..message))
     end
     return textutils.serialise(out)
 end
@@ -493,11 +505,11 @@ local interpreter = function() -- Main command interpretation thread
 			end
 			local cmd = args[1]:sub(2, -1) -- Strip the !
 			table.remove(args, 1) -- Remove the first parameter given (!command)
-			local splitat = cmd:find(":"), cmd_exec
+			local splitat, cmd_exec = cmd:find(":"), nil
 			if not splitat then -- Did they not specify the plugin source?
 				for p_name, plugin in pairs(plugins) do -- Nope... gonna have to find it for them.
 					for c_name, data in pairs(plugin.commands) do
-						if c_name == cmd then --well I found it, but there may be more...
+						if c_name == cmd then -- Well I found it, but there may be more...
 							cmd_exec = {data = data, plugin = p_name, command = c_name} -- Split into command function, plugin name, and command name
 							break
 						end
@@ -532,18 +544,18 @@ local interpreter = function() -- Main command interpretation thread
 					uuid = uuid
 				}
 				local function exec_command()
-					local stat, err = pcall(cmd_exec.data.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
-					if stat == false then--it crashed...
+					local cmd_exec = cmd_exec
+					local stat, err = pcall(cmd_exec.data.command, name, args, data) -- Let's execute the command in a safe environment that won't kill allium
+					if stat == false then -- It crashed...
 						allium.tell(name, {
 							"&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:",
 							"&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r"
 						})
 						print(cli.warn, cmd.." | "..err)
 					end
-					cmd_exec, cmd = nil, nil
 				end
 				raisin.thread(exec_command, 0, group.command)
-    		else --this isn't even a valid command...
+    		else -- This isn't even a valid command...
 	    		allium.tell(name, "&6Invalid Command, use &c&g[[!allium:help]]!help&r&6 for assistance.") --bleh!
     		end
 	    end
