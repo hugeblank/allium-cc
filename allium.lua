@@ -1,12 +1,10 @@
 -- Allium by hugeblank
-local version = ...
-local label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>" --bot title
 
 -- Dependency Loading
 local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
 
--- Internal API/Utility definitions
-local allium, plugins, group = {}, {}, {thread = raisin.group.add(1) , command = raisin.group.add(2)} 
+-- Internal definitions
+local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
 
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
 	local words = {...}
@@ -21,7 +19,7 @@ local function print(noline, ...) -- Magical function that takes in a table and 
 		elseif type(words[i]) == "table" then
 			print(unpack(words[i]))
 		else
-			write(words[i])
+			write(tostring(words[i]))
 		end
 	end
 	if not noline then
@@ -30,27 +28,20 @@ local function print(noline, ...) -- Magical function that takes in a table and 
 	term.setTextColor(text_color)
 end
 
-local function deep_copy(table, list) -- Recursively copy a module
+local function deep_copy(table) -- Recursively copy a module
 	out = {}
-	if not list then
-		list = {table}
-	end
 	for name, func in pairs(table) do
-		local matched, i = false, 1
-		while not matched do
-			if i == #list or list[i] == func then
-				matched = true
-			end
-			i = i+1
-		end
-		if type(func) == "table" and not matched then
-			list[#list+1] = func
-			out[name] = deep_copy(func, list)
+		if type(func) == "table" then
+			out[name] = deep_copy(func)
 		else
 			out[name] = func
 		end
 	end
 	return out
+end
+
+local function assert(condition, message, level)
+	if not condition then error(message, (level or 0)+3) end
 end
 
 local cli = {
@@ -59,10 +50,86 @@ local cli = {
 	error = {true, "[", colors.red, "E", colors.white, "] "}
 }
 
+local config
+do -- Configuration parsing
+	local file, default, rule = fs.open("cfg/allium.lson", "r"), {import_timeout = 5, label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r>"}
+	local function verify_cfg(input, default, index)
+		for f_k, f_v in pairs(input) do -- input key, value
+			for t_k, t_v in pairs(default) do -- standard key, value
+				if type(f_v) == "table" and type(t_v) == "table" then
+					if not verify_cfg(f_v, t_v, f_k..".") then
+						return false
+					end
+				elseif f_k == t_k and type(f_v) ~= type(t_v) then
+					printError("Invalid config option "..(index or "")..f_k.." (expected "..type(t_v)..", got "..type(f_v)..")")
+					return false
+				end
+			end
+		end
+		return true
+	end
+	local function fill_missing(file, default)
+		local out = {}
+		for k, v in pairs(default) do
+			if type(v) == "table" then
+				out[k] = fill_missing(file[k], v)
+			else
+				if file[k] == nil then
+					out[k] = v
+				else
+					out[k] = file[k]
+				end
+			end
+		end
+		return out
+	end
+	if not file then -- Could not read file
+		printError("Could not read config")
+		return
+	end
+	local output = textutils.unserialise(file.readAll())
+	if not output then -- Config file in invalid format
+		printError("Could not parse config")
+		return
+	end
+	allium.version, rule = semver.parse(output.version)
+	if not allium.version then -- Invalid Allium version
+		printError("Could not parse Allium's version (breaks SemVer rule #"..rule..")")
+		return
+	end
+	output.version = nil
+	if verify_cfg(output, default) then -- Invalid configuration option (skips missing ones)
+		config = fill_missing(output, default)
+	else
+		return
+	end
+end
+
 do -- Allium image setup <3
+	local image = {
+		"  2a2",
+		" 2aa6a",
+		"26a6aaa",
+		"aa66a2a",
+		" 6aa62",
+		"  ad26",
+		"   5",
+		"   d",
+		"   d",
+		"   d",
+		"   5",
+		"   5",
+		"   d",
+		"   d"
+	}
 	term.clear()
 	local x, y = term.getSize()
-	paintutils.drawImage(paintutils.loadImage("cfg/logo.nfp"), x-7, 2) -- Draw the Allium image on the side
+	term.setCursorPos(x-7, 3)
+	for i = 1, #image do -- Draw the Allium image on the side
+		term.blit(string.rep(" ", #image[i]), string.rep("0", #image[i]), image[i])
+		local _, cy = term.getCursorPos()
+		term.setCursorPos(x-7, cy+1)
+	end
 	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
 	term.redirect(win) -- Redirect the terminal
 	term.setCursorPos(1, 1)
@@ -72,14 +139,7 @@ do -- Allium image setup <3
 	print(cli.info, "Initializing API")
 end
 
-allium.assert = function(condition, message, level)
-	if not level then 
-		level = 0
-	end
-	if not condition then error(message, level+3) end
-end
-
-local assert = allium.assert
+allium.assert = assert
 
 allium.sanitize = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
@@ -89,18 +149,18 @@ end
 allium.tell = function(name, message, alt_name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
     assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
-	local test
+	local out
 	if type(message) == "table" then
-		_, test = commands.tellraw(name, color.format(table.concat(message, "\\n")))
+		_, out = commands.tellraw(name, color.format(table.concat(message, "\\n")))
 	else
 		message = message:gsub("\n", "\\n")
-		_, test = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r " else return label.."&r " end end)(alt_name)..message))
+		_, out = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r" else return config.label.."&r" end end)(alt_name)..message))
     end
-    return textutils.serialise(test)
+    return textutils.serialise(out)
 end
 
 allium.execute = function(name, command)
-	os.queueEvent("chat_capture", command, "", name)
+	os.queueEvent("chat_capture", command, "execute", name)
 end
 
 allium.getPlayers = function()
@@ -109,8 +169,7 @@ allium.getPlayers = function()
 	if not input[1]:find(":") then
 		return false, input
 	end
-	input = input[1]:sub(input[1]:find(":")+1, -1)
-	for user in string.gmatch(input, "%S+") do
+	for user in string.gmatch(input[1]:sub(input[1]:find(":")+1, -1), "%S+") do
 		if user:find(",") then
 			out[#out+1] = user:sub(1, -2)
 		else
@@ -159,8 +218,6 @@ allium.getInfo = function(plugin) -- Get the information of all plugins, or a si
 	if plugin then
 		plugin = allium.sanitize(plugin)
 		assert(plugins[plugin], "Invalid argument #1 (plugin "..plugin.." does not exist)")
-	end
-	if plugin then
 		local res = {[plugin] = {}}
 		for name, command_data in pairs(plugins[plugin].commands) do
 			res[plugin][name] = {info = command_data.info, usage = command_data.usage}
@@ -190,41 +247,32 @@ allium.register = function(p_name, version, fullname)
 	local real_name = allium.sanitize(p_name)
 	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
 	local version, rule = semver.parse(version)
-	if not rule then rule = "" end
-	assert(type(version) == "table", "Invalid argument #2 (malformed SemVer, breaks rule "..rule..")")
-	plugins[real_name] = {threads = {}, commands = {}, name = fullname or p_name, version = version}
-	local funcs = {}
-	local this = plugins[real_name]
+	assert(type(version) == "table", "Invalid argument #2 (malformed SemVer, breaks rule "..(rule or "")..")")
+	plugins[real_name] = {commands = {}, name = fullname or p_name, version = version}
+	local funcs, this = {}, plugins[real_name]
 	
-	funcs.command = function(c_name, command, info, usage) -- name: name | command: executing function | info: help information | usage: table of strings for improper inputs
+	funcs.command = function(c_name, command, info) -- name: name | command: executing function | info: help information
 		-- Add a command for the user to execute
 		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
 		local real_name = allium.sanitize(c_name)
 		assert(type(command) == "function", "Invalid argument #2 (function expected, got "..type(command)..")")
-		assert(this.commands[real_name] == nil, "Invalid argument #2 (command exists under name "..real_name.." for plugin "..this.name..")")
-		assert(type(info) == "string" or type(info) == "table" or not info, "Invalid argument #3 (string, table, or nil expected, got "..type(info)..")")
+		assert(this.commands[real_name] == nil, "Invalid argument #2 (command "..c_name.." already exists)")
+		assert(type(info) == "string" or type(info) == "table" or not info, "Invalid argument #3 (string, or table expected, got "..type(info)..")")
 		if type(info) == "string" then info = {info} end
 		assert(info[1], "Invalid argument #3 (info formatted table expected)")
-		this.commands[real_name] = {command = command, info = info, usage = usage}
+		this.commands[real_name] = {command = command, info = info}
 	end
 
 	funcs.thread = function(thread)
 		-- Add a thread that repeatedly iterates
 		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")")
-		return raisin.thread.wrap(raisin.thread.add(thread, 0, group.thread), group.thread)
-	end
-
-	funcs.module = function(container)
-		-- A container for all external functionality that other programs can utilize
-		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
-		this.module = container
-		funcs.module = container
+		return raisin.thread(thread, 0, group.thread)
 	end
 
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		if fs.exists("cfg/persistence.ltn") then
-			local fper = fs.open("cfg/persistence.ltn", "r")
+		if fs.exists("cfg/persistence.lson") then
+			local fper = fs.open("cfg/persistence.lson", "r")
 			local tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 			if not tpersist[real_name] then
@@ -239,18 +287,16 @@ allium.register = function(p_name, version, fullname)
 	
 	funcs.setPersistence = function(name, data)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		local tpersist
-		if fs.exists("cfg/persistence.ltn") then
-			local fper = fs.open("cfg/persistence.ltn", "r")
-			tpersist = textutils.unserialize(fper.readAll())
-			fper.close()
-		end
+		local tpersist = funcs.getPersistence(name) or {}
 		if not tpersist[real_name] then
 			tpersist[real_name] = {}
 		end
 		if type(name) == "string" then
 			tpersist[real_name][name] = data
-			local fpers = fs.open("cfg/persistence.ltn", "w")
+			local fpers = fs.open("cfg/persistence.lson", "w")
+			if not fpers then 
+				return false 
+			end
 			fpers.write(textutils.serialise(tpersist))
 			fpers.close()
 			return true
@@ -258,10 +304,17 @@ allium.register = function(p_name, version, fullname)
 		return false
 	end
 
+	funcs.module = function(container)
+		-- A container for all external functionality that other programs can utilize
+		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
+		this.module = container
+		funcs.module = container
+	end
+
 	funcs.import = function(p_name) -- request the API from a specific plugin
 		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 		p_name = allium.sanitize(p_name)
-		local timer = os.startTimer(5)
+		local timer = os.startTimer(config.import_timeout or 5)
 		repeat
 			local e = {os.pullEvent()}
 		until (e[1] == "timer" and e[2] == timer) or (plugins[p_name] and plugins[p_name].module)
@@ -289,21 +342,46 @@ allium.register = function(p_name, version, fullname)
 	return funcs
 end
 
-allium.version = semver.parse(version)
-
-allium.verify = function(min, max)
-	min = semver.parse(min)
-	max = semver.parse(max)
-	if min == allium.version and not max then
+allium.verify = function(param) -- Verification code ripped from DepMan instance
+	local function convert(str) -- Use the semver API to convert. Provide a detailed error if conversion fails
+		if type(str) ~= "string" then
+			error("Could not convert "..tostring(str))
+		end
+		local ver, rule = semver.parse(str:gsub("%s", ""))
+		if not ver then
+			error("Could not parse "..str:gsub("%s", "")..", breaks semver spec rule "..rule)
+		end
+		return ver
+	end
+	local function compare(in_str) -- compare version provided in string to input versions, using the operator provided
+		local _, split = in_str:find("[><][=]*")
+		local lim, op, res = convert(in_str:sub(split+1)), in_str:sub(1, split), nil -- Split operator and version string
+		if op == ">" then
+			res = allium.version > lim
+		elseif op == "<" then
+			res =  allium.version < lim
+		elseif op == ">=" then
+			res = allium.version >= lim
+		elseif op == "<=" then
+			res = allium.version <= lim
+		end
+		return res
+	end
+	local range = param:find("&&") -- Matched a range definition
+	local comp, c_e = param:find("[><][=]*") -- I do love me some pattern matching
+	if range then -- If there's a range beginning definition
+		local a, b = compare(param:sub(1, range-1)), compare(param:sub(range+3, -1))
+		if a and b then
+			return true
+		end
+	elseif comp then -- Otherwise if there's a comparison operator
+		if compare(param) then
+			return true
+		end
+	elseif convert(param) == allium.version then -- Otherwise this is a simple list element
 		return true
 	end
-	if min and allium.version < min then
-		return false
-	end
-	if max and allium.version > max then
-		return false
-	end
-	return true
+	return false
 end
 
 allium.getVersion = function(plugin)
@@ -341,7 +419,7 @@ end
 
 do -- Plugin loading process
 	print(cli.info, "Loading plugins")
-	local loader_group = raisin.group.add(1)
+	local loader_group = raisin.group(1)
 	local function scopeDown(dir)
 		for _, plugin in pairs(fs.list(dir)) do
 			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
@@ -355,7 +433,7 @@ do -- Plugin loading process
 							print(cli.error, err)
 						end
 					end
-					raisin.thread.add(thread, 0, loader_group)
+					raisin.thread(thread, 0, loader_group)
 				end
 			elseif fs.isDir(dir.."/"..plugin) then
 				scopeDown(dir.."/"..plugin)
@@ -365,13 +443,30 @@ do -- Plugin loading process
 	local dir = shell.dir()
 	if fs.exists(dir.."/plugins") then
 		scopeDown(dir.."/plugins")
-	else
-		fs.makeDir(dir.."/plugins")
 	end
 	raisin.manager.runGroup(loader_group)
 end
 
 local interpreter = function() -- Main command interpretation thread
+	-- Definitions that don't need to be repeated every command
+	local function getUsage(fields, info, index)
+		index = index or 1
+		fields[index] = {}
+		for key, info in pairs(info) do
+			if type(info) == "table" then
+				local match = false
+				for i = 1, #fields[index] do
+					if key == fields[index][i] then
+						match = true
+					end
+				end
+				if not match then
+					fields[index][#fields[index]+1] = key
+				end
+				getUsage(fields, info, index+1)
+			end
+		end
+	end
 	while true do
 		local _, message, _, name, uuid = os.pullEvent("chat_capture") -- Pull chat messages
 		if message:find("!") == 1 then -- Are they for allium?
@@ -410,11 +505,11 @@ local interpreter = function() -- Main command interpretation thread
 			end
 			local cmd = args[1]:sub(2, -1) -- Strip the !
 			table.remove(args, 1) -- Remove the first parameter given (!command)
-			local cmd_exec
-			if not cmd:find(":") then -- Did they not specify the plugin source?
+			local splitat, cmd_exec = cmd:find(":"), nil
+			if not splitat then -- Did they not specify the plugin source?
 				for p_name, plugin in pairs(plugins) do -- Nope... gonna have to find it for them.
 					for c_name, data in pairs(plugin.commands) do
-						if c_name == cmd then --well I found it, but there may be more...
+						if c_name == cmd then -- Well I found it, but there may be more...
 							cmd_exec = {data = data, plugin = p_name, command = c_name} -- Split into command function, plugin name, and command name
 							break
 						end
@@ -422,7 +517,6 @@ local interpreter = function() -- Main command interpretation thread
 					if cmd_exec then break end -- Exit this loop, we've found the command we're looking for
 				end
 			else -- Hey they did! +1 karma.
-				local splitat = cmd:find(":")
 				local p_name, c_name = cmd:sub(1, splitat-1), cmd:sub(splitat+1, -1)
 				if plugins[p_name] then --check plugin existence
 					if plugins[p_name].commands[c_name] then --check command existence
@@ -433,24 +527,35 @@ local interpreter = function() -- Main command interpretation thread
 			if cmd_exec then -- Is there really a command?
 				local data = { -- Infrequently used data to pass onto the command being executed
 					error = function(text) 
-						local str = "Invalid or missing parameter(s)"
-						if cmd_exec.data.usage then
-							str = "!"..cmd.." "..cmd_exec.data.usage
+						local str, fields = "", {}
+						getUsage(fields, cmd_exec.data.info)
+						if #fields == 0 then
+							str = "Invalid or missing parameter(s)"
+						else
+							str = "!"..cmd_exec.plugin..":"..cmd_exec.command.." "
+							for i = 1, #fields do
+								if #fields[i] ~= 0 then
+									str = str.."< "..table.concat(fields[i], " | ").." > "
+								end
+							end
 						end
 						allium.tell(name, "&c"..(text or str))
 					end,
-					usage = cmd_exec.data.usage,
 					uuid = uuid
 				}
 				local function exec_command()
-					local stat, err = pcall(cmd_exec.data.command, name, args, data) --Let's execute the command in a safe environment that won't kill allium
-					if stat == false then--it crashed...
-						allium.tell(name, "&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:\n&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r")
+					local cmd_exec = cmd_exec
+					local stat, err = pcall(cmd_exec.data.command, name, args, data) -- Let's execute the command in a safe environment that won't kill allium
+					if stat == false then -- It crashed...
+						allium.tell(name, {
+							"&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:",
+							"&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r"
+						})
 						print(cli.warn, cmd.." | "..err)
 					end
 				end
-				raisin.thread.add(exec_command, 0, group.command)
-    		else --this isn't even a valid command...
+				raisin.thread(exec_command, 0, group.command)
+    		else -- This isn't even a valid command...
 	    		allium.tell(name, "&6Invalid Command, use &c&g[[!allium:help]]!help&r&6 for assistance.") --bleh!
     		end
 	    end
@@ -484,8 +589,8 @@ local scanner = function() -- Login/out scanner thread
     end
 end
 
-raisin.thread.add(interpreter, 0)
-raisin.thread.add(scanner, 1)
+raisin.thread(interpreter, 0)
+raisin.thread(scanner, 1)
 
 if not fs.exists("cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
 	local fpers = fs.open("cfg/persistence.lson", "w")

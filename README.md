@@ -12,4 +12,4 @@ Installation instructions and further information, in a more digestable form can
 There are some places you might want to check out after you fork, and before you start testing your code.
 
 1. The pastebin [installer](https://www.pastebin.com/LGwrkjxm). You are free to make your own installer to your fork with this code, simply change the `repo` string to "[your github username] [the name of your Allium repository] [the branch you want to clone from] [location]".
-2. The startup file of your fork. Set the `deps` and `allium` values to true in the `update` section in `/cfg/allium.lson` file, and make sure to replace the marked line with your repo, like above. Additionally, redirect the depman instance and/or listing to your own, if necessary.
+2. The startup file of your fork. Set the `deps` and `allium` values to false in the `update` section in `/cfg/allium.lson` file, and make sure to replace the marked line with your repo, like above. Additionally, redirect the depman instance and/or listing to your own, if necessary.
