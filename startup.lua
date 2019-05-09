@@ -1,7 +1,7 @@
 shell.openTab("shell")
 
 -- Allium version
-local allium_version = "0.8.0"
+local allium_version = "0.8.1"
 
 if not commands then -- Attempt to prevent user from running this on non-command comps
 	printError("Allium must be run on a command computer")
@@ -29,6 +29,7 @@ do -- Configuration parsing
 	end
 	local function fill_missing(file, default)
         local out = {}
+        if not file then file = {} end
         for k, v in pairs(default) do
             if type(v) == "table" then
                 out[k] = fill_missing(file[k], v)
@@ -45,9 +46,9 @@ do -- Configuration parsing
                 out[k] = v
             end
         end
-		return out
+        return out
     end
-    local output
+    local output = {}
 	if file then -- Could not read file
         output = textutils.unserialise(file.readAll()) or {}
         file.close()
