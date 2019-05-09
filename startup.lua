@@ -1,7 +1,7 @@
 shell.openTab("shell")
 
 -- Allium version
-local allium_version = "0.8.0-pr6"
+local allium_version = "0.8.0"
 
 if not commands then -- Attempt to prevent user from running this on non-command comps
 	printError("Allium must be run on a command computer")
