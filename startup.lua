@@ -24,6 +24,17 @@ local loadSettings = function(file, default)
     if type(config) ~= "table" then
         return default
     end
+    local checkForKeys
+    checkForKeys = function(default, test)
+        for key, value in pairs(default) do
+            if not test[key] then
+                test[key] = value
+            elseif type(test[key]) == "table" then
+                checkForKeys(value, test[key])
+            end
+        end
+    end
+    checkForKeys(default, config)
     return config
 end
 
