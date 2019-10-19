@@ -1,12 +1,22 @@
 shell.openTab("shell")
 
 -- Allium version
-local allium_version = "0.8.1"
+local allium_version = "0.9.0-pr1"
 
 if not commands then -- Attempt to prevent user from running this on non-command comps
 	printError("Allium must be run on a command computer")
 	return
 end
+
+local default = {
+    version = allium_version, -- Allium's version
+    import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
+    label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r> ", -- The label the loader uses
+    updates = { -- Various auto-update configurations. Server operators may want to change this from the default
+        deps = true, -- Automatically update dependencies
+        allium = true -- Automatically update allium
+    }
+}
 
 --load settings from file
 local loadSettings = function(file, default)
@@ -38,7 +48,7 @@ local loadSettings = function(file, default)
     return config
 end
 
-config = loadSettings("cfg/allium.lson", {updates = {dependencies = true, allium = true}})
+config = loadSettings("cfg/allium.lson", default)
 
 -- Checking Allium/Plugin updates
 if config.updates.allium then
@@ -53,7 +63,7 @@ end
 -- Filling Dependencies
 if config.updates.dependencies then
     -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
-    print("Updating Dependencies...")
+    print("Checking for dependency updates...")
     local didrun = false
     parallel.waitForAll(function()
         didrun = shell.run("pastebin run nRgBd3b6 upgrade https://pastebin.com/raw/fisfxn76 /cfg/deps.lson /lib "..allium_version)
@@ -74,14 +84,15 @@ term.clear()
 term.setCursorPos(1, 1)
 
 -- Running Allium
-shell.run("allium.lua")
+multishell.setTitle(multishell.getCurrent(), "Allium")
+os.run(_ENV, "allium.lua", config)
 
 -- Removing all captures
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if peripheral.getMethods(side) then
 		for _, method in pairs(peripheral.getMethods(side)) do
 			if method == "uncapture" then
-                peripheral.call(side, "uncapture", ".")
+                peripheral.call(side, "uncapture")
 				break
 			end
 		end
