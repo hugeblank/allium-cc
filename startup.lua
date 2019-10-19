@@ -1,26 +1,39 @@
 shell.openTab("shell")
 
 -- Allium version
-local allium_version = "0.8.1"
+local allium_version = "0.9.0-pr1"
 
 if not commands then -- Attempt to prevent user from running this on non-command comps
 	printError("Allium must be run on a command computer")
 	return
 end
 
-local config = {}
+--[[
+    DEFAULT ALLIUM CONFIGS ### DO NOT CHANGE THESE ###
+    Configurations can be changed in /cfg/allium.lson
+]]
+local default = {
+    version = allium_version, -- Allium's version
+    import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
+    label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r> ", -- The label the loader uses
+    updates = { -- Various auto-update configurations. Server operators may want to change this from the default
+        deps = true, -- Automatically update dependencies
+        allium = true -- Automatically update allium
+    }
+}
 
+local config = {}
 do -- Configuration parsing
-	local file, default = fs.open("cfg/allium.lson", "r"), {updates = {deps = true, allium = true}}
+	local file = fs.open("cfg/allium.lson", "r")
 	local function verify_cfg(input, default, index)
-		for f_k, f_v in pairs(input) do -- input key, value
-			for t_k, t_v in pairs(default) do -- standard key, value
-				if type(f_v) == "table" and type(t_v) == "table" then
-					if not verify_cfg(f_v, t_v, f_k..".") then
+		for givenField, givenValue in pairs(input) do -- input key, value
+			for expectedField, expectedValue in pairs(default) do -- standard key, value
+				if type(givenValue) == "table" and type(expectedValue) == "table" then
+					if not verify_cfg(givenValue, expectedValue, givenField..".") then
 						return false
 					end
-				elseif f_k == t_k and type(f_v) ~= type(t_v) then
-					printError("Invalid config option "..(index or "")..f_k.." (expected "..type(t_v)..", got "..type(f_v)..")")
+				elseif givenField == expectedField and type(givenValue) ~= type(expectedValue) then
+					printError("Invalid config option "..(index or "")..givenField.." (expected "..type(expectedValue)..", got "..type(givenValue)..")")
 					return false
 				end
 			end
@@ -81,7 +94,7 @@ end
 -- Filling Dependencies
 if config.updates.deps then
     -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
-    print("Updating Dependencies...")
+    print("Checking for dependency updates...")
     local didrun = false
     parallel.waitForAll(function()
         didrun = shell.run("pastebin run nRgBd3b6 upgrade https://pastebin.com/raw/fisfxn76 /cfg/deps.lson /lib "..allium_version)
@@ -102,14 +115,15 @@ term.clear()
 term.setCursorPos(1, 1)
 
 -- Running Allium
-shell.run("allium.lua")
+multishell.setTitle(multishell.getCurrent(), "Allium")
+os.run(_ENV, "allium.lua", config)
 
 -- Removing all captures
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if peripheral.getMethods(side) then
 		for _, method in pairs(peripheral.getMethods(side)) do
 			if method == "uncapture" then
-                peripheral.call(side, "uncapture", ".")
+                peripheral.call(side, "uncapture")
 				break
 			end
 		end

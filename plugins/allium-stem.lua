@@ -1,5 +1,5 @@
 local allium = require("allium")
-local stem = allium.register("allium", "0.4.1", "Allium Stem")
+local stem = allium.register("allium", "0.4.2", "Allium Stem")
 local addDetails
 do -- Just a block for organization of command parsing stuffs
 	local function infill(variant, execute)
@@ -169,7 +169,7 @@ local help = function(name, args, data)
 						data.error(cmd..": "..infill_info)
 						return
 					end
-					info[#info+1] = "&c&s[["..infill_text.."]]&h[[Click to add to chat input]]"..infill_text
+					info[#info+1] = "&c&s[["..infill_text.."]]&h[[Click to add to chat input]]"..infill_text.."&r"
 					for i = 1, #infill_info do
 						info[#info+1] = infill_info[i]
 					end
