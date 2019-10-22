@@ -238,10 +238,9 @@ allium.register = function(p_name, version, fullname)
 		return raisin.thread(thread, 0, group.thread)
 	end
 
-	funcs.loadConfig = function(name, default)
-		assert(type(name) == "string", "Invalid argument #1 (string expected, got "..type(name)..")") 
-		assert(type(default) == "table", "Invalid argument #2 (table expected, got "..type(default)..")") 
-		local file = shell.path().."/cfg/"..name
+	funcs.loadConfig = function(default)
+		assert(type(default) == "table", "Invalid argument #1 (table expected, got "..type(default)..")") 
+		local file = shell.path().."/cfg/"..real_name
 		if not fs.exists(file) then
 			local setting = fs.open(file,"w")
 			setting.write(textutils.serialise(default))
