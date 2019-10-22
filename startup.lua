@@ -1,5 +1,3 @@
-shell.openTab("shell")
-
 -- Allium version
 local allium_version = "0.9.0-pr1"
 
@@ -37,7 +35,7 @@ local loadSettings = function(file, default)
     local checkForKeys
     checkForKeys = function(default, test)
         for key, value in pairs(default) do
-            if not test[key] then
+            if type(test[key]) ~= type(value) then
                 test[key] = value
             elseif type(test[key]) == "table" then
                 checkForKeys(value, test[key])

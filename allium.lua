@@ -28,15 +28,6 @@ local function print(noline, ...) -- Magical function that takes in a table and 
 	term.setTextColor(text_color)
 end
 
-local function getData(name) -- Extract data on user from data command
-	local suc, data = commands.exec("data get entity "..name)
-	if not suc then return suc, data end
-	data = data[1]:sub(data[1]:find("{"), -1)
-	local data = mojson.parseList(data)
-	if not data then return false end
-	return data
-end
-
 local function deep_copy(table) -- Recursively copy a module
 	out = {}
 	for name, func in pairs(table) do
@@ -59,16 +50,57 @@ local cli = {
 	error = {true, "[", colors.red, "E", colors.white, "] "}
 }
 
-
-local config = ...
+local config
 do -- Configuration parsing
-	if type(config) ~= "table" then
-		printError("Invalid input configuration, make sure you're using the provided init file.")
+	local file, default, rule = fs.open("cfg/allium.lson", "r"), {import_timeout = 5, label = "<&r&dAll&5&h[[Hugeblank was here. Hi.]]&i[[https://www.youtube.com/watch?v=hjGZLnja1o8]]i&r&dum&r> "}
+	local function verify_cfg(input, default, index)
+		for f_k, f_v in pairs(input) do -- input key, value
+			for t_k, t_v in pairs(default) do -- standard key, value
+				if type(f_v) == "table" and type(t_v) == "table" then
+					if not verify_cfg(f_v, t_v, f_k..".") then
+						return false
+					end
+				elseif f_k == t_k and type(f_v) ~= type(t_v) then
+					printError("Invalid config option "..(index or "")..f_k.." (expected "..type(t_v)..", got "..type(f_v)..")")
+					return false
+				end
+			end
+		end
+		return true
+	end
+	local function fill_missing(file, default)
+		local out = {}
+		for k, v in pairs(default) do
+			if type(v) == "table" then
+				out[k] = fill_missing(file[k], v)
+			else
+				if file[k] == nil then
+					out[k] = v
+				else
+					out[k] = file[k]
+				end
+			end
+		end
+		return out
+	end
+	if not file then -- Could not read file
+		printError("Could not read config")
 		return
 	end
-	allium.version, rule = semver.parse(config.version)
+	local output = textutils.unserialise(file.readAll())
+	if not output then -- Config file in invalid format
+		printError("Could not parse config")
+		return
+	end
+	allium.version, rule = semver.parse(output.version)
 	if not allium.version then -- Invalid Allium version
 		printError("Could not parse Allium's version (breaks SemVer rule #"..rule..")")
+		return
+	end
+	output.version = nil
+	if verify_cfg(output, default) then -- Invalid configuration option (skips missing ones)
+		config = fill_missing(output, default)
+	else
 		return
 	end
 end
@@ -128,8 +160,6 @@ allium.tell = function(name, message, alt_name)
 end
 
 allium.execute = function(name, command)
-	assert(type(name) == "string", "Invalid argument #1 (string expected, got "..type(name)..")")
-	assert(type(command) == "string", "Invalid argument #2 (string expected, got "..type(command)..")")
 	os.queueEvent("chat_capture", command, "execute", name)
 end
 
@@ -150,9 +180,10 @@ allium.getPlayers = function()
 end
 
 allium.getPosition = function(name)
-	assert(type(name) == "string", "Invalid argument #1 (string expected, got "..type(name)..")")
-	local data = allium.getData(name)
-	assert(data, "Failed to get data on user ".. name)
+	local suc, data = commands.exec("data get entity "..name)
+	if not suc then return false, data end
+	data = data[1]:sub(data[1]:find("{"), -1)
+	local data = mojson.parseList(data)
 	return {
 		position = data.Pos,
 		rotation = data.Rotation,
@@ -238,6 +269,38 @@ allium.register = function(p_name, version, fullname)
 		return raisin.thread(thread, 0, group.thread)
 	end
 
+	funcs.loadConfig = function(name, default)
+		assert(type(name) == "string", "Invalid argument #1 (string expected, got "..type(name)..")") 
+		assert(type(default) == "table", "Invalid argument #2 (table expected, got "..type(default)..")") 
+		local file = shell.path().."/cfg/"..name
+		if not fs.exists(file) then
+			local setting = fs.open(file,"w")
+			setting.write(textutils.serialise(default))
+			setting.close()
+			return default
+		end
+		local setting = fs.open(file, "r")
+		local config = setting.readAll()
+		setting.close()
+		config = textutils.unserialise(config)
+		if type(config) ~= "table" then
+			return default
+		end
+		local checkForKeys
+		checkForKeys = function(default, test)
+			for key, value in pairs(default) do
+				if not test[key] then
+					test[key] = value
+				elseif type(test[key]) == "table" then
+					checkForKeys(value, test[key])
+				end
+			end
+		end
+		checkForKeys(default, config)
+		return config
+	end
+
+
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		if fs.exists("cfg/persistence.lson") then
@@ -312,7 +375,6 @@ allium.register = function(p_name, version, fullname)
 end
 
 allium.verify = function(param) -- Verification code ripped from DepMan instance
-	assert(type(param) == "string", "Invalid argument #1 (string expected, got "..type(param)..")")
 	local function convert(str) -- Use the semver API to convert. Provide a detailed error if conversion fails
 		if type(str) ~= "string" then
 			error("Could not convert "..tostring(str))
