@@ -1,3 +1,5 @@
+shell.openTab("shell")
+
 -- Allium version
 local allium_version = "0.9.0-pr1"
 
@@ -6,6 +8,10 @@ if not commands then -- Attempt to prevent user from running this on non-command
 	return
 end
 
+--[[
+    DEFAULT ALLIUM CONFIGS ### DO NOT CHANGE THESE ###
+    Configurations can be changed in /cfg/allium.lson
+]]
 local default = {
     version = allium_version, -- Allium's version
     import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
@@ -16,37 +22,64 @@ local default = {
     }
 }
 
---load settings from file
-local loadSettings = function(file, default)
-    assert(type(file) == "string", "file must be a string")  
-    if not fs.exists(file) then
-        local setting = fs.open(file,"w")
-        setting.write(textutils.serialise(default))
-        setting.close()
-        return default
-    end
-    local setting = fs.open(file, "r")
-    local config = setting.readAll()
-    setting.close()
-    config = textutils.unserialise(config)
-    if type(config) ~= "table" then
-        return default
-    end
-    local checkForKeys
-    checkForKeys = function(default, test)
-        for key, value in pairs(default) do
-            if type(test[key]) ~= type(value) then
-                test[key] = value
-            elseif type(test[key]) == "table" then
-                checkForKeys(value, test[key])
+local config = {}
+do -- Configuration parsing
+	local file = fs.open("cfg/allium.lson", "r")
+	local function verify_cfg(input, default, index)
+		for givenField, givenValue in pairs(input) do -- input key, value
+			for expectedField, expectedValue in pairs(default) do -- standard key, value
+				if type(givenValue) == "table" and type(expectedValue) == "table" then
+					if not verify_cfg(givenValue, expectedValue, givenField..".") then
+						return false
+					end
+				elseif givenField == expectedField and type(givenValue) ~= type(expectedValue) then
+					printError("Invalid config option "..(index or "")..givenField.." (expected "..type(expectedValue)..", got "..type(givenValue)..")")
+					return false
+				end
+			end
+		end
+		return true
+	end
+	local function fill_missing(file, default)
+        local out = {}
+        if not file then file = {} end
+        for k, v in pairs(default) do
+            if type(v) == "table" then
+                out[k] = fill_missing(file[k], v)
+            else
+                if type(file[k]) == "nil" then
+                    out[k] = v
+                else
+                    out[k] = file[k]
+                end
             end
         end
+        for k, v in pairs(file) do
+            if out[k] == nil then
+                out[k] = v
+            end
+        end
+        return out
     end
-    checkForKeys(default, config)
-    return config
+    local output = {}
+	if file then -- Could not read file
+        output = textutils.unserialise(file.readAll()) or {}
+        file.close()
+	end
+	if verify_cfg(output, default) then -- Make sure none of the config opts are invalid (skips missing ones)
+        config = fill_missing(output, default) -- Fill in the remaining options that are missing
+        if config.version ~= allium_version then
+            config.version = allium_version
+            file = fs.open("cfg/allium.lson", "w")
+            if file then
+                file.write(textutils.serialise(config))
+                file.close()
+            end
+        end
+	else
+		return
+	end
 end
-
-config = loadSettings("cfg/allium.lson", default)
 
 -- Checking Allium/Plugin updates
 if config.updates.allium then
@@ -59,7 +92,7 @@ if config.updates.allium then
 end
 
 -- Filling Dependencies
-if config.updates.dependencies then
+if config.updates.deps then
     -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
     print("Checking for dependency updates...")
     local didrun = false
