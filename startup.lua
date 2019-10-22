@@ -6,6 +6,11 @@ if not commands then -- Attempt to prevent user from running this on non-command
 	return
 end
 
+
+--[[
+    DEFAULT ALLIUM CONFIGS ### DO NOT CHANGE THESE ###
+    Configurations can be changed in /cfg/allium.lson
+]]
 local default = {
     version = allium_version, -- Allium's version
     import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
