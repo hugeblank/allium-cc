@@ -238,6 +238,37 @@ allium.register = function(p_name, version, fullname)
 		return raisin.thread(thread, 0, group.thread)
 	end
 
+	funcs.loadConfig = function(default)
+		assert(type(default) == "table", "Invalid argument #1 (table expected, got "..type(default)..")") 
+		local file = shell.path().."/cfg/"..real_name
+		if not fs.exists(file) then
+			local setting = fs.open(file,"w")
+			setting.write(textutils.serialise(default))
+			setting.close()
+			return default
+		end
+		local setting = fs.open(file, "r")
+		local config = setting.readAll()
+		setting.close()
+		config = textutils.unserialise(config)
+		if type(config) ~= "table" then
+			return default
+		end
+		local checkForKeys
+		checkForKeys = function(default, test)
+			for key, value in pairs(default) do
+				if not test[key] then
+					test[key] = value
+				elseif type(test[key]) == "table" then
+					checkForKeys(value, test[key])
+				end
+			end
+		end
+		checkForKeys(default, config)
+		return config
+	end
+
+
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		if fs.exists("cfg/persistence.lson") then
