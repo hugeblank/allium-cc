@@ -218,7 +218,8 @@ allium.register = function(p_name, version, fullname)
 	assert(plugins[real_name] == nil, "Invalid argument #1 (plugin exists under name "..real_name..")")
 	local version, rule = semver.parse(version)
 	assert(type(version) == "table", "Invalid argument #2 (malformed SemVer, breaks rule "..(rule or "")..")")
-	plugins[real_name] = {commands = {}, name = fullname or p_name, version = version}
+	local loaded = {}
+	plugins[real_name] = {commands = {}, loaded = loaded, name = fullname or p_name, version = version}
 	local funcs, this = {}, plugins[real_name]
 	
 	funcs.command = function(c_name, command, info) -- name: name | command: executing function | info: help information
@@ -315,28 +316,26 @@ allium.register = function(p_name, version, fullname)
 	funcs.import = function(p_name) -- request the API from a specific plugin
 		assert(type(p_name) == "string", "Invalid argument #1 (string expected, got "..type(p_name)..")")
 		p_name = allium.sanitize(p_name)
+		assert(p_name == real_name, real_name.." attempted to load self. What made you think you could do this?")
 		local timer = os.startTimer(config.import_timeout or 5)
-		repeat
-			local e = {os.pullEvent()}
-		until (e[1] == "timer" and e[2] == timer) or (plugins[p_name] and plugins[p_name].module)
-		if not plugins[p_name] and plugins[p_name].module then
+		parallel.waitForAny(function()
+			repeat
+				local e = {os.pullEvent()}
+			until (e[1] == "timer" and e[2] == timer) or (plugins[p_name] and plugins[p_name].module)
+		end, function()
+			repeat
+				sleep()
+			until plugins[p_name].module
+		end)
+		if not plugins[p_name].module then
 			return false
 		end
-		for being_loaded, loaded_plugins in pairs(loaded) do -- Plugin being loaded, plugins that the plugin being loaded has loaded
-			if being_loaded == p_name then
-				for i = 1, #loaded_plugins do
-					if loaded_plugins[i] == real_name then
-						return false
-					end
-				end
-				break
+		for i = 1, #plugins[p_name].loaded do
+			if plugins[p_name].loaded[i] == real_name then
+				error("Cannot import "..p_name.."Circular dependencies with "..real_name.." and "..plugins[p_name].loaded[i])
 			end
 		end
-		if loaded[real_name] then
-			loaded[real_name][#loaded[real_name]+1] = p_name
-		else
-			loaded[real_name] = {p_name}
-		end
+		loaded[#loaded+1] = p_name
 		return deep_copy(plugins[p_name].module)
 	end
 
