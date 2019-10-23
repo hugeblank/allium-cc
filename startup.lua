@@ -1,5 +1,6 @@
 -- Allium version
-local allium_version = "0.9.0-pr1"
+-- x.x.x-pr = unstable, potential breaking changes
+local allium_version = "0.9.0-pr"
 
 local path = "/"
 for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
@@ -28,7 +29,7 @@ local default = {
 
 --load settings from file
 local loadSettings = function(file, default)
-    assert(type(file) == "string", "file must be a string")  
+    assert(type(file) == "string", "file must be a string")
     if not fs.exists(file) then
         local setting = fs.open(file,"w")
         setting.write(textutils.serialise(default))
@@ -56,7 +57,7 @@ local loadSettings = function(file, default)
     return config
 end
 
-config = loadSettings(path.."cfg/allium.lson", default)
+local config = loadSettings(path.."cfg/allium.lson", default)
 
 -- Checking Allium/Plugin updates
 if config.updates.allium then
@@ -76,6 +77,7 @@ if config.updates.dependencies then
     parallel.waitForAll(function()
         didrun = shell.run("pastebin run nRgBd3b6 upgrade "..path.." https://pastebin.com/raw/fisfxn76 "..path.."/cfg/deps.lson "..path.."/lib "..allium_version)
     end, 
+
     function()
         multishell.setTitle(multishell.getCurrent(), "depman")
     end)
