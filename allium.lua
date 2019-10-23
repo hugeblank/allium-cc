@@ -240,7 +240,7 @@ allium.register = function(p_name, version, fullname)
 
 	funcs.loadConfig = function(default)
 		assert(type(default) == "table", "Invalid argument #1 (table expected, got "..type(default)..")") 
-		local file = shell.path().."/cfg/"..real_name
+		local file = shell.path().."/cfg/"..real_name..".lson"
 		if not fs.exists(file) then
 			local setting = fs.open(file,"w")
 			setting.write(textutils.serialise(default))
