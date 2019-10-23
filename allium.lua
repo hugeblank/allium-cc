@@ -5,7 +5,7 @@ local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"
 
 -- Internal definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
-local path = ""
+local path = "/"
 for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 	path = path..str
 end
@@ -274,8 +274,8 @@ allium.register = function(p_name, version, fullname)
 
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		if fs.exists("cfg/persistence.lson") then
-			local fper = fs.open("cfg/persistence.lson", "r")
+		if fs.exists(path.."cfg/persistence.lson") then
+			local fper = fs.open(path.."cfg/persistence.lson", "r")
 			local tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 			if not tpersist[real_name] then
@@ -296,7 +296,7 @@ allium.register = function(p_name, version, fullname)
 		end
 		if type(name) == "string" then
 			tpersist[real_name][name] = data
-			local fpers = fs.open("cfg/persistence.lson", "w")
+			local fpers = fs.open(path.."cfg/persistence.lson", "w")
 			if not fpers then 
 				return false 
 			end
@@ -444,9 +444,8 @@ do -- Plugin loading process
 			end
 		end
 	end
-	local dir = shell.dir()
-	if fs.exists(dir.."/plugins") then
-		scopeDown(dir.."/plugins")
+	if fs.exists(path.."/plugins") then
+		scopeDown(path.."/plugins")
 	end
 	raisin.manager.runGroup(loader_group)
 end
@@ -596,8 +595,8 @@ end
 raisin.thread(interpreter, 0)
 raisin.thread(scanner, 1)
 
-if not fs.exists("cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
-	local fpers = fs.open("cfg/persistence.lson", "w")
+if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
+	local fpers = fs.open(path.."cfg/persistence.lson", "w")
 	fpers.write("{}")
 	fpers.close()
 end

@@ -1,6 +1,11 @@
 -- Allium version
 local allium_version = "0.9.0-pr1"
 
+local path = "/"
+for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
+	path = path..str
+end
+
 if not commands then -- Attempt to prevent user from running this on non-command comps
 	printError("Allium must be run on a command computer")
 	return
@@ -51,14 +56,14 @@ local loadSettings = function(file, default)
     return config
 end
 
-config = loadSettings("cfg/allium.lson", default)
+config = loadSettings(path.."cfg/allium.lson", default)
 
 -- Checking Allium/Plugin updates
 if config.updates.allium then
-    if fs.exists("cfg/repolist.csh") then -- Checking for a repolist shell executable
+    if fs.exists(path.."cfg/repolist.csh") then -- Checking for a repolist shell executable
         -- Update all plugins and programs on the repolist
-        for line in io.lines("cfg/repolist.csh") do
-            shell.run(line)
+        for line in io.lines(path.."cfg/repolist.csh") do
+            shell.run(path..line)
         end
     end
 end
@@ -69,7 +74,7 @@ if config.updates.dependencies then
     print("Checking for dependency updates...")
     local didrun = false
     parallel.waitForAll(function()
-        didrun = shell.run("pastebin run nRgBd3b6 upgrade https://pastebin.com/raw/fisfxn76 /cfg/deps.lson /lib "..allium_version)
+        didrun = shell.run("pastebin run nRgBd3b6 upgrade "..path.." https://pastebin.com/raw/fisfxn76 "..path.."/cfg/deps.lson "..path.."/lib "..allium_version)
     end, 
     function()
         multishell.setTitle(multishell.getCurrent(), "depman")
@@ -88,7 +93,7 @@ term.setCursorPos(1, 1)
 
 -- Running Allium
 multishell.setTitle(multishell.getCurrent(), "Allium")
-os.run(_ENV, "allium.lua", config)
+os.run(_ENV, path.."allium.lua", config)
 
 -- Removing all captures
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
