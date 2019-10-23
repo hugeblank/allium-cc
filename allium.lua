@@ -38,7 +38,7 @@ local function getData(name) -- Extract data on user from data command
 end
 
 local function deep_copy(table) -- Recursively copy a module
-	out = {}
+	local out = {}
 	for name, func in pairs(table) do
 		if type(func) == "table" then
 			out[name] = deep_copy(func)
@@ -66,7 +66,8 @@ do -- Configuration parsing
 		printError("Invalid input configuration, make sure you're using the provided init file.")
 		return
 	end
-	allium.version, rule = semver.parse(config.version)
+	local ver, rule = semver.parse(config.version)
+	allium.version = ver
 	if not allium.version then -- Invalid Allium version
 		printError("Could not parse Allium's version (breaks SemVer rule #"..rule..")")
 		return
@@ -151,7 +152,7 @@ end
 
 allium.getPosition = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (string expected, got "..type(name)..")")
-	local data = allium.getData(name)
+	local data = getData(name)
 	assert(data, "Failed to get data on user ".. name)
 	return {
 		position = data.Pos,
@@ -471,7 +472,7 @@ local interpreter = function() -- Main command interpretation thread
 	while true do
 		local _, message, _, name, uuid = os.pullEvent("chat_capture") -- Pull chat messages
 		if message:find("!") == 1 then -- Are they for allium?
-			args = {}
+			local args = {}
 			for k in message:gmatch("%S+") do -- Put all arguments spaced out into a table
 				args[#args+1] = k
 			end
