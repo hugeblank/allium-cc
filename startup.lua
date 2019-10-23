@@ -30,9 +30,11 @@ local default = {
 local loadSettings = function(file, default)
     assert(type(file) == "string", "file must be a string")
     if not fs.exists(file) then
-        local setting = fs.open(file,"w")
+        local setting, v = fs.open(file,"w"), default.version
+        default.version = nil
         setting.write(textutils.serialise(default))
         setting.close()
+        default.version = v
         return default
     end
     local setting = fs.open(file, "r")
