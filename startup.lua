@@ -12,7 +12,6 @@ if not commands then -- Attempt to prevent user from running this on non-command
 	return
 end
 
-
 --[[
     DEFAULT ALLIUM CONFIGS ### DO NOT CHANGE THESE ###
     Configurations can be changed in /cfg/allium.lson
@@ -71,14 +70,18 @@ end
 
 -- Filling Dependencies
 if config.updates.dependencies then
-    -- Allium DepMan Instance: https://pastebin.com/nRgBd3b6
+    -- Allium DepMan Instance & Listing: https://github.com/hugeblank/allium-depman/
     print("Checking for dependency updates...")
     local didrun = false
     parallel.waitForAll(function()
-        didrun = shell.run("pastebin run nRgBd3b6 upgrade "..path.." https://pastebin.com/raw/fisfxn76 "..path.."/cfg/deps.lson "..path.."/lib "..allium_version)
-    end, 
-
-    function()
+        local ipath = path.."instance.lua"
+        if fs.exists(ipath) then
+            fs.delete(ipath)
+        end
+        didrun = shell.run("wget https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua "..ipath)
+        if not didrun then return end
+        didrun = shell.run(ipath.." upgrade "..path.." https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson "..path.."/cfg/deps.lson "..path.."/lib "..allium_version)
+    end, function()
         multishell.setTitle(multishell.getCurrent(), "depman")
     end)
     if not didrun then
