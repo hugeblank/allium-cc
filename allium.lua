@@ -5,7 +5,10 @@ local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"
 
 -- Internal definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
-
+local path = ""
+for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
+	path = path..str
+end
 local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
 	local words = {...}
 	if type(noline) ~= "boolean" then
@@ -240,7 +243,7 @@ allium.register = function(p_name, version, fullname)
 
 	funcs.loadConfig = function(default)
 		assert(type(default) == "table", "Invalid argument #1 (table expected, got "..type(default)..")") 
-		local file = shell.path().."/cfg/"..real_name..".lson"
+		local file = path.."/cfg/"..real_name..".lson"
 		if not fs.exists(file) then
 			local setting = fs.open(file,"w")
 			setting.write(textutils.serialise(default))
