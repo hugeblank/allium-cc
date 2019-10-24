@@ -4,31 +4,35 @@
 local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
 
 -- Internal definitions
-local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)} 
+local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)}
+
+-- Executing path
 local path = "/"
 for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 	path = path..str
 end
-local function print(noline, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
-	local words = {...}
-	if type(noline) ~= "boolean" then
-		table.insert(words, 1, noline)
-		noline = false
-	end
-	local text_color = term.getTextColor()
-	for i = 1, #words do
-		if type(words[i]) == "number" then
-			term.setTextColor(words[i])
-		elseif type(words[i]) == "table" then
-			print(unpack(words[i]))
-		else
-			write(tostring(words[i]))
+
+-- Defining custom print
+local nprint = _G.print
+local function print(prefix, wcText, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
+	local color = term.getTextColor()
+	local function writeColor(cdata)
+		for i = 1, #cdata do
+			if type(cdata[i]) == "string" then
+				write(cdata[i])
+			else
+				term.setTextColor(cdata[i])
+			end
 		end
+		term.setTextColor(color)
 	end
-	if not noline then
-		write("\n")
+	writeColor(prefix)
+	if wcText then
+		writeColor({...})
+		nprint()
+	else
+		nprint(...)
 	end
-	term.setTextColor(text_color)
 end
 
 local function getData(name) -- Extract data on user from data command
@@ -57,9 +61,9 @@ local function assert(condition, message, level)
 end
 
 local cli = {
-	info = {true, "[", colors.lime, "I", colors.white, "] "}, 
-	warn = {true, "[", colors.yellow, "W", colors.white, "] "},
-	error = {true, "[", colors.red, "E", colors.white, "] "}
+	info = {"[", colors.lime, "I", colors.white, "] "}, 
+	warn = {"[", colors.yellow, "W", colors.white, "] "},
+	error = {"[", colors.red, "E", colors.white, "] "}
 }
 
 
@@ -107,8 +111,8 @@ do -- Allium image setup <3
 	term.setCursorPos(1, 1)
 	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 	term.setTextColor(colors.white)
-	print(cli.info, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
-	print(cli.info, "Initializing API")
+	print(cli.info, true, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
+	print(cli.info, false, "Initializing API")
 end
 
 allium.assert = assert
@@ -116,6 +120,14 @@ allium.assert = assert
 allium.sanitize = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
 	return name:lower():gsub(" ", "_"):gsub("[^a-z0-9_]", "")
+end
+
+allium.log = function(...)
+	print(cli.info, false, ...)
+end
+
+allium.warn = function(...)
+	print(cli.warn, false, ...)
 end
 
 allium.tell = function(name, message, alt_name)
@@ -408,7 +420,7 @@ for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if allium.side then break end
 end
 if not allium.side then
-	print(cli.warn, "Allium could not find chat module")
+	print(cli.warn, false, "Allium could not find chat module")
 end
 
 -- Packaging the Allium API
@@ -417,24 +429,24 @@ if not package.preload["allium"] then
 		return allium 
 	end
 else
-	print(cli.error, "Another instance of Allium is already running")
+	print(cli.error, false, "Another instance of Allium is already running")
 	return
 end
 
 do -- Plugin loading process
-	print(cli.info, "Loading plugins")
+	print(cli.info, false, "Loading plugins")
 	local loader_group = raisin.group(1)
 	local function scopeDown(dir)
 		for _, plugin in pairs(fs.list(dir)) do
 			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
 				local file, err = loadfile(dir.."/"..plugin, _ENV)
 				if not file then
-					print(cli.error, err)
+					print(cli.error, false, err)
 				else
 					local thread = function()
 						local suc, err = pcall(file)
 						if not suc then
-							print(cli.error, err)
+							print(cli.error, false, err)
 						end
 					end
 					raisin.thread(thread, 0, loader_group)
@@ -554,7 +566,7 @@ local interpreter = function() -- Main command interpretation thread
 							"&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:",
 							"&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r"
 						})
-						print(cli.warn, cmd.." | "..err)
+						print(cli.warn, false, cmd.." | "..err)
 					end
 				end
 				raisin.thread(exec_command, 0, group.command)
@@ -587,7 +599,7 @@ local scanner = function() -- Login/out scanner thread
 				end
 			end
 		else
-			print(cli.warn, "Could not list online players, skipping tick.")
+			print(cli.warn, false, "Could not list online players, skipping tick.")
 		end
     end
 end
@@ -601,7 +613,7 @@ if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this
 	fpers.close()
 end
 
-print(cli.info, "Allium started.")
+print(cli.info, false, "Allium started.")
 allium.tell("@a", "&eHello World!")
 raisin.manager.run()
 
