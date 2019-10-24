@@ -1,121 +1,133 @@
 local allium = require("allium")
-local stem = allium.register("allium", "0.4.2", "Allium Stem")
-local addDetails
-do -- Just a block for organization of command parsing stuffs
-	local function infill(variant, execute)
-		local out = {}
-		if variant == "username" then
-			local players = allium.getPlayers()
-			for i = 1, #players do
-				out[#out+1] = " &6-&r &g[["..execute..players[i].." ]]&h[[Click to add user "..players[i].."]]&a"..players[i]
-			end
-		elseif variant == "plugin" then
-			local list = allium.getInfo()
-			for plugin in pairs(list) do
-				out[#out+1] = " &6-&r &g[["..execute..plugin.." ]]&h[[Click to add plugin "..plugin.."]]&a"..plugin
-			end
-		elseif variant == "command" then
-			local list = allium.getInfo()
-			for plugin, v in pairs(list) do
-				for command in pairs(v) do
-					local rawcmd = command
-					local command = plugin..":"..command
-					out[#out+1] = " &6-&r &g[["..execute..command.." ]]&h[[Click to add command !"..rawcmd.."]]&a!"..command
-				end
-			end
-		elseif type(variant) == "function" or type(variant) == "table" then
-			local result = {}
-			if type(variant) == "function" then
-				result = variant()
-			else
-				result = variant
-			end
-			for i = 1, #result do
-				if type(result[i]) == "string" and not result[i]:find("=") then
-					out[#out+1] = " &6-&r &g[["..execute..result[i].." ]]&h[[Click to add "..result[i].."]]&a"..result[i]
-				end
-			end
-		end
-		return out
-	end
-
-	local function parse(label, data, execute)
-		local prefix, postfix, execution, hover, information = "&6 - &r<&a", "&r>:", "", ""
-		if type(data[1]) == "string" then
-			information = data[1]
-		else
-			information = "&oNo information found"
-		end
-		if data.optional == true then
-			prefix, postfix = "&6 - &r[&a", "&r]:"
-		end
-		if data.clickable == true or data.clickable == nil then
-			hover, execution = "Click to add this parameter", execute..label
-			if type(data.infill) == "string" then
-				execution = execution.."="
-			end
-		end
-		if data.default and tostring(data.default) then -- Overrides infill. default and infill shouldn't even be used in the same place anyways.
-			execution = execute..label.."=\"\""..data.default.."\"\"" -- Quoting a quote so it gets placed in chat properly
-		end
-		local meta = ""
-		if #execution ~= 0 then
-			meta = meta.."&g[["..execution.."]]"
-		end
-		if #hover ~= 0 then
-			meta = meta.."&h[["..hover.."]]"
-		end
-		return prefix..meta..label..postfix.." "..information
-	end
-
-	addDetails = function(info, args, execute, command) 
-		if not args[1] then
-				-- We're at the end of parsing and should render possible fields
-				local out = {}
-				if info then
-					for k, v in pairs(info) do
-						if type(v) == "table" then
-							out[#out+1] = parse(k, v, execute)
-						end
-					end
-				end
-				if #out == 0 or not info then
-					out = {" &6-&a No more parameters to add!", " &6-&a Click &r&c&h[[Add command to chat input]]&s[["..command.."]]here&r&a, or the red command to add it to your chat input."}
-				end
-				return out, command
-		else -- Otherwise things are going totally as planned and we should just recurse onwards
-			local param_data = {}
-			local is_tag = args[1]:find("=")
-			if is_tag then
-				param_data.param = args[1]:sub(1, is_tag-1)
-				param_data.tag = args[1]:sub(is_tag+1, -1)
-				table.remove(args, 1)
-			else
-				param_data.param = table.remove(args, 1)
-			end
-			if is_tag and #param_data.tag == 0 then
-				-- If the parameter is an infill thing, and doesn't have a value attached to it:
-				if not (info[param_data.param] and info[param_data.param].infill) then
-					return "Missing infill information"
-				end
-				return infill(info[param_data.param].infill, execute..param_data.param.."="), command
-			elseif param_data.tag then
-				execute = execute..param_data.param.."="..param_data.tag.." "
-				command = command..param_data.tag.." "
-			else
-				execute = execute..param_data.param.." "
-				command = command..param_data.param.." "
-			end
-			return addDetails(info[param_data.param], args, execute, command)
-		end
-	end
-end
+local stem = allium.register("allium", "0.5.0", "Allium Stem") --UPDATE THIS
 
 local help = function(name, args, data)
-	local cmds_per, page = 7, 1 -- Turn this into a per-user persistence preference
+	local cmds_per, page = 8, 1 -- Turn this into a per-user persistence preference
 	local info = {}
 	local out_str = ""
+	local addDetails
 	local next_command = "!allium:help "
+
+	do -- Just a block for organization of command parsing stuffs
+		local function infill(variant, execute)
+			local out = {}
+			if type(variant) == "string" then
+				if variant == "username" then
+					local players = allium.getPlayers()
+					for i = 1, #players do
+						out[#out+1] = " &6-&r &g[["..execute..players[i].." ]]&h[[Click to add user "..players[i].."]]&a"..players[i]
+					end
+				elseif variant == "plugin" then
+					local list = allium.getInfo()
+					for plugin in pairs(list) do
+						out[#out+1] = " &6-&r &g[["..execute..plugin.." ]]&h[[Click to add plugin "..plugin.."]]&a"..plugin
+					end
+				elseif variant == "command" then
+					local list = allium.getInfo()
+					for plugin, v in pairs(list) do
+						for command in pairs(v) do
+							local rawcmd = command
+							local command = plugin..":"..command
+							out[#out+1] = " &6-&r &g[["..execute..command.." ]]&h[[Click to add command !"..rawcmd.."]]&a!"..command
+						end
+					end
+				elseif variant:sub(1, -2) == "position_" then
+					local position = allium.getPosition(name).position
+					if variant:sub(-1, -1) == "x" then
+						out[#out+1] = " &6-&r &g[["..execute..position[1].." ]]&h[[Click to add your x position]]&a"..position[1]
+					elseif variant:sub(-1, -1) == "y" then
+						out[#out+1] = " &6-&r &g[["..execute..position[2].." ]]&h[[Click to add your y position]]&a"..position[2]
+					elseif variant:sub(-1, -1) == "z" then
+						out[#out+1] = " &6-&r &g[["..execute..position[3].." ]]&h[[Click to add your z position]]&a"..position[3]
+					end
+				end
+			elseif type(variant) == "function" or type(variant) == "table" then
+				local result = {}
+				if type(variant) == "function" then
+					result = variant()
+				else
+					result = variant
+				end
+				for i = 1, #result do
+					if type(result[i]) == "string" and not result[i]:find("=") then
+						out[#out+1] = " &6-&r &g[["..execute..result[i].." ]]&h[[Click to add "..result[i].."]]&a"..result[i]
+					end
+				end
+			end
+			return out
+		end
+
+		local function parse(label, data, execute)
+			local prefix, postfix, execution, hover, information = "&6 - &r<&a", "&r>:", "", ""
+			if type(data[1]) == "string" then
+				information = data[1]
+			else
+				information = "&oNo information found"
+			end
+			if data.optional == true then
+				prefix, postfix = "&6 - &r[&a", "&r]:"
+			end
+			if data.clickable == true or data.clickable == nil then
+				hover, execution = "Click to add this parameter", execute..label
+				if type(data.infill) == "string" then
+					execution = execution.."="
+				end
+			end
+			if data.default and tostring(data.default) then -- Overrides infill. default and infill shouldn't even be used in the same place anyways.
+				execution = execute..label.."=\"\""..data.default.."\"\"" -- Quoting a quote so it gets placed in chat properly
+			end
+			local meta = ""
+			if #execution ~= 0 then
+				meta = meta.."&g[["..execution.."]]"
+			end
+			if #hover ~= 0 then
+				meta = meta.."&h[["..hover.."]]"
+			end
+			return prefix..meta..label..postfix.." "..information
+		end
+
+		addDetails = function(info, args, execute, command)
+			if not args[1] then --or info then
+					-- We're at the end of parsing and should render possible fields
+					local out = {}
+					if info then
+						for k, v in pairs(info) do
+							if type(v) == "table" then
+								out[#out+1] = parse(k, v, execute)
+							end
+						end
+					end
+					if #out == 0 or not info then
+						out = {" &6-&a No more parameters to add!", " &6-&a Click &r&c&h[[Click to run command]]&g[["..command.."]]here&r&a to run the command", " &6- &eOR&a click on the first line to add the command to the chat input."}
+					end
+					return out, command
+			else -- Otherwise things are going totally as planned and we should just recurse onwards
+				local param_data = {}
+				local is_tag = args[1]:find("=")
+				if is_tag then
+					param_data.param = args[1]:sub(1, is_tag-1)
+					param_data.tag = args[1]:sub(is_tag+1, -1)
+					table.remove(args, 1)
+				else
+					param_data.param = table.remove(args, 1)
+				end
+				if is_tag and #param_data.tag == 0 then
+					-- If the parameter is an infill thing, and doesn't have a value attached to it:
+					if not (info[param_data.param] and info[param_data.param].infill) then
+						return "Missing infill information"
+					end
+					return infill(info[param_data.param].infill, execute..param_data.param.."="), command
+				elseif param_data.tag then
+					execute = execute..param_data.param.."="..param_data.tag.." "
+					command = command..param_data.tag.." "
+				else
+					execute = execute..param_data.param.." "
+					command = command..param_data.param.." "
+				end
+				return addDetails(info[param_data.param], args, execute, command)
+			end
+		end
+	end
 
 	local function run()
 		for i = (cmds_per*(page-1))+1, (cmds_per*page) do
@@ -123,7 +135,7 @@ local help = function(name, args, data)
 				out_str = out_str..info[i].."\\n"
 			end
 		end
-		if out_str == "" or page <= 0 then
+		if #out_str == 0 or page <= 0 then
 			data.error("Page does not exist.")
 			return
 		end
@@ -134,8 +146,9 @@ local help = function(name, args, data)
 		allium.tell(name, out_str, true)
 	end
 
-	if tonumber(args[#args]) then
-		page = tonumber(args[#args])
+	local pagenum = tonumber(args[#args])
+	if pagenum and pagenum == math.ceil(pagenum) then
+		page = pagenum
 		args[#args] = nil
 	end
 
