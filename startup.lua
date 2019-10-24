@@ -18,10 +18,10 @@ end
 ]]
 local default = {
     version = allium_version, -- Allium's version
-    import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
     label = "<&r&dAll&5&h[[Killroy wuz here.]]&i[[https://www.youtube.com/watch?v=XqZsoesa55w\\&t=15s]]i&r&dum&r> ", -- The label the loader uses
+    import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
     updates = { -- Various auto-update configurations. Server operators may want to change this from the default
-        deps = true, -- Automatically update dependencies
+        dependencies = true, -- Automatically update dependencies
         allium = true -- Automatically update allium
     }
 }
