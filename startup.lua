@@ -74,20 +74,13 @@ end
 if config.updates.dependencies then
     -- Allium DepMan Instance & Listing: https://github.com/hugeblank/allium-depman/
     print("Checking for dependency updates...")
-    local didrun = false
-    parallel.waitForAll(function()
-        local ipath = path.."instance.lua"
-        if fs.exists(ipath) then
-            fs.delete(ipath)
-        end
-        didrun = shell.run("wget https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua "..ipath)
-        if not didrun then return end
-        didrun = shell.run(ipath.." upgrade "..path.." https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson "..path.."/cfg/deps.lson "..path.."/lib "..allium_version)
-    end, function()
-        multishell.setTitle(multishell.getCurrent(), "depman")
-    end)
+    local didrun, err
+    didrun = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua")
+    if didrun then
+        didrun, err = pcall(load(didrun.readAll(), "Depman", nil, _ENV), "upgrade", path, "https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson", path.."/cfg/deps.lson", path.."/lib", allium_version)
+    end
     if not didrun then
-        printError("Could not update dependencies")
+        printError("Could not update dependencies: "..(err or "Failed to download instance"))
         return
     end
 end
