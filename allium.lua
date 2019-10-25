@@ -112,7 +112,7 @@ do -- Allium image setup <3
 	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 	term.setTextColor(colors.white)
 	print(cli.info, true, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
-	print(cli.info, false, "Initializing API")
+	allium.log("Initializing API")
 end
 
 allium.assert = assert
@@ -252,7 +252,13 @@ allium.register = function(p_name, version, fullname)
 	funcs.thread = function(thread)
 		-- Add a thread that repeatedly iterates
 		assert(type(thread) == "function", "Invalid argument #1 (function expected, got "..type(thread)..")")
-		return raisin.thread(thread, 0, group.thread)
+		local wrapper = function()
+			local s, e = pcall(thread)
+			if not s then
+				allium.warn("Thread in "..real_name.." | "..e)
+			end
+		end
+		return raisin.thread(wrapper, 0, group.thread)
 	end
 
 	funcs.loadConfig = function(default)
@@ -420,7 +426,7 @@ for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 	if allium.side then break end
 end
 if not allium.side then
-	print(cli.warn, false, "Allium could not find chat module")
+	allium.warn("Allium could not find chat module")
 end
 
 -- Packaging the Allium API
@@ -434,7 +440,7 @@ else
 end
 
 do -- Plugin loading process
-	print(cli.info, false, "Loading plugins")
+	allium.log("Loading plugins")
 	local loader_group = raisin.group(1)
 	local function scopeDown(dir)
 		for _, plugin in pairs(fs.list(dir)) do
@@ -566,7 +572,7 @@ local interpreter = function() -- Main command interpretation thread
 							"&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:",
 							"&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r"
 						})
-						print(cli.warn, false, cmd.." | "..err)
+						allium.warn(cmd.." | "..err)
 					end
 				end
 				raisin.thread(exec_command, 0, group.command)
@@ -577,7 +583,7 @@ local interpreter = function() -- Main command interpretation thread
 	end
 end
 
-local scanner = function() -- Login/out scanner thread
+local player_scanner = function() -- Login/out scanner thread
     local online = {}
     while true do
         local cur_players = allium.getPlayers()
@@ -599,13 +605,13 @@ local scanner = function() -- Login/out scanner thread
 				end
 			end
 		else
-			print(cli.warn, false, "Could not list online players, skipping tick.")
+			allium.warn("Could not list online players, skipping tick.")
 		end
     end
 end
 
 raisin.thread(interpreter, 0)
-raisin.thread(scanner, 1)
+raisin.thread(player_scanner, 1)
 
 if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
 	local fpers = fs.open(path.."cfg/persistence.lson", "w")
@@ -613,7 +619,7 @@ if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this
 	fpers.close()
 end
 
-print(cli.info, false, "Allium started.")
+allium.log("Allium started.")
 allium.tell("@a", "&eHello World!")
 raisin.manager.run()
 
