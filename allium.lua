@@ -624,7 +624,7 @@ common.refresh = function()
 		term.setCursorPos(x-6, y-1)
 		term.blit("TRS \24", "888f8", "14efb")
 	else
-		common.bX = x-4
+		common.bX = x-5
 		term.setCursorPos(x-5, y-1)
 		term.blit("TRS", "888", "14e")
 	end
@@ -633,76 +633,79 @@ common.refresh = function()
 	term.redirect(done)
 end
 
-local button_manager = function()
-	common.refresh()
-	while true do
-		local e = {os.pullEvent("mouse_click")}
-		table.remove(e, 1)
-		if table.remove(e, 1) == 1 then
-			local x = table.remove(e, 1)
-			if table.remove(e, 1) == common.bY then
-				if x-common.bX == 0 then -- Terminate
-					allium.log("Exiting Allium...")
-					sleep(1)
-					return
-				elseif x-common.bX == 1 then -- Reboot
-					allium.log("Rebooting...")
-					sleep(1)
-					os.reboot()
-				elseif x-common.bX == 2 then -- Shutdown
-					allium.log("Shutting down...")
-					sleep(1)
-					os.shutdown()
-				elseif x-common.bX == 4 and common.unhide_update then -- Update
-					allium.log("Downloading updates...")
-					for i = 1, #common.run do
-						local s, e = pcall(table.unpack(common.run[i]))
-						if not s then
-							print(cli.error, true, "Failed to execute an update: "..e)
+local update_interaction = function()
+	parallel.waitForAll(function() -- Update checker on initialize
+		if config.updates.notify.dependencies then
+			local suc, deps = config.updates.check.dependencies()
+			local suffixer
+			if type(deps) == "table" and #deps > 0 then
+				if #deps == 1 then
+					suffixer = {"Utility ", " is "}
+				else
+					suffixer = {"Utilities: ", " are "}
+				end
+				allium.log(suffixer[1]..table.concat(deps, ", ")..suffixer[2].."ready to be updated")
+				common.run[#common.run+1] = {config.updates.run.dependencies}
+				common.unhide_update = true
+			elseif not suc then
+				print(cli.error, true, "Error in checking for dependency updates: "..deps)
+			end
+		end
+		if config.updates.notify.allium then
+			local sha = config.updates.check.allium()
+			if sha ~= config.sha then
+				allium.log("Allium is ready to be updated")
+				common.run[#common.run+1] = {config.updates.run.allium, sha}
+				common.unhide_update = true
+			elseif not sha then
+				allium.warn("Failed to scan for allium updates")
+			end
+		end
+		if config.updates.notify.plugins then
+			-- Things will also be here
+		end
+		common.refresh()
+	end, function() -- User Interface
+		common.refresh()
+		while true do
+			local e = {os.pullEvent("mouse_click")}
+			table.remove(e, 1)
+			if table.remove(e, 1) == 1 then
+				local x = table.remove(e, 1)
+				if table.remove(e, 1) == common.bY then
+					if x-common.bX == 0 then -- Terminate
+						allium.log("Exiting Allium...")
+						sleep(1)
+						return
+					elseif x-common.bX == 1 then -- Reboot
+						allium.log("Rebooting...")
+						sleep(1)
+						os.reboot()
+					elseif x-common.bX == 2 then -- Shutdown
+						allium.log("Shutting down...")
+						sleep(1)
+						os.shutdown()
+					elseif x-common.bX == 4 and common.unhide_update then -- Update
+						allium.log("Downloading updates...")
+						for i = 1, #common.run do
+							local s, err = pcall(table.unpack(common.run[i]))
+							if not s then
+								print(cli.error, true, "Failed to execute an update: "..err)
+							end
 						end
+						allium.log("Rebooting to apply updates...")
+						sleep(1)
+						os.reboot()
 					end
-					allium.log("Rebooting to apply updates...")
-					sleep(1)
-					os.reboot()
 				end
 			end
 		end
-	end
-end
-
-local update_panel = function() -- Update checker & UI handler thread
-	if config.updates.notify.dependencies then
-		local deps = config.updates.check.dependencies()
-		local suffixer
-		if #deps > 0 then
-			if #deps == 1 then
-				suffixer = {"Utility ", " is "}
-			else
-				suffixer = {"Utilities: ", " are "}
-			end
-			allium.log(suffixer[1]..table.concat(deps, ", ")..suffixer[2].."ready to be updated")
-			common.run[#common.run+1] = {config.updates.run.dependencies}
-			common.unhide_update = true
-		end
-	end
-	if config.updates.notify.allium then
-		local sha = config.updates.check.allium()
-		if sha ~= config.sha then
-			allium.log("Allium is ready to be updated")
-			common.run[#common.run+1] = {config.updates.run.allium, sha}
-			common.unhide_update = true
-		end
-	end
-	if config.updates.notify.plugins then
-		-- Things will also be here
-	end
-	common.refresh()
+	end)
 end
 
 raisin.thread(interpreter, 0)
 raisin.thread(player_scanner, 1)
-raisin.thread(button_manager, 1)
-raisin.thread(update_panel, 1)
+raisin.thread(update_interaction, 1)
 
 if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
 	local fpers = fs.open(path.."cfg/persistence.lson", "w")

@@ -28,9 +28,9 @@ local default = {
             allium = true -- Notify when allium needs updating
         },
         repo = { -- Repo specific information for Allium in case you want to use a fork
-            user = "hugeblank", -- User to pull updates from
-            branch = "master", --  Branch/Tag to pull updates from
-            name = "Allium" -- Name of repo to pull updates from
+            user = "hugeblank", -- User to check updates from
+            branch = "master", --  Branch/Tag to check updates from
+            name = "Allium" -- Name of repo to check updates from
         }
     }
 }
@@ -91,14 +91,21 @@ if config.updates.notify.dependencies then
             local out
             local temp = _G.print -- The good ol' switcheroo
             _G.print = function(...) out = {...} end
-            local result = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(args))
+            local result, err = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(args))
             _G.print = temp
             if result then
-                return table.unpack(out)
+                return result, table.unpack(out)
+            else
+                return result, err
             end
         end
         config.updates.check.dependencies = function()
-            return depman("scan")
+            local suc, out = depman("scan")
+            if suc then
+                return suc, textutils.unserialise(out)
+            else
+                return suc, out
+            end
         end
         config.updates.run.dependencies = function()
             return depman("upgrade")
@@ -117,7 +124,7 @@ if config.updates.notify.allium then
             jsonresponse.close()
             return json.decode(out).sha
         else
-            config.updates.notify.allium = false
+            return false
         end
     end
     config.updates.run.allium = function(sha)
