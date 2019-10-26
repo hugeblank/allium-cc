@@ -83,34 +83,22 @@ if config.updates.notify.dependencies then
             path.."/lib",
             allium_version
         }
-        local copyEnv -- My linter sucks and doesn't understand recursion.
-        copyEnv = function(t)
-            local out = {}
-            for key, value in pairs(t) do
-                if key == "_ENV" then
-                    out[key] = out
-                elseif type(value) == "table" then
-                    out[key] = copyEnv(value)
-                else
-                    out[key] = value
-                end
-            end
-            return out
-        end
         depman = function(task)
             local args = {}
             for i = 1, #depargs do
                 args[i] = depargs[i]
             end
             local out
-            local env = copyEnv(_ENV)
-            env.print = function(...) out = {...} end
-            if pcall(load(contents, "Depman", nil, env), task, table.unpack(args)) then
+            local temp = _G.print -- The good ol' switcheroo
+            _G.print = function(...) out = {...} end
+            local result = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(args))
+            _G.print = temp
+            if result then
                 return table.unpack(out)
             end
         end
         config.updates.check.dependencies = function()
-            return textutils.unserialise(depman("scan"))
+            return depman("scan")
         end
         config.updates.run.dependencies = function()
             return depman("upgrade")
@@ -221,7 +209,7 @@ term.setCursorPos(1, 1)
 
 -- Running Allium
 multishell.setTitle(multishell.getCurrent(), "Allium")
-local s, e = pcall(os.run(_ENV, path.."allium.lua", config))
+local s, e = pcall(os.run, _ENV, path.."allium.lua", config)
 if not s then
     printError(e)
 end
