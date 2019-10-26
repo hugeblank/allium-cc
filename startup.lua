@@ -2,7 +2,8 @@
 -- x.x.x-pr = unstable, potential breaking changes
 local allium_version = "0.9.0-pr"
 
-local path = "/"
+local github, json, path = require("lib.nap")("https://api.github.com"), require("lib.json"), "/"
+local firstrun = false
 for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 	path = path..str
 end
@@ -17,12 +18,20 @@ end
     Configurations can be changed in /cfg/allium.lson
 ]]
 local default = {
-    version = allium_version, -- Allium's version
-    label = "<&r&dAll&5&h[[Killroy wuz here.]]&i[[https://www.youtube.com/watch?v=XqZsoesa55w\\&t=15s]]i&r&dum&r> ", -- The label the loader uses
+    label = "<&r&dAll&5&h[[Kilroy wuz here.]]&i[[https://www.youtube.com/watch?v=XqZsoesa55w\\&t=15s]]i&r&dum&r> ", -- The label the loader uses
     import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
-    updates = { -- Various auto-update configurations. Server operators may want to change this from the default
-        dependencies = true, -- Automatically update dependencies
-        allium = true -- Automatically update allium
+    restart_timeout = 5, -- The amount of time to wait when allium errors before restarting
+    updates = { -- Various update configurations.
+        notify = { -- Configurations to trigger notifications when parts of Allium are ready for an update
+            dependencies = true, -- Notify when dependencies need updating
+            plugins = true, -- Notify when plugins need updating
+            allium = true -- Notify when allium needs updating
+        },
+        repo = { -- Repo specific information for Allium in case you want to use a fork
+            user = "hugeblank", -- User to pull updates from
+            branch = "master", --  Branch/Tag to pull updates from
+            name = "Allium" -- Name of repo to pull updates from
+        }
     }
 }
 
@@ -30,11 +39,10 @@ local default = {
 local loadSettings = function(file, default)
     assert(type(file) == "string", "file must be a string")
     if not fs.exists(file) then
-        local setting, v = fs.open(file,"w"), default.version
-        default.version = nil
+        firstrun = true
+        local setting = fs.open(file,"w")
         setting.write(textutils.serialise(default))
         setting.close()
-        default.version = v
         return default
     end
     local setting = fs.open(file, "r")
@@ -59,30 +67,128 @@ local loadSettings = function(file, default)
 end
 
 local config = loadSettings(path.."cfg/allium.lson", default)
+local depman
+config.updates.check = {}
+config.updates.run = {}
 
--- Checking Allium/Plugin updates
-if config.updates.allium then
-    if fs.exists(path.."cfg/repolist.csh") then -- Checking for a repolist shell executable
-        -- Update all plugins and programs on the repolist
-        for line in io.lines(path.."cfg/repolist.csh") do
-            shell.run(path..line)
+if config.updates.notify.dependencies then
+    local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua")
+    if depget then
+        local contents = depget.readAll()
+        depget.close()
+        local depargs = { -- Depman args minus the task which can be inserted into the first index
+            path,
+            "https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson",
+            path.."/cfg/deps.lson",
+            path.."/lib",
+            allium_version
+        }
+        depman = function(task)
+            local args = {}
+            for i = 1, #depargs do
+                args[i] = depargs[i]
+            end
+            local env = _ENV
+            env._ENV = env
+            local out
+            env.print = function(...) out = {...} end
+            if pcall(load(contents, "Depman", nil, env), task, table.unpack(args)) then
+                return table.unpack(out)
+            end
+        end
+        config.updates.check.dependencies = function()
+            return textutils.unserialise(depman("scan"))
+        end
+        config.updates.run.dependencies = function()
+            return depman("upgrade")
         end
     end
 end
 
--- Filling Dependencies
-if config.updates.dependencies then
-    -- Allium DepMan Instance & Listing: https://github.com/hugeblank/allium-depman/
-    print("Checking for dependency updates...")
-    local didrun, err
-    didrun = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua")
-    if didrun then
-        didrun, err = pcall(load(didrun.readAll(), "Depman", nil, _ENV), "upgrade", path, "https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson", path.."/cfg/deps.lson", path.."/lib", allium_version)
+if config.updates.notify.allium then
+    config.updates.check.allium = function()
+        local repo = config.updates.repo
+        local jsonresponse = github.repos[repo.user][repo.name].commits[repo.branch]({
+            method = "GET"
+        })
+        if jsonresponse then
+            local out = jsonresponse.readAll()
+            jsonresponse.close()
+            return json.decode(out).sha
+        else
+            config.updates.notify.allium = false
+        end
     end
-    if not didrun then
-        printError("Could not update dependencies: "..(err or "Failed to download instance"))
+    config.updates.run.allium = function(sha)
+        local repo = config.updates.repo
+        os.run({
+            term = {
+                write=function()end,
+                setCursorPos=function()end
+            },
+            print = function() end
+        },
+        fs.combine(path, "/lib/gget.lua"),
+        repo.user,
+        repo.name,
+        repo.branch
+        )
+        local file = fs.open(fs.combine(path, "/cfg/version.lson"), "w")
+        if file then
+            file.write(textutils.serialise({sha = sha})) 
+            -- Not adding version because we're outdated now. We've been replaced.
+            file.close()
+        else
+            printError("Could not write to file. Is the disk full?")
+            return
+        end
+    end
+end
+
+if config.updates.notify.plugins then
+    -- Things will be here
+end
+
+-- First run installation of utilities
+if firstrun then
+    print("Welcome to Allium! Doing some first-run setup and then we'll be on our way.")
+    if depman then
+        depman("upgrade")
+    end
+    local sha, file = config.updates.check.allium(), fs.open(fs.combine(path, "/cfg/version.lson"), "w")
+    if file then
+        file.write(textutils.serialise({sha = sha, version = allium_version}))
+        file.close()
+    else
+        printError("Could not write to file. Is the disk full?")
         return
     end
+end
+
+local r_file = fs.open(fs.combine(path, "/cfg/version.lson"), "r")
+if r_file then
+    local v_data = textutils.unserialise(r_file.readAll())
+    r_file.close()
+    if v_data then
+        config.version, config.sha = v_data.version, v_data.sha
+    else
+        printError("Could not parse version data, did you mess with ./cfg/version.lson?")
+        return
+    end
+    if not config.version then
+        local w_file = fs.open(fs.combine(path, "/cfg/version.lson"), "w")
+        if w_file then -- Reapply version because it was removed by the last version
+            v_data.version = allium_version
+            w_file.write(textutils.serialise(v_data))
+            w_file.close()
+        else
+            printError("Could not write to file. Is the disk full?")
+            return
+        end
+    end
+else
+    printError("Could not read version data, did you delete ./cfg/version.lson?")
+    return
 end
 
 -- Clearing the screen
@@ -108,6 +214,8 @@ for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 end
 
 -- Rebooting or exiting
-print("Rebooting in 5 seconds")
-print("Press any key to cancel")
-parallel.waitForAny(function() repeat until os.pullEvent("char") end, function() sleep(5) os.reboot() end)
+if config.restart_timeout > 0 then
+    print("Rebooting in "..config.restart_timeout.." seconds")
+    print("Press any key to cancel")
+    parallel.waitForAny(function() repeat until os.pullEvent("char") end, function() sleep(config.restart_timeout) os.reboot() end)
+end

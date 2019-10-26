@@ -66,6 +66,14 @@ local cli = {
 	error = {"[", colors.red, "E", colors.white, "] "}
 }
 
+-- Logging wrapper functions
+allium.log = function(...)
+	print(cli.info, false, ...)
+end
+
+allium.warn = function(...)
+	print(cli.warn, false, ...)
+end
 
 local config = ...
 do -- Configuration parsing
@@ -81,6 +89,7 @@ do -- Configuration parsing
 	end
 end
 
+local main -- Main terminal window Allium is outputting to
 do -- Allium image setup <3
 	local image = {
 		"  2a2",
@@ -107,7 +116,7 @@ do -- Allium image setup <3
 		term.setCursorPos(x-7, cy+1)
 	end
 	local win = window.create(term.current(), 1, 1, x-9, y, true) -- Create a window to prevent text from writing over the image
-	term.redirect(win) -- Redirect the terminal
+	main = term.redirect(win) -- Redirect the terminal
 	term.setCursorPos(1, 1)
 	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 	term.setTextColor(colors.white)
@@ -120,14 +129,6 @@ allium.assert = assert
 allium.sanitize = function(name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
 	return name:lower():gsub(" ", "_"):gsub("[^a-z0-9_]", "")
-end
-
-allium.log = function(...)
-	print(cli.info, false, ...)
-end
-
-allium.warn = function(...)
-	print(cli.warn, false, ...)
 end
 
 allium.tell = function(name, message, alt_name)
@@ -610,8 +611,95 @@ local player_scanner = function() -- Login/out scanner thread
     end
 end
 
+local common = {
+	unhide_update = false,
+	run = {}
+}
+common.refresh = function()
+	local done = term.redirect(main)
+	local x, y = term.getSize()
+	common.bY = y-1
+	if common.unhide_update then
+		common.bX = x-6
+		term.setCursorPos(x-6, y-1)
+		term.blit("TRS \24", "888f8", "14efb")
+	else
+		common.bx = x-4
+		term.setCursorPos(x-5, y-1)
+		term.blit("TRS", "888", "14e")
+	end
+	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
+	term.setTextColor(colors.white)
+	term.redirect(done)
+end
+
+local button_manager = function()
+	common.refresh()
+	while true do
+		local e = {os.pullEvent("mouse_click")}
+		table.remove(e, 1)
+		if table.remove(e, 1) == 1 then
+			local x = table.remove(e, 1)
+			if table.remove(e, 1) == common.bY then
+				if x-common.bX == 0 then -- Terminate
+					allium.log("Exiting Allium...")
+					sleep(1)
+					return
+				elseif x-common.bX == 1 then -- Reboot
+					allium.log("Rebooting...")
+					sleep(1)
+					os.reboot()
+				elseif x-common.bX == 2 then -- Shutdown
+					allium.log("Shutting down...")
+					sleep(1)
+					os.shutdown()
+				elseif x-common.bX == 4 and common.unhide_update then -- Update
+					allium.log("Downloading updates...")
+					for i = 1, #common.run do
+						common.run[i]()
+					end
+					allium.log("Rebooting to apply updates...")
+					sleep(1)
+					os.reboot()
+				end
+			end
+		end
+	end
+end
+
+local update_panel = function() -- Update checker & UI handler thread
+	if config.updates.notify.dependencies then
+		local deps = config.updates.check.dependencies()
+		local suffixer
+		if #deps > 0 then
+			if #deps == 1 then
+				suffixer = {"Utility ", " is "}
+			else
+				suffixer = {"Utilities: ", " are "}
+			end
+			allium.log(suffixer[1]..table.concat(deps, ", ")..suffixer[2].."ready to be updated")
+			common.run[#common.run+1] = config.updates.run.dependencies
+			common.unhide_update = true
+		end
+	end
+	if config.updates.notify.allium then
+		local sha = config.updates.check.allium()
+		if sha ~= config.sha then
+			allium.log("Allium is ready to be updated")
+			common.run[#common.run+1] = config.updates.run.allium
+			common.unhide_update = true
+		end
+	end
+	if config.updates.notify.plugins then
+		-- Things will also be here
+	end
+	common.refresh()
+end
+
 raisin.thread(interpreter, 0)
 raisin.thread(player_scanner, 1)
+raisin.thread(button_manager, 1)
+raisin.thread(update_panel, 1)
 
 if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
 	local fpers = fs.open(path.."cfg/persistence.lson", "w")
@@ -621,6 +709,6 @@ end
 
 allium.log("Allium started.")
 allium.tell("@a", "&eHello World!")
-raisin.manager.run()
+raisin.manager.run(1)
 
 package.preload["allium"] = nil
