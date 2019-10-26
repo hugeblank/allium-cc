@@ -656,7 +656,7 @@ local button_manager = function()
 				elseif x-common.bX == 4 and common.unhide_update then -- Update
 					allium.log("Downloading updates...")
 					for i = 1, #common.run do
-						common.run[i]()
+						common.run[i](config.sha)
 					end
 					allium.log("Rebooting to apply updates...")
 					sleep(1)
@@ -686,6 +686,7 @@ local update_panel = function() -- Update checker & UI handler thread
 		local sha = config.updates.check.allium()
 		if sha ~= config.sha then
 			allium.log("Allium is ready to be updated")
+			config.sha = sha
 			common.run[#common.run+1] = config.updates.run.allium
 			common.unhide_update = true
 		end

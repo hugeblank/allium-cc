@@ -124,9 +124,13 @@ if config.updates.notify.allium then
         os.run({
             term = {
                 write=function()end,
-                setCursorPos=function()end
+                setCursorPos=function()end,
+                getCursorPos=function() return 1, 1 end
             },
-            print = function() end
+            print = function() end,
+            shell = {
+                getRunningProgram = function() return path.."/lib/gget.lua" end
+            }
         },
         fs.combine(path, "/lib/gget.lua"),
         repo.user,
@@ -135,7 +139,7 @@ if config.updates.notify.allium then
         )
         local file = fs.open(fs.combine(path, "/cfg/version.lson"), "w")
         if file then
-            file.write(textutils.serialise({sha = sha})) 
+            file.write(textutils.serialise({sha = sha}))
             -- Not adding version because we're outdated now. We've been replaced.
             file.close()
         else
@@ -179,6 +183,7 @@ if r_file then
         local w_file = fs.open(fs.combine(path, "/cfg/version.lson"), "w")
         if w_file then -- Reapply version because it was removed by the last version
             v_data.version = allium_version
+            config.version = allium_version
             w_file.write(textutils.serialise(v_data))
             w_file.close()
         else
