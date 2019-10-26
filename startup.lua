@@ -79,18 +79,31 @@ if config.updates.notify.dependencies then
         local depargs = { -- Depman args minus the task which can be inserted into the first index
             path,
             "https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson",
-            path.."/cfg/deps.lson",
+            path.."/cfg/dependencies.lson",
             path.."/lib",
             allium_version
         }
+        local copyEnv -- My linter sucks and doesn't understand recursion.
+        copyEnv = function(t)
+            local out = {}
+            for key, value in pairs(t) do
+                if key == "_ENV" then
+                    out[key] = out
+                elseif type(value) == "table" then
+                    out[key] = copyEnv(value)
+                else
+                    out[key] = value
+                end
+            end
+            return out
+        end
         depman = function(task)
             local args = {}
             for i = 1, #depargs do
                 args[i] = depargs[i]
             end
-            local env = _ENV
-            env._ENV = env
             local out
+            local env = copyEnv(_ENV)
             env.print = function(...) out = {...} end
             if pcall(load(contents, "Depman", nil, env), task, table.unpack(args)) then
                 return table.unpack(out)
@@ -121,13 +134,15 @@ if config.updates.notify.allium then
     end
     config.updates.run.allium = function(sha)
         local repo = config.updates.repo
+        local null = function() end
         os.run({
             term = {
-                write=function()end,
-                setCursorPos=function()end,
+                write=null,
+                setCursorPos=null,
                 getCursorPos=function() return 1, 1 end
             },
-            print = function() end,
+            print = null,
+            write = null,
             shell = {
                 getRunningProgram = function() return path.."/lib/gget.lua" end
             }
@@ -177,6 +192,7 @@ if r_file then
         config.version, config.sha = v_data.version, v_data.sha
     else
         printError("Could not parse version data, did you mess with ./cfg/version.lson?")
+        print("If you're updating from a prior version, delete allium.config, reboot, and you should be good.")
         return
     end
     if not config.version then
@@ -193,6 +209,7 @@ if r_file then
     end
 else
     printError("Could not read version data, did you delete ./cfg/version.lson?")
+    print("If you're updating from a prior version, delete allium.config, reboot, and you should be good.")
     return
 end
 
@@ -204,7 +221,10 @@ term.setCursorPos(1, 1)
 
 -- Running Allium
 multishell.setTitle(multishell.getCurrent(), "Allium")
-os.run(_ENV, path.."allium.lua", config)
+local s, e = pcall(os.run(_ENV, path.."allium.lua", config))
+if not s then
+    printError(e)
+end
 
 -- Removing all captures
 for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
