@@ -676,7 +676,7 @@ local update_interaction = function()
 				if table.remove(e, 1) == common.bY then
 					if x-common.bX == 0 then -- Terminate
 						allium.log("Exiting Allium...")
-						return
+						raisin.manager.halt()
 					elseif x-common.bX == 1 then -- Reboot
 						allium.log("Rebooting...")
 						sleep(1)
@@ -715,6 +715,6 @@ end
 
 allium.log("Allium started.")
 allium.tell("@a", "&eHello World!")
-raisin.manager.run(1)
+raisin.manager.run()
 
 package.preload["allium"] = nil
