@@ -1,7 +1,7 @@
 -- Allium by hugeblank
 
 -- Dependency Loading
-local raisin, color, semver, mojson = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson")
+local raisin, color, semver, mojson, json = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson"), require("lib.json")
 
 -- Internal definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)}
@@ -133,15 +133,16 @@ end
 
 allium.tell = function(name, message, alt_name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
-    assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
-	local out
+	assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
+	local out = {}
 	if type(message) == "table" then
-		_, out = commands.tellraw(name, color.format(table.concat(message, "\n")))
+		for i = 1, #message do
+			_, out[#out+1] = commands.async.tellraw(name, json.encode(color.format(message[i])))
+		end
 	else
-	--message = message:gsub("\n", "\\n")
-		_, out = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r" else return config.label.."&r" end end)(alt_name)..message))
-    end
-    return textutils.serialise(out)
+		_, out = commands.tellraw(name, json.encode(color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r" else return config.label.."&r" end end)(alt_name)..message)))
+	end
+    return out
 end
 
 allium.execute = function(name, command)
@@ -463,8 +464,8 @@ do -- Plugin loading process
 			end
 		end
 	end
-	if fs.exists(path.."/plugins") then
-		scopeDown(path.."/plugins")
+	if fs.exists(fs.combine(path, "/plugins")) then
+		scopeDown(fs.combine(path, "/plugins"))
 	end
 	raisin.manager.runGroup(loader_group)
 end
@@ -675,7 +676,6 @@ local update_interaction = function()
 				if table.remove(e, 1) == common.bY then
 					if x-common.bX == 0 then -- Terminate
 						allium.log("Exiting Allium...")
-						sleep(1)
 						return
 					elseif x-common.bX == 1 then -- Reboot
 						allium.log("Rebooting...")

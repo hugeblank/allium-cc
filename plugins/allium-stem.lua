@@ -132,14 +132,14 @@ local help = function(name, args, data)
 	local function run()
 		for i = (cmds_per*(page-1))+1, (cmds_per*page) do
 			if info[i] then
-				out_str = out_str..info[i].."\\n"
+				out_str = out_str..info[i].."\n"
 			end
 		end
 		if #out_str == 0 or page <= 0 then
 			data.error("Page does not exist.")
 			return
 		end
-		out_str = "&2===================&r &dAll&5i&r&dum&e Help Menu&r &2===================&r\\n"..out_str
+		out_str = "&2===================&r &dAll&5i&r&dum&e Help Menu&r &2===================&r\n"..out_str
 		local template = #(" << "..page.."/"..math.ceil(#info/cmds_per).." >> ")
 		local sides = 32-template
 		out_str = out_str.."&2"..string.rep("=", sides).."&r &6&l&h(Previous Page)&g("..next_command..(page-1)..")<<&r&c&l "..page.."/"..math.ceil(#info/cmds_per).." &r&6&l&h(Next Page)&g("..next_command..(page+1)..")>>&r &2"..string.rep("=", sides).."&r"
@@ -217,7 +217,7 @@ end
 
 local credits = function(name)
 	allium.tell(name, {
-		"&dAll&5i&dum &av"..tostring(allium.version).."&r was cultivated with love by &a&h(Check out his repo!)&i(https://github.com/hugeblank)hugeblank&r.",
+		"&dAll&5i&dum &av"..tostring(allium.version).."&r was cultivated with love by &a&h(Check out his profile!)&i(https://github.com/hugeblank)hugeblank&r.",
 		"Documentation on Allium can be found here: &9&h(Read up on Allium!)&ihttps://github.com/hugeblank/allium-wiki&r.",
 		"Contribute and report issues to Allium here: &9&h(Check out where Allium is grown!)&ihttps://github.com/hugeblank/allium&r.",
 		"&6Other Contributors:",
