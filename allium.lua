@@ -66,15 +66,6 @@ local cli = {
 	error = {"[", colors.red, "E", colors.white, "] "}
 }
 
--- Logging wrapper functions
-allium.log = function(...)
-	print(cli.info, false, ...)
-end
-
-allium.warn = function(...)
-	print(cli.warn, false, ...)
-end
-
 local config = ...
 do -- Configuration parsing
 	if type(config) ~= "table" then
@@ -121,7 +112,7 @@ do -- Allium image setup <3
 	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 	term.setTextColor(colors.white)
 	print(cli.info, true, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
-	allium.log("Initializing API")
+	print(cli.info, true, "Initializing API")
 end
 
 allium.assert = assert
@@ -131,14 +122,23 @@ allium.sanitize = function(name)
 	return name:lower():gsub(" ", "_"):gsub("[^a-z0-9_]", "")
 end
 
+-- Logging wrapper functions
+allium.log = function(...)
+	print(cli.info, false, ...)
+end
+
+allium.warn = function(...)
+	print(cli.warn, false, ...)
+end
+
 allium.tell = function(name, message, alt_name)
 	assert(type(name) == "string", "Invalid argument #1 (expected string, got "..type(name)..")")
     assert(type(message) == "string" or type(message) == "table", "Invalid argument #2 (expected string or table, got "..type(message)..")")
 	local out
 	if type(message) == "table" then
-		_, out = commands.tellraw(name, color.format(table.concat(message, "\\n")))
+		_, out = commands.tellraw(name, color.format(table.concat(message, "\n")))
 	else
-		message = message:gsub("\n", "\\n")
+	--message = message:gsub("\n", "\\n")
 		_, out = commands.tellraw(name, color.format((function(alt_name) if alt_name == true then return "" elseif alt_name then return alt_name.."&r" else return config.label.."&r" end end)(alt_name)..message))
     end
     return textutils.serialise(out)
@@ -571,14 +571,14 @@ local interpreter = function() -- Main command interpretation thread
 					if stat == false then -- It crashed...
 						allium.tell(name, {
 							"&4!"..cmd_exec.command.." crashed! This is likely not your fault, but the developer's. Please contact the developer of &a"..cmd_exec.plugin.."&4. Error:",
-							"&c&h[[Click here to place error into chat prompt, so you may copy it if needed for an issue report]]&s[["..err.."]]"..err.."&r"
+							"&c&h(Click here to place error into chat prompt, so you may copy it if needed for an issue report)&s("..err..")"..err.."&r"
 						})
 						allium.warn(cmd.." | "..err)
 					end
 				end
 				raisin.thread(exec_command, 0, group.command)
     		else -- This isn't even a valid command...
-	    		allium.tell(name, "&6Invalid Command, use &c&g[[!allium:help]]!help&r&6 for assistance.") --bleh!
+	    		allium.tell(name, "&6Invalid Command, use &c&g(!allium:help)!help&r&6 for assistance.") --bleh!
     		end
 	    end
 	end
@@ -635,7 +635,7 @@ end
 
 local update_interaction = function()
 	parallel.waitForAll(function() -- Update checker on initialize
-		if config.updates.notify.dependencies then
+		if config.updates.check.dependencies then
 			local suc, deps = config.updates.check.dependencies()
 			local suffixer
 			if type(deps) == "table" and #deps > 0 then
@@ -651,7 +651,7 @@ local update_interaction = function()
 				print(cli.error, true, "Error in checking for dependency updates: "..deps)
 			end
 		end
-		if config.updates.notify.allium then
+		if config.updates.check.allium then
 			local sha = config.updates.check.allium()
 			if sha ~= config.sha then
 				allium.log("Allium is ready to be updated")

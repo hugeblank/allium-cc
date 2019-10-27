@@ -1,8 +1,8 @@
 -- Allium version
 -- x.x.x-pr = unstable, potential breaking changes
-local allium_version = "0.9.0-pr"
+local allium_version = "0.9.0-pr.newcolor"
 
-local github, json, path = require("lib.nap")("https://api.github.com"), require("lib.json"), "/"
+local path = "/"
 local firstrun = false
 for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 	path = path..str
@@ -18,9 +18,8 @@ end
     Configurations can be changed in /cfg/allium.lson
 ]]
 local default = {
-    label = "<&r&dAll&5&h[[Kilroy wuz here.]]&i[[https://www.youtube.com/watch?v=XqZsoesa55w\\&t=15s]]i&r&dum&r> ", -- The label the loader uses
+    label = "<&r&dAll&5&h(Kilroy wuz here.)&i(https://www.youtube.com/watch?v=XqZsoesa55w\\&t=15s)i&r&dum&r> ", -- The label the loader uses
     import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
-    restart_timeout = 5, -- The amount of time to wait when allium errors before restarting
     updates = { -- Various update configurations.
         notify = { -- Configurations to trigger notifications when parts of Allium are ready for an update
             dependencies = true, -- Notify when dependencies need updating
@@ -84,20 +83,12 @@ if config.updates.notify.dependencies then
             allium_version
         }
         depman = function(task)
-            local args = {}
-            for i = 1, #depargs do
-                args[i] = depargs[i]
-            end
-            local out
+            local out = {}
             local temp = _G.print -- The good ol' switcheroo
             _G.print = function(...) out = {...} end
-            local result, err = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(args))
+            local result = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(depargs))
             _G.print = temp
-            if result then
-                return result, table.unpack(out)
-            else
-                return result, err
-            end
+            return result, table.unpack(out)
         end
         config.updates.check.dependencies = function()
             local suc, out = depman("scan")
@@ -112,6 +103,17 @@ if config.updates.notify.dependencies then
         end
     end
 end
+
+
+-- First run installation of utilities
+if firstrun then
+    print("Welcome to Allium! Doing some first-run setup and then we'll be on our way.")
+    fs.delete(fs.combine(path, "/lib"))
+    if depman then
+        depman("upgrade")
+    end
+end
+local github, json = require("lib.nap")("https://api.github.com"), require("lib.json")
 
 if config.updates.notify.allium then
     config.updates.check.allium = function()
@@ -163,12 +165,9 @@ if config.updates.notify.plugins then
     -- Things will be here
 end
 
--- First run installation of utilities
+-- Final firstrun stuff
 if firstrun then
-    print("Welcome to Allium! Doing some first-run setup and then we'll be on our way.")
-    if depman then
-        depman("upgrade")
-    end
+    print("Finalizing installation")
     local sha, file = config.updates.check.allium(), fs.open(fs.combine(path, "/cfg/version.lson"), "w")
     if file then
         file.write(textutils.serialise({sha = sha, version = allium_version}))
@@ -231,11 +230,4 @@ for _, side in pairs(peripheral.getNames()) do -- Finding the chat module
 			end
 		end
     end
-end
-
--- Rebooting or exiting
-if config.restart_timeout > 0 then
-    print("Rebooting in "..config.restart_timeout.." seconds")
-    print("Press any key to cancel")
-    parallel.waitForAny(function() repeat until os.pullEvent("char") end, function() sleep(config.restart_timeout) os.reboot() end)
 end

@@ -1,5 +1,5 @@
 local allium = require("allium")
-local stem = allium.register("allium", "0.5.0", "Allium Stem") --UPDATE THIS
+local stem = allium.register("allium", "0.6.0", "Allium Stem")
 
 local help = function(name, args, data)
 	local cmds_per, page = 8, 1 -- Turn this into a per-user persistence preference
@@ -15,12 +15,12 @@ local help = function(name, args, data)
 				if variant == "username" then
 					local players = allium.getPlayers()
 					for i = 1, #players do
-						out[#out+1] = " &6-&r &g[["..execute..players[i].." ]]&h[[Click to add user "..players[i].."]]&a"..players[i]
+						out[#out+1] = " &6-&r &g("..execute..players[i].." )&h(Click to add user "..players[i]..")&a"..players[i]
 					end
 				elseif variant == "plugin" then
 					local list = allium.getInfo()
 					for plugin in pairs(list) do
-						out[#out+1] = " &6-&r &g[["..execute..plugin.." ]]&h[[Click to add plugin "..plugin.."]]&a"..plugin
+						out[#out+1] = " &6-&r &g("..execute..plugin.." )&h(Click to add plugin "..plugin..")&a"..plugin
 					end
 				elseif variant == "command" then
 					local list = allium.getInfo()
@@ -28,17 +28,17 @@ local help = function(name, args, data)
 						for command in pairs(v) do
 							local rawcmd = command
 							local command = plugin..":"..command
-							out[#out+1] = " &6-&r &g[["..execute..command.." ]]&h[[Click to add command !"..rawcmd.."]]&a!"..command
+							out[#out+1] = " &6-&r &g("..execute..command.." )&h(Click to add command !"..rawcmd..")&a!"..command
 						end
 					end
 				elseif variant:sub(1, -2) == "position_" then
 					local position = allium.getPosition(name).position
 					if variant:sub(-1, -1) == "x" then
-						out[#out+1] = " &6-&r &g[["..execute..position[1].." ]]&h[[Click to add your x position]]&a"..position[1]
+						out[#out+1] = " &6-&r &g("..execute..position[1].." )&h(Click to add your x position)&a"..position[1]
 					elseif variant:sub(-1, -1) == "y" then
-						out[#out+1] = " &6-&r &g[["..execute..position[2].." ]]&h[[Click to add your y position]]&a"..position[2]
+						out[#out+1] = " &6-&r &g("..execute..position[2].." )&h(Click to add your y position)&a"..position[2]
 					elseif variant:sub(-1, -1) == "z" then
-						out[#out+1] = " &6-&r &g[["..execute..position[3].." ]]&h[[Click to add your z position]]&a"..position[3]
+						out[#out+1] = " &6-&r &g("..execute..position[3].." )&h(Click to add your z position)&a"..position[3]
 					end
 				end
 			elseif type(variant) == "function" or type(variant) == "table" then
@@ -50,7 +50,7 @@ local help = function(name, args, data)
 				end
 				for i = 1, #result do
 					if type(result[i]) == "string" and not result[i]:find("=") then
-						out[#out+1] = " &6-&r &g[["..execute..result[i].." ]]&h[[Click to add "..result[i].."]]&a"..result[i]
+						out[#out+1] = " &6-&r &g("..execute..result[i].." )&h(Click to add "..result[i]..")&a"..result[i]
 					end
 				end
 			end
@@ -78,10 +78,10 @@ local help = function(name, args, data)
 			end
 			local meta = ""
 			if #execution ~= 0 then
-				meta = meta.."&g[["..execution.."]]"
+				meta = meta.."&g("..execution..")"
 			end
 			if #hover ~= 0 then
-				meta = meta.."&h[["..hover.."]]"
+				meta = meta.."&h("..hover..")"
 			end
 			return prefix..meta..label..postfix.." "..information
 		end
@@ -98,7 +98,7 @@ local help = function(name, args, data)
 						end
 					end
 					if #out == 0 or not info then
-						out = {" &6-&a No more parameters to add!", " &6-&a Click &r&c&h[[Click to run command]]&g[["..command.."]]here&r&a to run the command", " &6- &eOR&a click on the first line to add the command to the chat input."}
+						out = {" &6-&a No more parameters to add!", " &6-&a Click &r&c&h(Click to run command)&g("..command..")here&r&a to run the command", " &6- &eOR&a click on the first line to add the command to the chat input."}
 					end
 					return out, command
 			else -- Otherwise things are going totally as planned and we should just recurse onwards
@@ -142,7 +142,7 @@ local help = function(name, args, data)
 		out_str = "&2===================&r &dAll&5i&r&dum&e Help Menu&r &2===================&r\\n"..out_str
 		local template = #(" << "..page.."/"..math.ceil(#info/cmds_per).." >> ")
 		local sides = 32-template
-		out_str = out_str.."&2"..string.rep("=", sides).."&r &6&l&h[[Previous Page]]&g[["..next_command..(page-1).."]]<<&r&c&l "..page.."/"..math.ceil(#info/cmds_per).." &r&6&l&h[[Next Page]]&g[["..next_command..(page+1).."]]>>&r &2"..string.rep("=", sides).."&r"
+		out_str = out_str.."&2"..string.rep("=", sides).."&r &6&l&h(Previous Page)&g("..next_command..(page-1)..")<<&r&c&l "..page.."/"..math.ceil(#info/cmds_per).." &r&6&l&h(Next Page)&g("..next_command..(page+1)..")>>&r &2"..string.rep("=", sides).."&r"
 		allium.tell(name, out_str, true)
 	end
 
@@ -161,7 +161,7 @@ local help = function(name, args, data)
 				else
 					entry.usage = ""
 				end
-				info[#info+1] = "&c&g[[!allium:help "..p_name..":"..cmd_name.."]]&h[[Click to begin autofill]]!"..p_name..":"..cmd_name.."&r: "..entry.info[1]
+				info[#info+1] = "&c&g(!allium:help "..p_name..":"..cmd_name..")&h(Click to begin autofill)!"..p_name..":"..cmd_name.."&r: "..entry.info[1]
 			end
 		end
 		return run()
@@ -182,7 +182,7 @@ local help = function(name, args, data)
 						data.error(cmd..": "..infill_info)
 						return
 					end
-					info[#info+1] = "&c&s[["..infill_text.."]]&h[[Click to add to chat input]]"..infill_text.."&r"
+					info[#info+1] = "&c&s("..infill_text..")&h(Click to add to chat input)"..infill_text.."&r"
 					for i = 1, #infill_info do
 						info[#info+1] = infill_info[i]
 					end
@@ -204,7 +204,7 @@ local help = function(name, args, data)
 					else
 						entry.usage = ""
 					end
-					info[#info+1] = "&c&g[[!allium:help "..args[1]..":"..cmd_name.."]]&h[[Click to begin autofill]]!"..cmd_name.."&r: "..entry.info[1]
+					info[#info+1] = "&c&g(!allium:help "..args[1]..":"..cmd_name..")&h(Click to begin autofill)!"..cmd_name.."&r: "..entry.info[1]
 				end
 				return run()
 			else
@@ -217,12 +217,12 @@ end
 
 local credits = function(name)
 	allium.tell(name, {
-		"&dAll&5i&dum &av"..tostring(allium.version).."&r was cultivated with love by &a&h[[Check out his repo!]]&i[[https://github.com/hugeblank]]hugeblank&r.",
-		"Documentation on Allium can be found here: &9&h[[Read up on Allium!]]&ihttps://github.com/hugeblank/allium-wiki&r.",
-		"Contribute and report issues to Allium here: &9&h[[Check out where Allium is grown!]]&ihttps://github.com/hugeblank/allium&r.",
+		"&dAll&5i&dum &av"..tostring(allium.version).."&r was cultivated with love by &a&h(Check out his repo!)&i(https://github.com/hugeblank)hugeblank&r.",
+		"Documentation on Allium can be found here: &9&h(Read up on Allium!)&ihttps://github.com/hugeblank/allium-wiki&r.",
+		"Contribute and report issues to Allium here: &9&h(Check out where Allium is grown!)&ihttps://github.com/hugeblank/allium&r.",
 		"&6Other Contributors:",
-		"&a - &rCommand formatting API by &1&h[[Check out his profile!]]&i[[https://github.com/roger109z]]roger109z&r.",
-		"&a - &rJSON parsing library by &d&h[[Check out their profile!]]&i[[https://github.com/rxi]]rxi&r."
+		"&a - &rCommand formatting API by &1&h(Check out his profile!)&i(https://github.com/roger109z)roger109z&r.",
+		"&a - &rJSON parsing library by &d&h(Check out their profile!)&i(https://github.com/rxi)rxi&r."
 	}, true)
 end
 
@@ -231,9 +231,9 @@ local plugins = function(name)
     local str = ""
     local plugins = allium.getInfo()
 	for p_name in pairs(plugins) do
-		local p_str = "&h[["..p_name.." v"..tostring(allium.getVersion(p_name)).."]]"
+		local p_str = "&h("..p_name.." v"..tostring(allium.getVersion(p_name))..")"
 		if plugins[p_name]["credits"] then
-			p_str = p_str.."&g[[!"..p_name..":credits]]"
+			p_str = p_str.."&g(!"..p_name..":credits)"
 		end
 		pluginlist[#pluginlist+1] = p_str..allium.getName(p_name)
     end
