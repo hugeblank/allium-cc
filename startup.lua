@@ -1,6 +1,6 @@
 -- Allium version
 -- x.x.x-pr = unstable, potential breaking changes
-local allium_version = "0.9.0-pr.newcolor"
+local allium_version = "0.9.0"
 
 local path = "/"
 local firstrun = false
@@ -65,10 +65,10 @@ local loadSettings = function(file, default)
     return config
 end
 
-local config = loadSettings(path.."cfg/allium.lson", default)
+local config, up = loadSettings(fs.combine(path, "cfg/allium.lson"), default), {}
 local depman
-config.updates.check = {}
-config.updates.run = {}
+up.check = {}
+up.run = {}
 
 if config.updates.notify.dependencies then
     local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua")
@@ -90,7 +90,7 @@ if config.updates.notify.dependencies then
             _G.print = temp
             return result, table.unpack(out)
         end
-        config.updates.check.dependencies = function()
+        up.check.dependencies = function()
             local suc, out = depman("scan")
             if suc then
                 return suc, textutils.unserialise(out)
@@ -98,7 +98,7 @@ if config.updates.notify.dependencies then
                 return suc, out
             end
         end
-        config.updates.run.dependencies = function()
+        up.run.dependencies = function()
             return depman("upgrade")
         end
     end
@@ -116,7 +116,7 @@ end
 local github, json = require("lib.nap")("https://api.github.com"), require("lib.json")
 
 if config.updates.notify.allium then
-    config.updates.check.allium = function()
+    up.check.allium = function()
         local repo = config.updates.repo
         local jsonresponse = github.repos[repo.user][repo.name].commits[repo.branch]({
             method = "GET"
@@ -126,10 +126,10 @@ if config.updates.notify.allium then
             jsonresponse.close()
             return json.decode(out).sha
         else
-            return false
+            return false, "No response from github"
         end
     end
-    config.updates.run.allium = function(sha)
+    up.run.allium = function(sha)
         local repo = config.updates.repo
         local null = function() end
         os.run({
@@ -215,7 +215,7 @@ term.setCursorPos(1, 1)
 
 -- Running Allium
 multishell.setTitle(multishell.getCurrent(), "Allium")
-local s, e = pcall(os.run, _ENV, path.."allium.lua", config)
+local s, e = pcall(os.run, _ENV, path.."allium.lua", config, up)
 if not s then
     printError(e)
 end

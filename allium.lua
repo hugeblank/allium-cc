@@ -66,7 +66,7 @@ local cli = {
 	error = {"[", colors.red, "E", colors.white, "] "}
 }
 
-local config = ...
+local config, up = ...
 do -- Configuration parsing
 	if type(config) ~= "table" then
 		printError("Invalid input configuration, make sure you're using the provided init file.")
@@ -612,32 +612,30 @@ local player_scanner = function() -- Login/out scanner thread
     end
 end
 
-local common = {
-	unhide_update = false,
-	run = {}
-}
-common.refresh = function()
-	local done = term.redirect(main)
-	local x, y = term.getSize()
-	common.bY = y-1
-	if common.unhide_update then
-		common.bX = x-6
-		term.setCursorPos(x-6, y-1)
-		term.blit("TRS \24", "888f8", "14efb")
-	else
-		common.bX = x-5
-		term.setCursorPos(x-5, y-1)
-		term.blit("TRS", "888", "14e")
+local update_interaction = function() -- Update UI scanning and handling thread
+	local common = {
+		run = {}
+	}
+	common.refresh = function()
+		local done = term.redirect(main)
+		local x, y = term.getSize()
+		common.bY = y-1
+		if #common.run > 0 then
+			common.bX = x-6
+			term.setCursorPos(x-6, y-1)
+			term.blit("TRS \24", "888f8", "14efb")
+		else
+			common.bX = x-5
+			term.setCursorPos(x-5, y-1)
+			term.blit("TRS", "888", "14e")
+		end
+		term.setBackgroundColor(colors.black) -- Reset terminal and cursor
+		term.setTextColor(colors.white)
+		term.redirect(done)
 	end
-	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
-	term.setTextColor(colors.white)
-	term.redirect(done)
-end
-
-local update_interaction = function()
 	parallel.waitForAll(function() -- Update checker on initialize
-		if config.updates.check.dependencies then
-			local suc, deps = config.updates.check.dependencies()
+		if config.updates.notify.dependencies then
+			local suc, deps = up.check.dependencies()
 			local suffixer
 			if type(deps) == "table" and #deps > 0 then
 				if #deps == 1 then
@@ -646,18 +644,16 @@ local update_interaction = function()
 					suffixer = {"Utilities: ", " are "}
 				end
 				allium.log(suffixer[1]..table.concat(deps, ", ")..suffixer[2].."ready to be updated")
-				common.run[#common.run+1] = {config.updates.run.dependencies}
-				common.unhide_update = true
+				common.run[#common.run+1] = {up.run.dependencies}
 			elseif not suc then
 				print(cli.error, true, "Error in checking for dependency updates: "..deps)
 			end
 		end
-		if config.updates.check.allium then
-			local sha = config.updates.check.allium()
+		if config.updates.notify.allium then
+			local sha = up.check.allium()
 			if sha ~= config.sha then
 				allium.log("Allium is ready to be updated")
-				common.run[#common.run+1] = {config.updates.run.allium, sha}
-				common.unhide_update = true
+				common.run[#common.run+1] = {up.run.allium, sha}
 			elseif not sha then
 				allium.warn("Failed to scan for allium updates")
 			end
@@ -685,7 +681,7 @@ local update_interaction = function()
 						allium.log("Shutting down...")
 						sleep(1)
 						os.shutdown()
-					elseif x-common.bX == 4 and common.unhide_update then -- Update
+					elseif x-common.bX == 4 and #common.run > 0 then -- Update
 						allium.log("Downloading updates...")
 						for i = 1, #common.run do
 							local s, err = pcall(table.unpack(common.run[i]))
