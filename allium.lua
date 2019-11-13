@@ -292,6 +292,75 @@ allium.register = function(p_name, version, fullname)
 		return config
 	end
 
+	do -- Library Managment micro service
+		local apis = {}
+		local meta_r = fs.open(fs.combine(path, "lib/plugins/metadata.lson"), "r")
+		local meta_t = {}
+		if meta_r then
+			meta_t = textutils.unserialise(meta_r.readAll()) or {}
+			meta_r.close()
+		end
+
+		local loadAPI = function(url, name)
+			assert(type(url) == "string", "Invalid argument #1 (expected string got "..type(url)..")")
+			assert(type(name) == "string", "Invalid argument #2 (expected string got "..type(name)..")")
+			name = allium.sanitize(name) -- Remove invalid characters
+			if not meta_t[real_name] then meta_t[real_name] = {} end -- Create entry for plugin
+			local api -- Variable to put loaded lib
+			local fileName = fs.combine(path, "lib/plugins/"..real_name.."/"..name..".lua") -- Path for file
+			-- Handle updates
+			if meta_t[real_name][name] ~= url then -- If this is an updated version of the library
+				meta_t[real_name][name] = nil -- Clear the entry from metadata to add later
+			end
+			-- Handle downloading/loading
+			if not meta_t[real_name][name] then -- If there is no entry for this library
+				local handle = http.get(url) -- Download handle, make file name
+				if not handle then return false end -- If download failed, leave
+				local apiFile, contents = fs.open(fileName, "w"), handle.readAll() -- Create local file, get response contents
+				local s, e = load(contents, name, nil, _ENV) -- Compile program
+				if not s then return false, e end -- Leave if it errored
+				api = s
+				apiFile.write(contents) -- Save handle
+				meta_t[real_name][name] = url -- Add library entry
+				apiFile.close() handle.close() -- Close handles
+			else -- OTHERWISE the library entry exists, load locally.
+				local s, e = loadfile(fileName) -- Load the file. Duh.
+				if not s then return false, e end -- Exit if there was an error loading it
+				api = s
+			end
+			-- Rewrite data to disk
+			local meta_w = fs.open(fs.combine(path, "lib/plugins/metadata.lson"), "w")
+			meta_w.write(textutils.serialise(meta_t))
+			meta_w.close()
+			apis[name] = true -- Mark library as loaded
+			return pcall(api) -- Safely load the library
+		end
+		local done = function() -- Do API cleaning
+			for name in pairs(apis) do
+				meta_t[real_name][name] = nil
+			end
+			for name in pairs(meta_t) do
+				local fileName = fs.combine(path, "lib/plugins/"..real_name.."/"..name..".lua") -- Path for file
+				fs.delete(fileName)
+			end
+		end
+
+		funcs.loadLibs = function(t)
+			assert(type(t) == "table", "Invalid argument #1 (expected table got "..type(t)..")")
+			local out = {}
+			for name, url in pairs(t) do
+				assert(type(url) == "string", "Invalid URL "..tostring(url).." (expected string got "..type(url)..")")
+				assert(type(name) == "string", "Invalid name "..tostring(name).." (expected string got "..type(name)..")")
+				local temp = {loadAPI(url, name)}
+				table.remove(temp, 1)
+				out[name] = temp
+			end
+			done()
+			return out
+		end
+	end
+
+	end
 
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
