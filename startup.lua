@@ -1,6 +1,6 @@
 -- Allium version
 -- x.x.x-pr = unstable, potential breaking changes
-local allium_version = "0.9.0"
+local allium_version = "0.10.0-pr"
 
 local path = "/"
 local firstrun = false
@@ -78,8 +78,8 @@ if config.updates.notify.dependencies then
         local depargs = { -- Depman args minus the task which can be inserted into the first index
             path,
             "https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson",
-            path.."/cfg/dependencies.lson",
-            path.."/lib",
+            fs.combine(path, "/cfg/dependencies.lson"),
+            fs.combine(path, "/lib"),
             allium_version
         }
         depman = function(task)
@@ -141,7 +141,7 @@ if config.updates.notify.allium then
             print = null,
             write = null,
             shell = {
-                getRunningProgram = function() return path.."/lib/gget.lua" end
+                getRunningProgram = function() return fs.combine(path, "/lib/gget.lua") end
             }
         },
         fs.combine(path, "/lib/gget.lua"),
@@ -215,7 +215,7 @@ term.setCursorPos(1, 1)
 
 -- Running Allium
 multishell.setTitle(multishell.getCurrent(), "Allium")
-local s, e = pcall(os.run, _ENV, path.."allium.lua", config, up)
+local s, e = pcall(os.run, _ENV, fs.combine(path, "allium.lua"), config, up)
 if not s then
     printError(e)
 end

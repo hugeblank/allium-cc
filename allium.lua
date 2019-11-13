@@ -6,12 +6,11 @@ local raisin, color, semver, mojson, json = require("lib.raisin"), require("lib.
 -- Internal definitions
 local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)}
 
--- Executing path
+-- Get executing path
 local path = "/"
 for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 	path = path..str
 end
-
 -- Defining custom print
 local nprint = _G.print
 local function print(prefix, wcText, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
@@ -238,7 +237,7 @@ allium.register = function(p_name, version, fullname)
 	local loaded = {}
 	plugins[real_name] = {commands = {}, loaded = loaded, name = fullname or p_name, version = version}
 	local funcs, this = {}, plugins[real_name]
-	
+
 	funcs.command = function(c_name, command, info) -- name: name | command: executing function | info: help information
 		-- Add a command for the user to execute
 		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
@@ -265,7 +264,7 @@ allium.register = function(p_name, version, fullname)
 
 	funcs.loadConfig = function(default)
 		assert(type(default) == "table", "Invalid argument #1 (table expected, got "..type(default)..")") 
-		local file = path.."/cfg/"..real_name..".lson"
+		local file = fs.combine(path, "/cfg/"..real_name..".lson")
 		if not fs.exists(file) then
 			local setting = fs.open(file,"w")
 			setting.write(textutils.serialise(default))
@@ -296,8 +295,8 @@ allium.register = function(p_name, version, fullname)
 
 	funcs.getPersistence = function(name)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		if fs.exists(path.."cfg/persistence.lson") then
-			local fper = fs.open(path.."cfg/persistence.lson", "r")
+		if fs.exists(fs.combine(path, "cfg/persistence.lson")) then
+			local fper = fs.open(fs.combine(path, "cfg/persistence.lson"), "r")
 			local tpersist = textutils.unserialize(fper.readAll())
 			fper.close()
 			if not tpersist[real_name] then
@@ -309,7 +308,7 @@ allium.register = function(p_name, version, fullname)
 		end
 		return false
 	end
-	
+
 	funcs.setPersistence = function(name, data)
 		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
 		local tpersist = funcs.getPersistence(name) or {}
@@ -318,7 +317,7 @@ allium.register = function(p_name, version, fullname)
 		end
 		if type(name) == "string" then
 			tpersist[real_name][name] = data
-			local fpers = fs.open(path.."cfg/persistence.lson", "w")
+			local fpers = fs.open(fs.combine(path, "cfg/persistence.lson"), "w")
 			if not fpers then 
 				return false 
 			end
@@ -330,10 +329,12 @@ allium.register = function(p_name, version, fullname)
 	end
 
 	funcs.module = function(container)
-		-- A container for all external functionality that other programs can utilize
-		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
-		this.module = container
-		funcs.module = container
+		if type(funcs.module) == "function" then -- Prevent overwriting the module
+			-- A container for all external functionality that other programs can utilize
+			assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
+			this.module = container
+			funcs.module = container
+		end
 	end
 
 	funcs.import = function(p_name) -- request the API from a specific plugin
@@ -703,8 +704,8 @@ raisin.thread(interpreter, 0)
 raisin.thread(player_scanner, 1)
 raisin.thread(update_interaction, 1)
 
-if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
-	local fpers = fs.open(path.."cfg/persistence.lson", "w")
+if not fs.exists(fs.combine(path, "cfg/persistence.lson")) then --In the situation that this is a first installation, let's do some setup
+	local fpers = fs.open(fs.combine(path, "cfg/persistence.lson"), "w")
 	fpers.write("{}")
 	fpers.close()
 end
