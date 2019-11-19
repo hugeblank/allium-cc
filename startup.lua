@@ -161,10 +161,6 @@ if config.updates.notify.allium then
     end
 end
 
-if config.updates.notify.plugins then
-    -- Things will be here
-end
-
 -- Final firstrun stuff
 if firstrun then
     print("Finalizing installation")
