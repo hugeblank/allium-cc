@@ -91,7 +91,6 @@ do -- Metadata magic table setup
 				end
 			end,
 			__newindex = function(_, k, v)
-				allium.log(k)
 				reset()
 				for i = 1, #keytbl do
 					dummy = dummy[keytbl[i]]
@@ -116,6 +115,88 @@ do -- Metadata magic table setup
 	reset()
 
 	g_persistence = setmetatable({}, makemt({}))
+end
+
+local g_updates = {}
+do
+	do -- Standard github update methods, written for you <3
+		local github = {}
+		local sha
+		github[1] = function(data) -- Update checker function
+			local github = nap("https://api.github.com")
+			if data.user and data.repo and data.branch then
+				local response = github.repos[data.user][data.repo].commits[data.branch]({ method = "GET" })
+				if not response then return false end
+				local parsed = json.decode(response.readAll())
+				if not parsed then return false end
+				if not data.sha then data.sha = parsed.sha end
+				if data.sha ~= parsed.sha then
+					sha = parsed.sha
+					return true
+				end
+			end
+			return false
+		end
+
+		github[2] = function(data) -- Update executor function
+			local null = function() end -- Please forgive me for this sin of a bodge
+			os.run({
+					term = {
+						write=null,
+						setCursorPos=null,
+						getCursorPos=function() return 1, 1 end
+					},
+					print = null,
+					write = null,
+					shell = {
+						getRunningProgram = function() return fs.combine(path, "/lib/gget.lua") end
+					}
+				},
+				fs.combine(path, "/lib/gget.lua"),
+				data.user,
+				data.repo,
+				data.branch,
+				data.path or fs.combine(path, "plugins")
+			)
+			data.sha = sha
+		end
+
+		g_updates.github = function()
+			return table.unpack(github)
+		end
+	end
+
+	do -- Standard pastebin update methods
+		local pastebin = {}
+		local p = fs.combine(path, "plugins")
+		pastebin[1] = function(data) -- Update checker function
+			if not (data.id and data.path and http.checkURL("https://pastebin.com/raw/"..data.id) and fs.exists(fs.combine(p, data.path))) then
+				return false
+			end
+			local content, file = http.get("https://pastebin.com/raw/"..data.id), fs.open(fs.combine(p, data.path), "r")
+			if not (content and file) then
+				file.close()
+				return false
+			end
+			local out = content.readAll() ~= file.readAll()
+			file.close() content.close()
+			return out
+		end
+
+		pastebin[2] = function(data) -- Update runner function
+			local content, file = http.get("https://pastebin.com/raw/"..data.id), fs.open(fs.combine(p, data.path), "w")
+			if not file then
+				content.close()
+				error("Could not write to file. Is the disk full?")
+			end
+			file.write(content.readAll())
+			file.close() content.close()
+		end
+
+		g_updates.pastebin = function()
+			return table.unpack(pastebin)
+		end
+	end
 end
 
 local cli = {
@@ -388,7 +469,6 @@ allium.register = function(p_name, version, fullname)
 				api = s
 				apiFile.write(contents) -- Save handle
 				persistence.libs[name] = url -- Add library entry
-				allium.log(persistence.libs[name])
 				apiFile.close() handle.close() -- Close handles
 			else -- OTHERWISE the library entry exists, load locally.
 				local s, e = loadfile(fileName) -- Load the file. Duh.
@@ -424,58 +504,12 @@ allium.register = function(p_name, version, fullname)
 	end
 
 	do -- Plugin self-update micro service
-		funcs.update = {}
+		funcs.update = {
+			default = g_updates
+		}
 		-- Magic table for the update micro API.
 		if not persistence.update then persistence.update = {} end
 		funcs.update.cache = persistence.update
-
-		local default = {}
-		do -- Standard github update methods, written for you <3
-			default.github = {}
-			local sha
-			default.github[1] = function(data) -- Update checker function
-				local github = nap("https://api.github.com")
-				if data.user and data.repo and data.branch then
-					local response = github.repos[data.user][data.repo].commits[data.branch]({ method = "GET" })
-					if not response then return false end
-					local parsed = json.decode(response.readAll())
-					if not parsed then return false end
-					if not data.sha then data.sha = parsed.sha end
-					if data.sha ~= parsed.sha then
-						sha = parsed.sha
-						return true
-					end
-				end
-				return false
-			end
-
-			default.github[2] = function(data) -- Update executor function
-				local null = function() end -- Please forgive me for this sin of a bodge
-				os.run({
-						term = {
-							write=null,
-							setCursorPos=null,
-							getCursorPos=function() return 1, 1 end
-						},
-						print = null,
-						write = null,
-						shell = {
-							getRunningProgram = function() return fs.combine(path, "/lib/gget.lua") end
-						}
-					},
-					fs.combine(path, "/lib/gget.lua"),
-					data.user,
-					data.repo,
-					data.branch,
-					fs.combine(path, "plugins/"..real_name)
-				)
-				data.sha = sha
-			end
-		end
-
-		funcs.update.getGithubMethods = function()
-			return table.unpack(default.github)
-		end
 
 		funcs.update.setMethods = function(check, update)
 			if not up.check.plugins then up.check.plugins = {} end
@@ -825,7 +859,8 @@ local update_interaction = function() -- Update UI scanning and handling thread
 			local suffixer
 			for k, v in pairs(up.check.plugins or {}) do
 				if g_persistence[k] and g_persistence[k].update and v and up.run.plugins[k] then
-					if pcall(v, g_persistence[k].update) then
+					local s, r = pcall(v, g_persistence[k].update)
+					if s and r then
 						toUpdate[#toUpdate+1] = k
 						common.run[#common.run+1] = {up.run.plugins[k], g_persistence[k].update}
 					end
