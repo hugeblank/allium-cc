@@ -67,17 +67,18 @@ do -- Metadata magic table setup
 		if not permdata then permdata = {} end
 		file.close()
 	end
-	local function reset()
+	local function scope(kt)
 		dummy = permdata
+		for i = 1, #kt do
+			dummy = dummy[kt[i]]
+		end
 	end
 
 	local function makemt(keytbl)
 		return {
+			-- Dear Lua, make __modindex a thing. Sincerely, hugeblank
 			__index = function(_, k)
-				reset()
-				for i = 1, #keytbl do
-					dummy = dummy[keytbl[i]]
-				end
+				scope(keytbl)
 				if type(dummy[k]) == "table" then
 					local newkeytbl = {}
 					for i = 1, #keytbl do
@@ -90,28 +91,22 @@ do -- Metadata magic table setup
 				end
 			end,
 			__newindex = function(_, k, v)
-				reset()
-				for i = 1, #keytbl do
-					dummy = dummy[keytbl[i]]
-				end
+				scope(keytbl)
 				dummy[k] = v
 				local file = fs.open(fs.combine(path, "cfg/metadata.lson"), "w")
 				assert(file, "Failed to open metadata file. Is the disk full?")
 				file.write(textutils.serialise(permdata))
 				file.close()
 			end,
-			__len = function(_)
-				reset()
-				for i = 1, #keytbl do
-					dummy = dummy[keytbl[i]]
-				end
-				return #dummy
+			__call = function()
+				scope(keytbl)
+				return dummy
 			end
 		}
 	end
 
 	update()
-	reset()
+	scope({})
 
 	g_persistence = setmetatable({}, makemt({}))
 end
