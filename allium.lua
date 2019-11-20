@@ -4,7 +4,7 @@
 local raisin, color, semver, mojson, json, nap = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson"), require("lib.json"), require("lib.nap")
 
 -- Internal definitions
-local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)}
+local allium, plugins, group = {}, {}, {thread = raisin.group(1), command = raisin.group(2)}
 
 -- Get executing path
 local path = "/"
@@ -12,8 +12,7 @@ for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 	path = path..str
 end
 -- Defining custom print
-local nprint = _G.print
-local function print(prefix, wcText, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
+local function aprint(prefix, wcText, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
 	local color = term.getTextColor()
 	local function writeColor(cdata)
 		for i = 1, #cdata do
@@ -28,9 +27,9 @@ local function print(prefix, wcText, ...) -- Magical function that takes in a ta
 	writeColor(prefix)
 	if wcText then
 		writeColor({...})
-		nprint()
+		_G.print()
 	else
-		nprint(...)
+		_G.print(...)
 	end
 end
 
@@ -250,8 +249,8 @@ do -- Allium image setup <3
 	term.setCursorPos(1, 1)
 	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 	term.setTextColor(colors.white)
-	print(cli.info, true, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
-	print(cli.info, true, "Initializing API")
+	aprint(cli.info, true, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
+	aprint(cli.info, true, "Initializing API")
 end
 
 allium.assert = assert
@@ -263,11 +262,11 @@ end
 
 -- Logging wrapper functions
 allium.log = function(...)
-	print(cli.info, false, ...)
+	aprint(cli.info, false, ...)
 end
 
 allium.warn = function(...)
-	print(cli.warn, false, ...)
+	aprint(cli.warn, false, ...)
 end
 
 allium.tell = function(name, message, alt_name)
@@ -588,7 +587,7 @@ allium.verify = function(param) -- Verification code ripped from DepMan instance
 		return res
 	end
 	local range = param:find("&&") -- Matched a range definition
-	local comp, c_e = param:find("[><][=]*") -- I do love me some pattern matching
+	local comp = param:find("[><][=]*") -- I do love me some pattern matching
 	if range then -- If there's a range beginning definition
 		local a, b = compare(param:sub(1, range-1)), compare(param:sub(range+3, -1))
 		if a and b then
@@ -633,7 +632,7 @@ if not package.preload["allium"] then
 		return allium
 	end
 else
-	print(cli.error, false, "Another instance of Allium is already running")
+	aprint(cli.error, false, "Another instance of Allium is already running")
 	return
 end
 
@@ -645,12 +644,12 @@ do -- Plugin loading process
 			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
 				local file, err = loadfile(dir.."/"..plugin, _ENV)
 				if not file then
-					print(cli.error, false, err)
+					aprint(cli.error, false, err)
 				else
 					local thread = function()
 						local suc, err = pcall(file)
 						if not suc then
-							print(cli.error, false, err)
+							aprint(cli.error, false, err)
 						end
 					end
 					raisin.thread(thread, 0, loader_group)
@@ -833,7 +832,7 @@ local update_interaction = function() -- Update UI scanning and handling thread
 		if config.updates.notify.dependencies then
 			local suc, deps = up.check.dependencies()
 			local suffixer
-			if type(deps) == "table" and #deps > 0 then
+			if suc and type(deps) == "table" and #deps > 0 then
 				if #deps == 1 then
 					suffixer = {"Utility ", " is"}
 				else
@@ -842,7 +841,7 @@ local update_interaction = function() -- Update UI scanning and handling thread
 				allium.log(suffixer[1]..table.concat(deps, ", ")..suffixer[2].." ready to be updated")
 				common.run[#common.run+1] = {up.run.dependencies}
 			elseif not suc then
-				print(cli.error, true, "Error in checking for dependency updates: "..deps)
+				aprint(cli.error, true, "Error in checking for dependency updates: "..table.concat(deps, ", "))
 			end
 		end
 		if config.updates.notify.allium then
@@ -900,7 +899,7 @@ local update_interaction = function() -- Update UI scanning and handling thread
 						for i = 1, #common.run do
 							local s, err = pcall(table.unpack(common.run[i]))
 							if not s then
-								print(cli.error, true, "Failed to execute an update: "..err)
+								aprint(cli.error, true, "Failed to execute an update: "..err)
 							end
 						end
 						allium.log("Rebooting to apply updates...")

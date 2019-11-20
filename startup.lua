@@ -71,7 +71,7 @@ up.check = {}
 up.run = {}
 
 if config.updates.notify.dependencies then
-    local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua")
+    local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/046ce3e231eab81ac15275ffe8dd76ab6f2f8274/instance.lua")
     if depget then
         local contents = depget.readAll()
         depget.close()
@@ -84,22 +84,24 @@ if config.updates.notify.dependencies then
         }
         depman = function(task)
             local out = {}
-            local temp = _G.print -- The good ol' switcheroo
-            _G.print = function(...) out = {...} end
-            local result = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(depargs))
-            _G.print = temp
-            return result, table.unpack(out)
+            local temp = {_G.print, _G.printError, _G.error} -- The good ol' switcheroo
+            local function cache(...)
+                for i = 1, #({...}) do
+                    out[#out+1] = ({...})[i]
+                    temp[1](out[#out])
+                end
+            end
+            _G.print, _G.printError, _G.error = cache, cache, cache -- Best CS map don't @ me (jk never played it)
+            local result, err = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(depargs))
+            out[#out+1] = err
+            _G.print, _G.printError, _G.error = table.unpack(temp)
+            return result, out
         end
         up.check.dependencies = function()
-            local suc, out = depman("scan")
-            if suc then
-                return suc, textutils.unserialise(out)
-            else
-                return suc, out
-            end
+            return depman("scan")
         end
         up.run.dependencies = function()
-            return depman("upgrade")
+            depman("upgrade")
         end
     end
 end
