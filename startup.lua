@@ -18,7 +18,7 @@ end
     Configurations can be changed in /cfg/allium.lson
 ]]
 local default = {
-    label = "<&r&dAll&5&h(Kilroy wuz here.)&i(https://www.youtube.com/watch?v=XqZsoesa55w\\&t=15s)i&r&dum&r> ", -- The label the loader uses
+    label = "<&r&dAll&5&h(hugeblank <3 AJR)&i(https://www.youtube.com/watch?v=Vy1JwiXHwI4)i&r&dum&r> ", -- The label the loader uses
     import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
     updates = { -- Various update configurations.
         notify = { -- Configurations to trigger notifications when parts of Allium are ready for an update
