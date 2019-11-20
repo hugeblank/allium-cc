@@ -71,7 +71,7 @@ up.check = {}
 up.run = {}
 
 if config.updates.notify.dependencies then
-    local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/master/instance.lua")
+    local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/6cb301b36eaf9e17500cf53187f3b6589223fa8b/instance.lua")
     if depget then
         local contents = depget.readAll()
         depget.close()
