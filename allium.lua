@@ -13,7 +13,7 @@ for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 end
 -- Defining custom print
 local function aprint(prefix, wcText, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
-	local color = term.getTextColor()
+	local c = term.getTextColor()
 	local function writeColor(cdata)
 		for i = 1, #cdata do
 			if type(cdata[i]) == "string" then
@@ -22,7 +22,7 @@ local function aprint(prefix, wcText, ...) -- Magical function that takes in a t
 				term.setTextColor(cdata[i])
 			end
 		end
-		term.setTextColor(color)
+		term.setTextColor(c)
 	end
 	writeColor(prefix)
 	if wcText then

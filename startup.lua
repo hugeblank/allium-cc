@@ -1,6 +1,6 @@
 -- Allium version
 -- x.x.x-pr = unstable, potential breaking changes
-local allium_version = "0.10.0-pr"
+local allium_version = "0.10.0"
 
 local path = "/"
 local firstrun = false
