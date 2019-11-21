@@ -1,6 +1,6 @@
 -- Allium version
 -- x.x.x-pr = unstable, potential breaking changes
-local allium_version = "0.9.0"
+local allium_version = "0.10.0"
 
 local path = "/"
 local firstrun = false
@@ -18,7 +18,7 @@ end
     Configurations can be changed in /cfg/allium.lson
 ]]
 local default = {
-    label = "<&r&dAll&5&h(Kilroy wuz here.)&i(https://www.youtube.com/watch?v=XqZsoesa55w\\&t=15s)i&r&dum&r> ", -- The label the loader uses
+    label = "<&r&dAll&5&h(hugeblank <3 AJR)&i(https://www.youtube.com/watch?v=Vy1JwiXHwI4)i&r&dum&r> ", -- The label the loader uses
     import_timeout = 5, -- The maximum amount of time it takes to wait for a plugin dependency to provide its module.
     updates = { -- Various update configurations.
         notify = { -- Configurations to trigger notifications when parts of Allium are ready for an update
@@ -71,35 +71,37 @@ up.check = {}
 up.run = {}
 
 if config.updates.notify.dependencies then
-    local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/6cb301b36eaf9e17500cf53187f3b6589223fa8b/instance.lua")
+    local depget = http.get("https://raw.githubusercontent.com/hugeblank/allium-depman/046ce3e231eab81ac15275ffe8dd76ab6f2f8274/instance.lua")
     if depget then
         local contents = depget.readAll()
         depget.close()
         local depargs = { -- Depman args minus the task which can be inserted into the first index
             path,
             "https://raw.githubusercontent.com/hugeblank/allium-depman/master/listing.lson",
-            path.."/cfg/dependencies.lson",
-            path.."/lib",
+            fs.combine(path, "/cfg/dependencies.lson"),
+            fs.combine(path, "/lib"),
             allium_version
         }
         depman = function(task)
             local out = {}
-            local temp = _G.print -- The good ol' switcheroo
-            _G.print = function(...) out = {...} end
-            local result = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(depargs))
-            _G.print = temp
-            return result, table.unpack(out)
+            local temp = {_G.print, _G.printError, _G.error} -- The good ol' switcheroo
+            local function cache(...)
+                for i = 1, #({...}) do
+                    out[#out+1] = ({...})[i]
+                    temp[1](out[#out])
+                end
+            end
+            _G.print, _G.printError, _G.error = cache, cache, cache -- Best CS map don't @ me (jk never played it)
+            local result, err = pcall(load(contents, "Depman", nil, _ENV), task, table.unpack(depargs))
+            out[#out+1] = err
+            _G.print, _G.printError, _G.error = table.unpack(temp)
+            return result, out
         end
         up.check.dependencies = function()
-            local suc, out = depman("scan")
-            if suc then
-                return suc, textutils.unserialise(out)
-            else
-                return suc, out
-            end
+            return depman("scan")
         end
         up.run.dependencies = function()
-            return depman("upgrade")
+            depman("upgrade")
         end
     end
 end
@@ -141,7 +143,7 @@ if config.updates.notify.allium then
             print = null,
             write = null,
             shell = {
-                getRunningProgram = function() return path.."/lib/gget.lua" end
+                getRunningProgram = function() return fs.combine(path, "/lib/gget.lua") end
             }
         },
         fs.combine(path, "/lib/gget.lua"),
@@ -159,10 +161,6 @@ if config.updates.notify.allium then
             return
         end
     end
-end
-
-if config.updates.notify.plugins then
-    -- Things will be here
 end
 
 -- Final firstrun stuff
@@ -215,7 +213,7 @@ term.setCursorPos(1, 1)
 
 -- Running Allium
 multishell.setTitle(multishell.getCurrent(), "Allium")
-local s, e = pcall(os.run, _ENV, path.."allium.lua", config, up)
+local s, e = pcall(os.run, _ENV, fs.combine(path, "allium.lua"), config, up)
 if not s then
     printError(e)
 end

@@ -1,21 +1,19 @@
 -- Allium by hugeblank
 
 -- Dependency Loading
-local raisin, color, semver, mojson, json = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson"), require("lib.json")
+local raisin, color, semver, mojson, json, nap = require("lib.raisin"), require("lib.color"), require("lib.semver"), require("lib.mojson"), require("lib.json"), require("lib.nap")
 
 -- Internal definitions
-local allium, plugins, group = {}, {}, {thread = raisin.group(1) , command = raisin.group(2)}
+local allium, plugins, group = {}, {}, {thread = raisin.group(1), command = raisin.group(2)}
 
--- Executing path
+-- Get executing path
 local path = "/"
 for str in string.gmatch(shell.getRunningProgram(), ".+[/]") do
 	path = path..str
 end
-
 -- Defining custom print
-local nprint = _G.print
-local function print(prefix, wcText, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
-	local color = term.getTextColor()
+local function aprint(prefix, wcText, ...) -- Magical function that takes in a table and changes the text color/writes at the same time
+	local c = term.getTextColor()
 	local function writeColor(cdata)
 		for i = 1, #cdata do
 			if type(cdata[i]) == "string" then
@@ -24,14 +22,14 @@ local function print(prefix, wcText, ...) -- Magical function that takes in a ta
 				term.setTextColor(cdata[i])
 			end
 		end
-		term.setTextColor(color)
+		term.setTextColor(c)
 	end
 	writeColor(prefix)
 	if wcText then
 		writeColor({...})
-		nprint()
+		_G.print()
 	else
-		nprint(...)
+		_G.print(...)
 	end
 end
 
@@ -58,6 +56,141 @@ end
 
 local function assert(condition, message, level)
 	if not condition then error(message, (level or 0)+3) end
+end
+
+local g_persistence
+do -- Metadata magic table setup
+	local permdata, dummy
+	local function update()
+		local file = fs.open(fs.combine(path, "cfg/metadata.lson"), "r")
+		permdata = textutils.unserialise(file.readAll())
+		if not permdata then permdata = {} end
+		file.close()
+	end
+	local function scope(kt)
+		dummy = permdata
+		for i = 1, #kt do
+			dummy = dummy[kt[i]]
+		end
+	end
+
+	local function makemt(keytbl)
+		return {
+			-- Dear Lua, make __modindex a thing. Sincerely, hugeblank
+			__index = function(_, k)
+				scope(keytbl)
+				if type(dummy[k]) == "table" then
+					local newkeytbl = {}
+					for i = 1, #keytbl do
+						newkeytbl[#newkeytbl+1] = keytbl[i]
+					end
+					newkeytbl[#newkeytbl+1] = k
+					return setmetatable({}, makemt(newkeytbl))
+				else
+					return dummy[k]
+				end
+			end,
+			__newindex = function(_, k, v)
+				scope(keytbl)
+				dummy[k] = v
+				local file = fs.open(fs.combine(path, "cfg/metadata.lson"), "w")
+				assert(file, "Failed to open metadata file. Is the disk full?")
+				file.write(textutils.serialise(permdata))
+				file.close()
+			end,
+			__call = function()
+				scope(keytbl)
+				return dummy
+			end
+		}
+	end
+
+	update()
+	scope({})
+
+	g_persistence = setmetatable({}, makemt({}))
+end
+
+local g_updates = {}
+do
+	do -- Standard github update methods, written for you <3
+		local github = {}
+		local sha
+		github[1] = function(data) -- Update checker function
+			local github = nap("https://api.github.com")
+			if data.user and data.repo and data.branch then
+				local response = github.repos[data.user][data.repo].commits[data.branch]({ method = "GET" })
+				if not response then return false end
+				local parsed = json.decode(response.readAll())
+				if not parsed then return false end
+				if not data.sha then data.sha = parsed.sha end
+				if data.sha ~= parsed.sha then
+					sha = parsed.sha
+					return true
+				end
+			end
+			return false
+		end
+
+		github[2] = function(data) -- Update executor function
+			local null = function() end -- Please forgive me for this sin of a bodge
+			os.run({
+					term = {
+						write=null,
+						setCursorPos=null,
+						getCursorPos=function() return 1, 1 end
+					},
+					print = null,
+					write = null,
+					shell = {
+						getRunningProgram = function() return fs.combine(path, "/lib/gget.lua") end
+					}
+				},
+				fs.combine(path, "/lib/gget.lua"),
+				data.user,
+				data.repo,
+				data.branch,
+				data.path or fs.combine(path, "plugins")
+			)
+			data.sha = sha
+		end
+
+		g_updates.github = function()
+			return table.unpack(github)
+		end
+	end
+
+	do -- Standard pastebin update methods
+		local pastebin = {}
+		local p = fs.combine(path, "plugins")
+		pastebin[1] = function(data) -- Update checker function
+			if not (data.id and data.path and http.checkURL("https://pastebin.com/raw/"..data.id) and fs.exists(fs.combine(p, data.path))) then
+				return false
+			end
+			local content, file = http.get("https://pastebin.com/raw/"..data.id), fs.open(fs.combine(p, data.path), "r")
+			if not (content and file) then
+				file.close()
+				return false
+			end
+			local out = content.readAll() ~= file.readAll()
+			file.close() content.close()
+			return out
+		end
+
+		pastebin[2] = function(data) -- Update runner function
+			local content, file = http.get("https://pastebin.com/raw/"..data.id), fs.open(fs.combine(p, data.path), "w")
+			if not file then
+				content.close()
+				error("Could not write to file. Is the disk full?")
+			end
+			file.write(content.readAll())
+			file.close() content.close()
+		end
+
+		g_updates.pastebin = function()
+			return table.unpack(pastebin)
+		end
+	end
 end
 
 local cli = {
@@ -111,8 +244,8 @@ do -- Allium image setup <3
 	term.setCursorPos(1, 1)
 	term.setBackgroundColor(colors.black) -- Reset terminal and cursor
 	term.setTextColor(colors.white)
-	print(cli.info, true, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
-	print(cli.info, true, "Initializing API")
+	aprint(cli.info, true, "Loading ", colors.magenta, "All", colors.purple, "i", colors.magenta, "um")
+	aprint(cli.info, true, "Initializing API")
 end
 
 allium.assert = assert
@@ -124,11 +257,11 @@ end
 
 -- Logging wrapper functions
 allium.log = function(...)
-	print(cli.info, false, ...)
+	aprint(cli.info, false, ...)
 end
 
 allium.warn = function(...)
-	print(cli.warn, false, ...)
+	aprint(cli.warn, false, ...)
 end
 
 allium.tell = function(name, message, alt_name)
@@ -154,7 +287,7 @@ end
 allium.getPlayers = function()
 	local didexec, input = commands.exec("list")
 	local out = {}
-	if not input[1]:find(":") then
+	if not didexec or not input[1]:find(":") then
 		return false, input
 	end
 	for user in string.gmatch(input[1]:sub(input[1]:find(":")+1, -1), "%S+") do
@@ -238,7 +371,14 @@ allium.register = function(p_name, version, fullname)
 	local loaded = {}
 	plugins[real_name] = {commands = {}, loaded = loaded, name = fullname or p_name, version = version}
 	local funcs, this = {}, plugins[real_name]
-	
+
+	-- Redefining persistence locally
+	if not g_persistence[real_name] then
+		g_persistence[real_name] = {}
+	end
+	local persistence = g_persistence[real_name]
+	this.persistence = persistence
+
 	funcs.command = function(c_name, command, info) -- name: name | command: executing function | info: help information
 		-- Add a command for the user to execute
 		assert(type(c_name) == "string", "Invalid argument #1 (string expected, got "..type(c_name)..")")
@@ -265,7 +405,7 @@ allium.register = function(p_name, version, fullname)
 
 	funcs.loadConfig = function(default)
 		assert(type(default) == "table", "Invalid argument #1 (table expected, got "..type(default)..")") 
-		local file = path.."/cfg/"..real_name..".lson"
+		local file = fs.combine(path, "/cfg/"..real_name..".lson")
 		if not fs.exists(file) then
 			local setting = fs.open(file,"w")
 			setting.write(textutils.serialise(default))
@@ -293,47 +433,97 @@ allium.register = function(p_name, version, fullname)
 		return config
 	end
 
+	do -- Library Managment micro service
+		local apis = {}
 
-	funcs.getPersistence = function(name)
-		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		if fs.exists(path.."cfg/persistence.lson") then
-			local fper = fs.open(path.."cfg/persistence.lson", "r")
-			local tpersist = textutils.unserialize(fper.readAll())
-			fper.close()
-			if not tpersist[real_name] then
-				tpersist[real_name] = {}
+		local loadAPI = function(url, name)
+			assert(type(url) == "string", "Invalid argument #1 (expected string got "..type(url)..")")
+			assert(type(name) == "string", "Invalid argument #2 (expected string got "..type(name)..")")
+			name = allium.sanitize(name) -- Remove invalid characters
+			if not persistence.libs then persistence.libs = {} end -- Create entry for plugin
+			local api -- Variable to put loaded lib
+			local fileName = fs.combine(path, "lib/plugins/"..real_name.."/"..name..".lua") -- Path for file
+			-- Handle updates
+			if persistence.libs[name] ~= url then -- If this is an updated version of the library
+				persistence.libs[name] = nil -- Clear the entry from metadata to add later
 			end
-			if type(name) == "string" then
-				return tpersist[real_name][name]
+			-- Handle downloading/loading
+			if not persistence.libs[name] then -- If there is no entry for this library
+				local handle = http.get(url) -- Download handle, make file name
+				if not handle then
+					handle.close()
+					return false
+				end -- If download failed, leave
+				local apiFile, contents = fs.open(fileName, "w"), handle.readAll() -- Create local file, get response contents
+				local s, e = load(contents, name, nil, _ENV) -- Compile program
+				if not s then
+					apiFile.close() handle.close() -- Close handles
+					return false, e
+				end -- Leave if it errored
+				api = s
+				apiFile.write(contents) -- Save handle
+				persistence.libs[name] = url -- Add library entry
+				apiFile.close() handle.close() -- Close handles
+			else -- OTHERWISE the library entry exists, load locally.
+				local s, e = loadfile(fileName) -- Load the file. Duh.
+				if not s then return false, e end -- Exit if there was an error loading it
+				api = s
+			end
+			apis[name] = true -- Mark library as loaded
+			return pcall(api) -- Safely load the library
+		end
+		local done = function() -- Do API cleaning
+			for name in pairs(persistence.libs) do
+				if not apis[name] then
+					persistence.libs[name] = nil
+					local fileName = fs.combine(path, "lib/plugins/"..real_name.."/"..name..".lua") -- Path for file
+					fs.delete(fileName)
+				end
 			end
 		end
-		return false
+
+		funcs.loadLibs = function(t)
+			assert(type(t) == "table", "Invalid argument #1 (expected table got "..type(t)..")")
+			local out = {}
+			for name, url in pairs(t) do
+				assert(type(url) == "string", "Invalid URL "..tostring(url).." (expected string got "..type(url)..")")
+				assert(type(name) == "string", "Invalid name "..tostring(name).." (expected string got "..type(name)..")")
+				local temp = {loadAPI(url, name)}
+				table.remove(temp, 1)
+				out[name] = temp
+			end
+			done()
+			return out
+		end
 	end
-	
-	funcs.setPersistence = function(name, data)
-		assert(type(name) ~= "nil", "Invalid argument #1 (expected anything but nil, got "..type(name)..")")
-		local tpersist = funcs.getPersistence(name) or {}
-		if not tpersist[real_name] then
-			tpersist[real_name] = {}
+
+	do -- Plugin self-update micro service
+		funcs.update = {
+			default = g_updates
+		}
+		-- Magic table for the update micro API.
+		if not persistence.update then persistence.update = {} end
+		funcs.update.cache = persistence.update
+
+		funcs.update.setMethods = function(check, update)
+			if not up.check.plugins then up.check.plugins = {} end
+			if not up.run.plugins then up.run.plugins = {} end
+			up.check.plugins[real_name] = check
+			up.run.plugins[real_name] = update
 		end
-		if type(name) == "string" then
-			tpersist[real_name][name] = data
-			local fpers = fs.open(path.."cfg/persistence.lson", "w")
-			if not fpers then 
-				return false 
-			end
-			fpers.write(textutils.serialise(tpersist))
-			fpers.close()
-			return true
-		end
-		return false
 	end
+
+	-- Magic table specifically for caching things that the user shouldn't see
+	if not persistence.cache then persistence.cache = {} end
+	funcs.cache = persistence.cache
 
 	funcs.module = function(container)
-		-- A container for all external functionality that other programs can utilize
-		assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
-		this.module = container
-		funcs.module = container
+		if type(funcs.module) == "function" then -- Prevent overwriting the module
+			-- A container for all external functionality that other programs can utilize
+			assert(type(container) == "table", "Invalid argument #1 (table expected, got "..type(container)..")")
+			this.module = container
+			funcs.module = container
+		end
 	end
 
 	funcs.import = function(p_name) -- request the API from a specific plugin
@@ -392,7 +582,7 @@ allium.verify = function(param) -- Verification code ripped from DepMan instance
 		return res
 	end
 	local range = param:find("&&") -- Matched a range definition
-	local comp, c_e = param:find("[><][=]*") -- I do love me some pattern matching
+	local comp = param:find("[><][=]*") -- I do love me some pattern matching
 	if range then -- If there's a range beginning definition
 		local a, b = compare(param:sub(1, range-1)), compare(param:sub(range+3, -1))
 		if a and b then
@@ -433,11 +623,11 @@ end
 
 -- Packaging the Allium API
 if not package.preload["allium"] then
-	package.preload["allium"] = function() 
-		return allium 
+	package.preload["allium"] = function()
+		return allium
 	end
 else
-	print(cli.error, false, "Another instance of Allium is already running")
+	aprint(cli.error, false, "Another instance of Allium is already running")
 	return
 end
 
@@ -449,12 +639,12 @@ do -- Plugin loading process
 			if (not fs.isDir(dir.."/"..plugin)) and plugin:find(".lua") then
 				local file, err = loadfile(dir.."/"..plugin, _ENV)
 				if not file then
-					print(cli.error, false, err)
+					aprint(cli.error, false, err)
 				else
 					local thread = function()
 						local suc, err = pcall(file)
 						if not suc then
-							print(cli.error, false, err)
+							aprint(cli.error, false, err)
 						end
 					end
 					raisin.thread(thread, 0, loader_group)
@@ -637,16 +827,16 @@ local update_interaction = function() -- Update UI scanning and handling thread
 		if config.updates.notify.dependencies then
 			local suc, deps = up.check.dependencies()
 			local suffixer
-			if type(deps) == "table" and #deps > 0 then
+			if suc and type(deps) == "table" and #deps > 0 then
 				if #deps == 1 then
-					suffixer = {"Utility ", " is "}
+					suffixer = {"Utility ", " is"}
 				else
-					suffixer = {"Utilities: ", " are "}
+					suffixer = {"Utilities: ", " are"}
 				end
-				allium.log(suffixer[1]..table.concat(deps, ", ")..suffixer[2].."ready to be updated")
+				allium.log(suffixer[1]..table.concat(deps, ", ")..suffixer[2].." ready to be updated")
 				common.run[#common.run+1] = {up.run.dependencies}
 			elseif not suc then
-				print(cli.error, true, "Error in checking for dependency updates: "..deps)
+				aprint(cli.error, true, "Error in checking for dependency updates: "..table.concat(deps, ", "))
 			end
 		end
 		if config.updates.notify.allium then
@@ -659,7 +849,25 @@ local update_interaction = function() -- Update UI scanning and handling thread
 			end
 		end
 		if config.updates.notify.plugins then
-			-- Things will also be here
+			local toUpdate = {}
+			local suffixer
+			for k, v in pairs(up.check.plugins or {}) do
+				if g_persistence[k] and g_persistence[k].update and v and up.run.plugins[k] then
+					local s, r = pcall(v, g_persistence[k].update)
+					if s and r then
+						toUpdate[#toUpdate+1] = k
+						common.run[#common.run+1] = {up.run.plugins[k], g_persistence[k].update}
+					end
+				end
+			end
+			if #toUpdate == 1 then
+				suffixer = {"Plugin ", " is"}
+			elseif #toUpdate > 1 then
+				suffixer = {"Plugins: ", " are"}
+			end
+			if suffixer then
+				allium.log(suffixer[1]..table.concat(toUpdate, ", ")..suffixer[2].." ready to be updated")
+			end
 		end
 		common.refresh()
 	end, function() -- User Interface
@@ -686,7 +894,7 @@ local update_interaction = function() -- Update UI scanning and handling thread
 						for i = 1, #common.run do
 							local s, err = pcall(table.unpack(common.run[i]))
 							if not s then
-								print(cli.error, true, "Failed to execute an update: "..err)
+								aprint(cli.error, true, "Failed to execute an update: "..err)
 							end
 						end
 						allium.log("Rebooting to apply updates...")
@@ -703,8 +911,8 @@ raisin.thread(interpreter, 0)
 raisin.thread(player_scanner, 1)
 raisin.thread(update_interaction, 1)
 
-if not fs.exists(path.."cfg/persistence.lson") then --In the situation that this is a first installation, let's do some setup
-	local fpers = fs.open(path.."cfg/persistence.lson", "w")
+if not fs.exists(fs.combine(path, "cfg/metadata.lson")) then --In the situation that this is a first installation, let's do some setup
+	local fpers = fs.open(fs.combine(path, "cfg/metadata.lson"), "w")
 	fpers.write("{}")
 	fpers.close()
 end
