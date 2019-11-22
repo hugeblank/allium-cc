@@ -166,11 +166,17 @@ end
 -- Final firstrun stuff
 if firstrun then
     print("Finalizing installation")
-    local sha, file = config.updates.check.allium(), fs.open(fs.combine(path, "/cfg/version.lson"), "w")
-    if file then
-        file.write(textutils.serialise({sha = sha, version = allium_version}))
-        file.close()
-    else
+    local sha, v_file = up.check.allium(), fs.open(fs.combine(path, "/cfg/version.lson"), "w")
+    if v_file then
+        v_file.write(textutils.serialise({sha = sha, version = allium_version}))
+        v_file.close()
+    end
+    local m_file = fs.open(fs.combine(path, "/cfg/metadata.lson"), "w")
+    if m_file then
+        m_file.write("{}")
+        m_file.close()
+    end
+    if not (m_file and v_file) then
         printError("Could not write to file. Is the disk full?")
         return
     end
